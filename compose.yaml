@@ -1,0 +1,31 @@
+services:
+  corolla-radar:
+    image: ghcr.io/wozniakmac/corolla-radar:latest
+    container_name: corolla-radar
+    restart: unless-stopped
+    ports:
+      - "4174:4174"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 4174
+      ENABLE_SCHEDULED_SCAN: "true"
+      SCAN_INTERVAL_MINUTES: 240
+      SCAN_CANDIDATE_LIMIT: 300
+      SCAN_MAX_PAGES: 20
+      SCAN_DISCOVERY_LIMIT: 500
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      NTFY_URL: ${NTFY_URL:-}
+    volumes:
+      - ./data:/app/data
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4174/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s

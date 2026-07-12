@@ -1,0 +1,35 @@
+{
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "dev": "concurrently -k \"vite\" \"tsx watch server/index.ts\"",
+    "scan": "tsx server/scan.ts",
+    "reprocess": "node --import tsx server/reprocess.ts",
+    "build": "tsc -b && vite build",
+    "test": "vitest run",
+    "server": "tsx server/index.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "cheerio": "latest",
+    "express": "latest",
+    "lucide-react": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "typescript": "latest",
+    "vite": "latest"
+  },
+  "devDependencies": {
+    "@types/express": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "concurrently": "latest",
+    "jsdom": "latest",
+    "prettier": "^3.9.5",
+    "tsx": "latest",
+    "vitest": "latest"
+  }
+}

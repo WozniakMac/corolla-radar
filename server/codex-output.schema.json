@@ -1,0 +1,36 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "year",
+    "power",
+    "price",
+    "mileage",
+    "body",
+    "camera",
+    "parkingSensors",
+    "ecvt",
+    "hybrid",
+    "vin",
+    "location",
+    "trim",
+    "seller",
+    "confidence"
+  ],
+  "properties": {
+    "year": { "type": ["number", "null"] },
+    "power": { "type": ["number", "null"] },
+    "price": { "type": ["number", "null"] },
+    "mileage": { "type": ["number", "null"] },
+    "body": { "type": ["string", "null"] },
+    "camera": { "type": ["boolean", "null"] },
+    "parkingSensors": { "type": ["boolean", "null"] },
+    "ecvt": { "type": ["boolean", "null"] },
+    "hybrid": { "type": ["boolean", "null"] },
+    "vin": { "type": ["string", "null"] },
+    "location": { "type": ["string", "null"] },
+    "trim": { "type": ["string", "null"] },
+    "seller": { "type": ["string", "null"] },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+  }
+}
