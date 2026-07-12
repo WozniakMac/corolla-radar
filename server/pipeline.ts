@@ -380,7 +380,13 @@ export async function runSources(
         const activeCandidateUrls = new Set(
           candidates.map((candidate) => normalize(candidate.url)),
         );
-        const candidateLimit = Number(process.env.SCAN_CANDIDATE_LIMIT || 300);
+        const configuredCandidateLimit = Number(
+          process.env.SCAN_CANDIDATE_LIMIT || 0,
+        );
+        const candidateLimit =
+          configuredCandidateLimit > 0
+            ? Math.floor(configuredCandidateLimit)
+            : Infinity;
         const complete =
           adapter.discoveryComplete === true &&
           candidates.length <= candidateLimit;

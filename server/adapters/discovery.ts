@@ -49,11 +49,16 @@ export function createHtmlAdapter(
     discoveryComplete: false,
     async discover() {
       const candidates = new Map<string, Candidate>();
-      const maxPages = Math.max(1, Number(process.env.SCAN_MAX_PAGES || 20));
-      const discoveryLimit = Math.max(
-        1,
-        Number(process.env.SCAN_DISCOVERY_LIMIT || 500),
+      const configuredMaxPages = Number(process.env.SCAN_MAX_PAGES || 0);
+      const configuredDiscoveryLimit = Number(
+        process.env.SCAN_DISCOVERY_LIMIT || 0,
       );
+      const maxPages =
+        configuredMaxPages > 0 ? Math.floor(configuredMaxPages) : Infinity;
+      const discoveryLimit =
+        configuredDiscoveryLimit > 0
+          ? Math.floor(configuredDiscoveryLimit)
+          : Infinity;
       const baseUrl = searchUrls[0];
       this.pagesScanned = 0;
       this.discoveryComplete = false;

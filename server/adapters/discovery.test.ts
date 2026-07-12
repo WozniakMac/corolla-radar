@@ -5,7 +5,10 @@ import {
   paginatedUrl,
 } from "./discovery";
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
+});
 
 describe("portal discovery", () => {
   it("extracts OLX detail URLs from anchors and embedded JSON", () => {
@@ -59,5 +62,25 @@ describe("portal discovery", () => {
     expect(adapter.pagesScanned).toBe(3);
     expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(String(fetchMock.mock.calls[1][0])).toContain("page=2");
+  });
+
+  it("has no default page limit", async () => {
+    const fetchMock = vi.fn(async (url: string | URL) => {
+      const call = fetchMock.mock.calls.length;
+      const id = call <= 25 ? call : 25;
+      const response = new Response(
+        `<a href="/osobowe/oferta/corolla-${id}">${id}</a>`,
+        { status: 200 },
+      );
+      Object.defineProperty(response, "url", { value: String(url) });
+      return response;
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const adapter = createHtmlAdapter("otomoto", "OTOMOTO", [
+      "https://www.otomoto.pl/osobowe/toyota/corolla",
+    ]);
+    const found = await adapter.discover();
+    expect(found).toHaveLength(25);
+    expect(adapter.pagesScanned).toBe(26);
   });
 });

@@ -28,9 +28,9 @@ Formatowanie całego projektu: `npm run format`. Kontrola bez zmian: `npm run fo
 
 Jednorazowy skan wszystkich źródeł: `npm run scan`. Pojedyncze źródło, np. `npm run scan -- otomoto` albo `npm run scan -- pewneauto`.
 
-Adaptery używają dynamicznej paginacji. Przechodzą dalej, dopóki kolejna strona zawiera nowe URL-e; zatrzymują się na pustej/powtórzonej stronie albo po osiągnięciu `SCAN_MAX_PAGES` (domyślnie 20). `SCAN_DISCOVERY_LIMIT` ogranicza liczbę odkrytych URL-i, a `SCAN_CANDIDATE_LIMIT` liczbę ofert otwieranych i weryfikowanych w jednym źródle.
+Adaptery używają dynamicznej paginacji bez domyślnego limitu stron ani ofert. Przechodzą dalej, dopóki kolejna strona zawiera nowe URL-e; zatrzymują się na pustej lub powtórzonej stronie albo na odpowiedzi 404. Opcjonalne zmienne `SCAN_MAX_PAGES`, `SCAN_DISCOVERY_LIMIT` i `SCAN_CANDIDATE_LIMIT` mogą działać jako awaryjne bezpieczniki; wartość `0` oznacza brak limitu.
 
-Obsługiwane adaptery: Toyota Pewne Auto, OTOMOTO i OLX. Każdy cykl najpierw wykrywa bezpośrednie URL-e, potem otwiera maksymalnie 40 kandydatów na źródło i dopiero po walidacji zapisuje ofertę.
+Obsługiwane adaptery: Toyota Pewne Auto, OTOMOTO i OLX. Każdy cykl najpierw wykrywa wszystkie dostępne bezpośrednie URL-e, potem otwiera i weryfikuje każdego kandydata.
 
 Każda otwarta strona oferty jest zapisywana w całości jako skompresowany snapshot HTML — także wtedy, gdy oferta zostanie odrzucona przez bieżący parser. Po zmianie reguł ekstrakcji można ponownie przeliczyć wszystkie najnowsze snapshoty bez łączenia się z portalami:
 
