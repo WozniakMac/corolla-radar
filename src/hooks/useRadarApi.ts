@@ -40,6 +40,7 @@ export function useRadarApi() {
       setCodexJobs(codexState.jobs);
       setCurrentCodexJobId(codexState.currentJobId);
       setMonitoringStats(statsState);
+      setScanning(Boolean(statsState.activeScan));
     } catch {
       // Static production preview can work without the API.
     }
@@ -61,10 +62,10 @@ export function useRadarApi() {
       });
       const body = await response.json();
       if (!response.ok) throw new Error(body.error);
-      setSources(body);
       await refresh();
-    } finally {
+    } catch (error) {
       setScanning(false);
+      console.error("Nie udało się uruchomić skanu:", error);
     }
   };
 

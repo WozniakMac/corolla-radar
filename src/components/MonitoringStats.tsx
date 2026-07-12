@@ -44,9 +44,24 @@ export function MonitoringStats({
             stats.intervalMinutes * 60_000,
         ).toISOString()
       : undefined;
+  const activeTrigger = stats.activeScan
+    ? trigger[stats.activeScan.trigger]
+    : undefined;
 
   return (
     <>
+      {stats.activeScan && (
+        <section className="activeScanNotice">
+          <RefreshCw className="spinning" />
+          <div>
+            <strong>{activeTrigger} skan jest w toku</strong>
+            <span>
+              Uruchomiono {date(stats.activeScan.startedAt)} · wyniki i wpis w
+              historii pojawią się po zakończeniu
+            </span>
+          </div>
+        </section>
+      )}
       <section className="monitorSummary">
         <div>
           <Activity />

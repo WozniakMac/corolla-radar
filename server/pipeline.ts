@@ -67,8 +67,15 @@ const statuses = new Map(
     } satisfies SourceStatus,
   ]),
 );
-let running = false;
+export type ActiveScan = {
+  trigger: "manual" | "automatic" | "cli";
+  source?: string;
+  startedAt: string;
+};
+
+let activeScan: ActiveScan | undefined;
 export const getStatuses = () => [...statuses.values()];
+export const getActiveScan = () => activeScan;
 
 function toCar(
   p: Awaited<ReturnType<typeof fetchAndParse>>,
@@ -307,10 +314,10 @@ export async function runSources(
   sourceId?: string,
   trigger: "manual" | "automatic" | "cli" = "manual",
 ) {
-  if (running) throw new Error("Cykl już trwa");
-  running = true;
+  if (activeScan) throw new Error("Cykl już trwa");
   const started = Date.now();
   const startedAt = new Date(started).toISOString();
+  activeScan = { trigger, source: sourceId, startedAt };
   try {
     for (const adapter of adapters.filter(
       (a) => !sourceId || a.id === sourceId,
@@ -449,13 +456,17 @@ export async function runSources(
     await save(db);
     return result;
   } finally {
-    running = false;
+    activeScan = undefined;
   }
 }
 
 export async function reprocessSavedSnapshots() {
-  if (running) throw new Error("Cykl już trwa");
-  running = true;
+  if (activeScan) throw new Error("Cykl już trwa");
+  activeScan = {
+    trigger: "manual",
+    source: "snapshots",
+    startedAt: new Date().toISOString(),
+  };
   try {
     const db = await load();
     const snapshots = latestSnapshots(
@@ -497,7 +508,7 @@ export async function reprocessSavedSnapshots() {
     await save(db);
     return { snapshots: snapshots.length, processed, accepted, errors };
   } finally {
-    running = false;
+    activeScan = undefined;
   }
 }
 const normalize = (value: string) => {

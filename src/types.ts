@@ -119,6 +119,11 @@ export type ScanRun = {
 export type MonitoringStats = {
   scheduled: boolean;
   intervalMinutes: number;
+  activeScan?: {
+    trigger: "manual" | "automatic" | "cli";
+    source?: string;
+    startedAt: string;
+  };
   runs: ScanRun[];
   snapshots?: number;
   snapshotBytes?: number;

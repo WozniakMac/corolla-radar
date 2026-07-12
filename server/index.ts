@@ -1,6 +1,11 @@
 import express from "express";
 import { resolve } from "node:path";
-import { getStatuses, reprocessSavedSnapshots, runSources } from "./pipeline";
+import {
+  getActiveScan,
+  getStatuses,
+  reprocessSavedSnapshots,
+  runSources,
+} from "./pipeline";
 import { load } from "./store";
 import {
   publicJobs,
@@ -23,6 +28,7 @@ app.get("/api/stats", async (_req, res) => {
   res.json({
     scheduled: process.env.ENABLE_SCHEDULED_SCAN === "true",
     intervalMinutes: Number(process.env.SCAN_INTERVAL_MINUTES || 240),
+    activeScan: getActiveScan(),
     runs: [...(store.scanRuns || [])].reverse(),
     snapshots: store.snapshots?.length || 0,
     snapshotBytes: (store.snapshots || []).reduce(
@@ -48,16 +54,12 @@ app.post("/api/codex/jobs/:id/process", async (req, res) => {
   }
 });
 app.post("/api/sources/run", async (req, res) => {
-  try {
-    res.json(await runSources(req.body?.source, "manual"));
-  } catch (error) {
-    res.status(409).json({
-      error:
-        error instanceof Error
-          ? error.message
-          : "Nie udało się uruchomić cyklu",
-    });
-  }
+  if (getActiveScan()) return res.status(409).json({ error: "Cykl już trwa" });
+  const source = req.body?.source;
+  void runSources(source, "manual").catch((error) =>
+    console.error("Manual scan failed:", error),
+  );
+  res.status(202).json({ started: true, activeScan: getActiveScan() });
 });
 app.post("/api/snapshots/reprocess", async (_req, res) => {
   try {

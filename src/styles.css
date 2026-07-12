@@ -1000,6 +1000,29 @@ details input[type="range"] {
   gap: 14px;
   margin-bottom: 20px;
 }
+.activeScanNotice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 14px 16px;
+  border: 1px solid #b9d9c8;
+  border-radius: 11px;
+  background: #edf8f2;
+  color: #216044;
+}
+.activeScanNotice svg {
+  width: 20px;
+}
+.activeScanNotice strong,
+.activeScanNotice span {
+  display: block;
+}
+.activeScanNotice span {
+  margin-top: 2px;
+  font-size: 11px;
+  color: #567064;
+}
 .monitorSummary > div {
   position: relative;
   display: grid;
