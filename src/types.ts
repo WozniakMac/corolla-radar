@@ -147,4 +147,18 @@ export type MonitoringStats = {
   runs: ScanRun[];
   snapshots?: number;
   snapshotBytes?: number;
+  cepikRuns?: Array<{
+    id: string;
+    carId: string;
+    offerUrl?: string;
+    vin: string;
+    registrationNumber: string;
+    firstRegistrationDate: string;
+    startedAt: string;
+    finishedAt: string;
+    durationMs: number;
+    outcome: "success" | "warning" | "failed";
+    error?: string;
+    rawData?: unknown;
+  }>;
 };

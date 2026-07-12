@@ -36,12 +36,27 @@ export type SnapshotMeta = {
   bytes: number;
   active?: boolean;
 };
+export type CepikRun = {
+  id: string;
+  carId: string;
+  offerUrl?: string;
+  vin: string;
+  registrationNumber: string;
+  firstRegistrationDate: string;
+  startedAt: string;
+  finishedAt: string;
+  durationMs: number;
+  outcome: "success" | "warning" | "failed";
+  error?: string;
+  rawData: unknown;
+};
 export type Store = {
   cars: unknown[];
   jobs: Job[];
   scanRuns?: ScanRun[];
   top5Ids?: string[];
   snapshots?: SnapshotMeta[];
+  cepikRuns?: CepikRun[];
 };
 export async function load(): Promise<Store> {
   try {
@@ -52,9 +67,10 @@ export async function load(): Promise<Store> {
       jobs: data.jobs || [],
       scanRuns: data.scanRuns || [],
       snapshots: data.snapshots || [],
+      cepikRuns: data.cepikRuns || [],
     };
   } catch {
-    return { cars: [], jobs: [], snapshots: [] };
+    return { cars: [], jobs: [], snapshots: [], cepikRuns: [] };
   }
 }
 export async function save(data: Store) {

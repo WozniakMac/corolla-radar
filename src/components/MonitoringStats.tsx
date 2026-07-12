@@ -6,6 +6,7 @@ import {
   ScanSearch,
 } from "lucide-react";
 import type { MonitoringStats as Stats } from "../types";
+import { useState } from "react";
 
 const date = (value?: string) =>
   value
@@ -16,6 +17,33 @@ const date = (value?: string) =>
     : "—";
 const duration = (ms: number) => `${Math.round(ms / 1000)} s`;
 const trigger = { manual: "Ręczny", automatic: "Automatyczny", cli: "CLI" };
+
+function RawCepikData({ id }: { id: string }) {
+  const [raw, setRaw] = useState<unknown>();
+  const [loading, setLoading] = useState(false);
+  return (
+    <details
+      className="rawData"
+      onToggle={(event) => {
+        if (!event.currentTarget.open || raw !== undefined || loading) return;
+        setLoading(true);
+        void fetch(`/api/cepik/runs/${id}/raw`)
+          .then((response) => response.json())
+          .then(setRaw)
+          .finally(() => setLoading(false));
+      }}
+    >
+      <summary>Raw JSON</summary>
+      <pre>
+        {loading
+          ? "Pobieranie…"
+          : raw === undefined
+            ? "Brak danych"
+            : JSON.stringify(raw, null, 2)}
+      </pre>
+    </details>
+  );
+}
 
 export function MonitoringStats({
   stats,
@@ -47,6 +75,10 @@ export function MonitoringStats({
   const activeTrigger = stats.activeScan
     ? trigger[stats.activeScan.trigger]
     : undefined;
+  const cepikRuns = stats.cepikRuns || [];
+  const cepikSuccess = cepikRuns.filter(
+    (run) => run.outcome === "success",
+  ).length;
 
   return (
     <>
@@ -147,6 +179,70 @@ export function MonitoringStats({
         ) : (
           <div className="emptyStats">
             Historia zacznie się zapisywać po następnym skanowaniu.
+          </div>
+        )}
+      </section>
+      <section className="scanHistory cepikHistory">
+        <div className="scanHistoryHead">
+          <div>
+            <h2>Zapytania Historia Pojazdu / CEPiK</h2>
+            <span>
+              {cepikRuns.length} prób · {cepikSuccess} sukcesów ·{" "}
+              {cepikRuns.length - cepikSuccess} ostrzeżeń lub błędów
+            </span>
+          </div>
+        </div>
+        {cepikRuns.length ? (
+          <div className="scanTableWrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Wynik</th>
+                  <th>Zakończono</th>
+                  <th>Oferta</th>
+                  <th>Rejestracja</th>
+                  <th>VIN</th>
+                  <th>Czas</th>
+                  <th>Dane surowe</th>
+                </tr>
+              </thead>
+              <tbody>
+                {cepikRuns.map((run) => (
+                  <tr key={run.id}>
+                    <td>
+                      <span className={`cepikOutcome ${run.outcome}`}>
+                        {run.outcome === "success"
+                          ? "Sukces"
+                          : run.outcome === "warning"
+                            ? "Ostrzeżenie"
+                            : "Błąd"}
+                      </span>
+                      {run.error && <small>{run.error}</small>}
+                    </td>
+                    <td>{date(run.finishedAt)}</td>
+                    <td>
+                      {run.offerUrl ? (
+                        <a href={run.offerUrl} target="_blank" rel="noreferrer">
+                          Otwórz
+                        </a>
+                      ) : (
+                        run.carId
+                      )}
+                    </td>
+                    <td>{run.registrationNumber}</td>
+                    <td className="mono">{run.vin}</td>
+                    <td>{duration(run.durationMs)}</td>
+                    <td>
+                      <RawCepikData id={run.id} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="emptyStats">
+            Historia pojawi się po pierwszym zapytaniu CEPiK.
           </div>
         )}
       </section>

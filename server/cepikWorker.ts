@@ -1,4 +1,5 @@
 import { chromium, type Browser } from "playwright";
+import { randomUUID } from "node:crypto";
 import { getActiveScan } from "./pipeline";
 import { load, save } from "./store";
 
@@ -109,15 +110,43 @@ async function tick() {
     if (!car) return;
     car.cepik = { status: "processing" };
     await save(db);
+    const started = Date.now();
+    const startedAt = new Date(started).toISOString();
+    let rawData: unknown;
     try {
       car.cepik = await checkCepik(car);
+      rawData = car.cepik;
     } catch (error) {
       car.cepik = {
         status: "failed",
         checkedAt: new Date().toISOString(),
         error: error instanceof Error ? error.message : "Błąd CEPiK",
       };
+      rawData = { error: car.cepik.error };
     }
+    db.cepikRuns ||= [];
+    db.cepikRuns.push({
+      id: randomUUID(),
+      carId: car.id,
+      offerUrl: car.listings?.find((listing: any) =>
+        /pewne auto/i.test(listing.source),
+      )?.url,
+      vin: car.vin,
+      registrationNumber: car.registrationNumber,
+      firstRegistrationDate: car.firstRegistrationDate,
+      startedAt,
+      finishedAt: new Date().toISOString(),
+      durationMs: Date.now() - started,
+      outcome:
+        car.cepik.status === "ok"
+          ? "success"
+          : car.cepik.status === "warning"
+            ? "warning"
+            : "failed",
+      error: car.cepik.error,
+      rawData,
+    });
+    db.cepikRuns = db.cepikRuns.slice(-500);
     await save(db);
   } finally {
     busy = false;

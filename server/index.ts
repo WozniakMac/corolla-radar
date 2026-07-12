@@ -32,6 +32,9 @@ app.get("/api/stats", async (_req, res) => {
     intervalMinutes: Number(process.env.SCAN_INTERVAL_MINUTES || 240),
     activeScan: getActiveScan(),
     runs: [...(store.scanRuns || [])].reverse(),
+    cepikRuns: [...(store.cepikRuns || [])]
+      .reverse()
+      .map(({ rawData: _rawData, ...run }) => run),
     snapshots: store.snapshots?.length || 0,
     snapshotBytes: (store.snapshots || []).reduce(
       (sum, snapshot) => sum + snapshot.bytes,
@@ -42,6 +45,13 @@ app.get("/api/stats", async (_req, res) => {
 app.get("/api/codex/jobs", async (_req, res) =>
   res.json({ jobs: await publicJobs(), ...workerState() }),
 );
+app.get("/api/cepik/runs/:id/raw", async (req, res) => {
+  const run = (await load()).cepikRuns?.find(
+    (item) => item.id === req.params.id,
+  );
+  if (!run) return res.status(404).json({ error: "Nie znaleziono zapytania" });
+  res.json(run.rawData);
+});
 app.post("/api/codex/jobs/process-all", async (_req, res) =>
   res.status(202).json({ queued: await queueAllPending() }),
 );

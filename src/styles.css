@@ -1121,6 +1121,55 @@ details input[type="range"] {
   color: #74807b;
   text-align: center;
 }
+.cepikHistory {
+  margin-top: 20px;
+}
+.cepikOutcome {
+  display: inline-block;
+  padding: 3px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+}
+.cepikOutcome.success {
+  background: #e5f5eb;
+  color: #197047;
+}
+.cepikOutcome.warning {
+  background: #fff1d6;
+  color: #925f09;
+}
+.cepikOutcome.failed {
+  background: #fee6e4;
+  color: #a82e26;
+}
+.cepikHistory td > small {
+  display: block;
+  max-width: 240px;
+  margin-top: 5px;
+  color: #a82e26;
+}
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.rawData summary {
+  cursor: pointer;
+  color: #28674d;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.rawData pre {
+  max-width: 620px;
+  max-height: 420px;
+  overflow: auto;
+  padding: 12px;
+  border-radius: 8px;
+  background: #15211b;
+  color: #d9eee3;
+  font-size: 10px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
 
 .confidenceScore {
   margin: -8px 0 20px;
