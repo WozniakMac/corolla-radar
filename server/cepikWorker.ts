@@ -2,6 +2,12 @@ import { chromium, type Browser } from "playwright";
 import { randomUUID } from "node:crypto";
 import { getActiveScan } from "./pipeline";
 import { load, save } from "./store";
+import {
+  buildMarketBenchmarks,
+  qualifyCar,
+  scoreCar,
+  worthTrip,
+} from "../src/scoring";
 
 let browser: Browser | undefined;
 let busy = false;
@@ -96,8 +102,24 @@ async function tick() {
   busy = true;
   try {
     const db = await load();
-    const car: any = (db.cars as any[]).find(
+    const cars = db.cars as any[];
+    const market = buildMarketBenchmarks(cars);
+    const topTenIds = new Set(
+      cars
+        .filter(
+          (item) =>
+            item.listings?.some((listing: any) => listing.active) &&
+            qualifyCar(item).status === "qualified",
+        )
+        .map((item) => ({ item, score: scoreCar(item, market) }))
+        .filter(({ item, score }) => worthTrip(item, score, market))
+        .sort((left, right) => right.score.total - left.score.total)
+        .slice(0, 10)
+        .map(({ item }) => item.id),
+    );
+    const car: any = cars.find(
       (item) =>
+        topTenIds.has(item.id) &&
         item.vin &&
         item.registrationNumber &&
         item.firstRegistrationDate &&

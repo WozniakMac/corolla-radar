@@ -48,7 +48,7 @@ ENABLE_SCHEDULED_SCAN=true SCAN_INTERVAL_MINUTES=360 npm run server
 
 Portale mogą zmieniać HTML, regulaminy i zabezpieczenia. Błędy adapterów są widoczne przez `GET /api/sources` i w panelu źródeł. Aplikacja nie obchodzi CAPTCHA ani logowania.
 
-Oferty Toyota Pewne Auto z numerem rejestracyjnym, VIN-em i datą pierwszej rejestracji są kolejno sprawdzane w usłudze Historia Pojazdu. Worker Chromium działa tylko przy `ENABLE_CEPIK=true`, domyślnie nie częściej niż raz na 300 sekund, nie ponawia zakończonego VIN-u i nie obchodzi CAPTCHA. Wynik oraz oś czasu są zapisywane przy samochodzie; ręczne ponowienie udostępnia `POST /api/cars/:id/cepik`.
+Oferty Toyota Pewne Auto z numerem rejestracyjnym, VIN-em i datą pierwszej rejestracji są kolejno sprawdzane w usłudze Historia Pojazdu, ale tylko gdy znajdują się w aktualnym top 10 rankingu. Worker przed każdym zapytaniem przelicza ranking. Działa tylko przy `ENABLE_CEPIK=true`, domyślnie nie częściej niż raz na 300 sekund, nie ponawia zakończonego VIN-u i nie obchodzi CAPTCHA. Wynik oraz oś czasu są zapisywane przy samochodzie; ręczne ponowienie udostępnia `POST /api/cars/:id/cepik` i również czeka, aż auto znajdzie się w top 10.
 
 Niepełne oferty trafiają do trwałej kolejki widocznej w aplikacji. Codex nigdy nie uruchamia się automatycznie: użytkownik może przetworzyć jedną ofertę albo wszystkie oczekujące. Zakończony URL nie jest przetwarzany ponownie podczas kolejnych skanów; wymaga użycia przycisku „Przetwórz ponownie”. Worker uruchamia lokalne `codex exec` w trybie `--ephemeral`, z sandboxem `read-only` i ścisłym schematem JSON. Wynik o pewności poniżej 0,8 jest ignorowany i nigdy nie może nadpisać jawnej informacji o sedanie, hatchbacku, SUV-ie ani Corolli Cross.
 
