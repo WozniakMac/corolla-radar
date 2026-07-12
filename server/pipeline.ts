@@ -77,6 +77,47 @@ let activeScan: ActiveScan | undefined;
 export const getStatuses = () => [...statuses.values()];
 export const getActiveScan = () => activeScan;
 
+export function reconcileSourcePresence(
+  db: Store,
+  source: string,
+  candidateUrls: Set<string>,
+  complete: boolean,
+  missingThreshold = 3,
+) {
+  const now = new Date().toISOString();
+  const listings = (db.cars as any[]).flatMap((car) => car.listings || []);
+  for (const listing of listings) {
+    if (listing.source !== source) continue;
+    const found = candidateUrls.has(normalize(listing.url));
+    if (found) {
+      listing.missedScans = 0;
+      listing.active = true;
+      delete listing.inactiveAt;
+    } else if (complete) {
+      listing.missedScans = (listing.missedScans || 0) + 1;
+      if (listing.missedScans >= missingThreshold) {
+        listing.active = false;
+        listing.inactiveAt ||= now;
+      }
+    }
+  }
+  for (const job of db.jobs) {
+    if (job.source !== source) continue;
+    if (candidateUrls.has(normalize(job.url))) job.missedScans = 0;
+    else if (complete) job.missedScans = (job.missedScans || 0) + 1;
+  }
+  db.jobs = db.jobs.filter((job) => (job.missedScans || 0) < missingThreshold);
+  for (const snapshot of db.snapshots || []) {
+    if (snapshot.source !== source) continue;
+    const listing = listings.find(
+      (item) =>
+        item.source === source &&
+        normalize(item.url) === normalize(snapshot.url),
+    );
+    if (listing) snapshot.active = listing.active;
+  }
+}
+
 function toCar(
   p: Awaited<ReturnType<typeof fetchAndParse>>,
   source: string,
@@ -328,28 +369,27 @@ export async function runSources(
       status.rejectionReasons = {};
       status.codexAttempted = 0;
       status.codexCompleted = 0;
+      status.discoveryComplete = false;
       status.discovered = status.verified = status.rejected = 0;
       try {
         const candidates = await adapter.discover();
         status.discovered = candidates.length;
         status.pagesScanned = adapter.pagesScanned;
+        status.discoveryComplete = adapter.discoveryComplete;
         const db = await load();
-        for (const snapshot of db.snapshots || [])
-          if (snapshot.source === adapter.name) snapshot.active = false;
         const activeCandidateUrls = new Set(
           candidates.map((candidate) => normalize(candidate.url)),
         );
-        db.jobs = db.jobs.filter(
-          (job) =>
-            job.source !== adapter.name ||
-            activeCandidateUrls.has(normalize(job.url)),
-        );
-        for (const car of db.cars as any[]) {
-          for (const listing of car.listings || []) {
-            if (listing.source === adapter.name) listing.active = false;
-          }
-        }
         const candidateLimit = Number(process.env.SCAN_CANDIDATE_LIMIT || 300);
+        const complete =
+          adapter.discoveryComplete === true &&
+          candidates.length <= candidateLimit;
+        reconcileSourcePresence(
+          db,
+          adapter.name,
+          activeCandidateUrls,
+          complete,
+        );
         for (const candidate of candidates.slice(0, candidateLimit)) {
           try {
             const p = await fetchAndParse(candidate.url);
@@ -419,9 +459,6 @@ export async function runSources(
             );
           }
         }
-        db.cars = (db.cars as any[]).filter((car) =>
-          car.listings?.some((listing: any) => listing.active),
-        );
         await save(db);
         status.lastSuccess = new Date().toISOString();
       } catch (error) {

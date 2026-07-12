@@ -14,11 +14,13 @@ export type SourceStatus = {
   codexAttempted?: number;
   codexCompleted?: number;
   pagesScanned?: number;
+  discoveryComplete?: boolean;
 };
 export interface SourceAdapter {
   id: SourceId;
   name: string;
   searchUrls: string[];
   pagesScanned?: number;
+  discoveryComplete?: boolean;
   discover(): Promise<Candidate[]>;
 }

@@ -14,6 +14,7 @@ export type Job = {
   finishedAt?: string;
   error?: string;
   carId?: string;
+  missedScans?: number;
 };
 export type ScanRun = {
   id: string;

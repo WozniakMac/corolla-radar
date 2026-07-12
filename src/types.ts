@@ -7,6 +7,8 @@ export type Listing = {
   power?: number;
   cashPrice?: number;
   active: boolean;
+  missedScans?: number;
+  inactiveAt?: string;
   checkedAt: string;
   description?: string;
   images?: string[];

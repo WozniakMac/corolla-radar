@@ -46,6 +46,7 @@ export function createHtmlAdapter(
     name,
     searchUrls,
     pagesScanned: 0,
+    discoveryComplete: false,
     async discover() {
       const candidates = new Map<string, Candidate>();
       const maxPages = Math.max(1, Number(process.env.SCAN_MAX_PAGES || 20));
@@ -55,6 +56,7 @@ export function createHtmlAdapter(
       );
       const baseUrl = searchUrls[0];
       this.pagesScanned = 0;
+      this.discoveryComplete = false;
       for (let page = 1; page <= maxPages; page++) {
         const searchUrl = paginatedUrl(baseUrl, id, page);
         const response = await fetch(searchUrl, {
@@ -66,7 +68,10 @@ export function createHtmlAdapter(
           },
           signal: AbortSignal.timeout(20_000),
         });
-        if (page > 1 && response.status === 404) break;
+        if (page > 1 && response.status === 404) {
+          this.discoveryComplete = true;
+          break;
+        }
         if (!response.ok) throw new Error(`${name}: HTTP ${response.status}`);
         this.pagesScanned++;
         const pageCandidates = extractCandidates(
@@ -79,12 +84,11 @@ export function createHtmlAdapter(
           if (!candidates.has(candidate.url)) newOnPage++;
           candidates.set(candidate.url, candidate);
         }
-        if (
-          pageCandidates.length === 0 ||
-          newOnPage === 0 ||
-          candidates.size >= discoveryLimit
-        )
+        if (pageCandidates.length === 0 || newOnPage === 0) {
+          this.discoveryComplete = true;
           break;
+        }
+        if (candidates.size >= discoveryLimit) break;
       }
       return [...candidates.values()].slice(0, discoveryLimit);
     },
