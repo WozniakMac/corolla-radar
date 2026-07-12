@@ -252,9 +252,13 @@ export function parseListingHtml(
       /salon polska|polski salon|zakupion.{0,30}w polskim salonie|pochodz.{0,30}z polskiej sieci dealerskiej|kraj pochodzenia\s*:?[ ]*polska/i.test(
         text,
       ),
-    aso: /(?:pełn|udokumentowan).{0,24}histor.{0,30}(?:serwisow.{0,12})?aso|serwisowan.{0,20}(?:w )?aso|serwis(?:owa|owy)?\s*(?:w )?aso/i.test(
-      text,
-    ),
+    aso:
+      /(?:pełn|udokumentowan).{0,24}histor.{0,30}(?:serwisow.{0,12})?aso|serwisowan.{0,20}(?:w )?aso|serwis(?:owa|owy)?\s*(?:w )?aso/i.test(
+        text,
+      ) ||
+      /(?:^|[|•])\s*ASO\s*(?:[|•]|$)/i.test(
+        `${vehicleHeading} ${text.slice(0, 900)}`,
+      ),
     oneOwner:
       /(?:^|\W)(?:1|I)\s*(?:właściciel|wlasciciel)|pierwszy właściciel/i.test(
         text,

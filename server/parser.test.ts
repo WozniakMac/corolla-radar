@@ -64,6 +64,21 @@ describe("listing parser", () => {
     expect(parsed.toyotaWarranty).toBe(true);
   });
 
+  it("recognizes a standalone ASO tag in the Pewne Auto header", () => {
+    const parsed = parseListingHtml(`
+      <html><head><title>Oferta samochodu Toyota Corolla 2023</title></head><body>
+        <h1>Toyota Corolla</h1>
+        <strong>1.8 Hybrid Style | ASO | VAT 23% | Bezwypadkowy | Salon PL |</strong>
+        <div class="vdp-description__content">
+          Toyota Corolla Hybrid Kombi. Rok produkcji 2023. Przebieg 46 255 km.
+          Skrzynia automatyczna. Kamera cofania. Czujniki parkowania.
+        </div>
+      </body></html>
+    `);
+    expect(parsed.aso).toBe(true);
+    expect(parsed.oneOwner).toBe(false);
+  });
+
   it("recognizes a reserved offer without treating a reserve button as status", () => {
     const reserved = parseListingHtml(`
       <html><head><title>Toyota Corolla Kombi 2023 95 000 zł</title></head><body>

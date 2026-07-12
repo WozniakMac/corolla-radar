@@ -373,7 +373,7 @@ export function explainScore(
           .filter(Boolean)
           .join(" • ") || "Brak mocnych dowodów historii.",
       deductions: [
-        !car.aso && "Brak potwierdzonej pełnej historii ASO: −5 pkt",
+        !car.aso && "Brak potwierdzonego serwisowania lub historii ASO: −5 pkt",
         !car.polishSalon && "Brak potwierdzenia salonu Polska: −3 pkt",
         !car.oneOwner && "Brak potwierdzenia jednego właściciela: −2 pkt",
         !car.vin && "Brak VIN-u: −2 pkt",

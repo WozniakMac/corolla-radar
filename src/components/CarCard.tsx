@@ -75,7 +75,7 @@ export function CarCard({
           </div>
           <div>
             <small>HISTORIA</small>
-            <strong>{car.aso ? "Pełne ASO" : "Niepełna"}</strong>
+            <strong>{car.aso ? "ASO potwierdzone" : "Brak danych"}</strong>
           </div>
           <div>
             <small>POCHODZENIE</small>
