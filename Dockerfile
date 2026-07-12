@@ -8,11 +8,14 @@ RUN npm run build
 FROM node:24-bookworm-slim AS runtime
 WORKDIR /app
 RUN npm install --global @openai/codex
+RUN npx playwright install --with-deps chromium
 ENV NODE_ENV=production \
     HOST=0.0.0.0 \
     PORT=4174 \
     ENABLE_SCHEDULED_SCAN=true \
-    SCAN_INTERVAL_MINUTES=240
+    SCAN_INTERVAL_MINUTES=240 \
+    ENABLE_CEPIK=true \
+    CEPIK_INTERVAL_SECONDS=300
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/server ./server

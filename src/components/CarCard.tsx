@@ -48,6 +48,17 @@ export function CarCard({
       <div className="carInfo">
         <div className="badges">
           {car.reserved && <span className="reservedBg">ZAREZERWOWANE</span>}
+          {car.cepik && (
+            <span
+              className={car.cepik.status === "ok" ? "greenBg" : "warnBg"}
+              title={car.cepik.error || car.cepik.timeline?.join(" • ")}
+            >
+              CEPiK{" "}
+              {car.cepik.status === "ok"
+                ? "OK"
+                : car.cepik.status.toUpperCase()}
+            </span>
+          )}
           <span className="trimBg">{trimVariant(car)}</span>
           <span>{car.year}</span>
           <span>{car.power} KM</span>

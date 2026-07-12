@@ -180,6 +180,12 @@ export function parseListingHtml(
     numberNear(text, /(?:rok produkcji|rocznik)[^0-9]{0,20}(20\d{2})/i) ||
     numberNear(title, /(20\d{2})/);
   const vin = text.match(/\b([A-HJ-NPR-Z0-9]{17})\b/)?.[1];
+  const registrationNumber = text.match(
+    /(?:numer rejestracyjny|nr rejestracyjny)\s*:?[ ]*([A-Z0-9]{4,10})/i,
+  )?.[1];
+  const firstRegistrationDate = text.match(
+    /(?:data pierwszej rejestracji|pierwsza rejestracja)\s*:?[ ]*(\d{4}-\d{2}-\d{2}|\d{2}[.\/-]\d{2}[.\/-]\d{4})/i,
+  )?.[1];
   const rawPower =
     text.match(
       /(?:moc(?: silnika)?|o mocy)\s*:?\s*(\d{2,3})\s*(?:KM|HP)\b/i,
@@ -317,6 +323,8 @@ export function parseListingHtml(
     mileage,
     year,
     vin,
+    registrationNumber,
+    firstRegistrationDate,
     power,
     eligibleBody,
     camera,

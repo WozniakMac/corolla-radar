@@ -35,6 +35,8 @@ export type Listing = {
   reserved?: boolean;
   hybrid?: boolean;
   ecvt?: boolean;
+  registrationNumber?: string;
+  firstRegistrationDate?: string;
 };
 export type Car = {
   id: string;
@@ -73,12 +75,28 @@ export type Car = {
   body: "Touring Sports";
   seller: string;
   vin?: string;
+  registrationNumber?: string;
+  firstRegistrationDate?: string;
+  cepik?: CepikReport;
   firstSeen: string;
   verifiedAt: string;
   listings: Listing[];
   notes: string[];
   description?: string;
   images?: string[];
+};
+export type CepikReport = {
+  status: "pending" | "processing" | "ok" | "warning" | "failed";
+  checkedAt?: string;
+  error?: string;
+  registrationStatus?: string;
+  inspectionStatus?: string;
+  insuranceStatus?: string;
+  ownersTotal?: number;
+  currentOwners?: number;
+  coOwnersTotal?: number;
+  timeline?: string[];
+  rawSummary?: string;
 };
 export type ScoreBreakdown = {
   deal: number;

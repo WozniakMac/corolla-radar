@@ -79,6 +79,18 @@ describe("listing parser", () => {
     expect(parsed.oneOwner).toBe(false);
   });
 
+  it("extracts identifiers required by Historia Pojazdu", () => {
+    const parsed = parseListingHtml(`
+      <html><head><title>Toyota Corolla Kombi 2023 109 900 zł</title></head><body>
+        Rok produkcji 2023. Przebieg 46 255 km. Numer rejestracyjny PL9316G.
+        VIN SB1ZB3AEX0E073865. Data pierwszej rejestracji 2024-01-12.
+      </body></html>
+    `);
+    expect(parsed.registrationNumber).toBe("PL9316G");
+    expect(parsed.vin).toBe("SB1ZB3AEX0E073865");
+    expect(parsed.firstRegistrationDate).toBe("2024-01-12");
+  });
+
   it("recognizes a reserved offer without treating a reserve button as status", () => {
     const reserved = parseListingHtml(`
       <html><head><title>Toyota Corolla Kombi 2023 95 000 zł</title></head><body>

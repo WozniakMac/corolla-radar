@@ -17,6 +17,7 @@
     "cheerio": "latest",
     "express": "latest",
     "lucide-react": "latest",
+    "playwright": "^1.61.1",
     "react": "latest",
     "react-dom": "latest",
     "typescript": "latest",

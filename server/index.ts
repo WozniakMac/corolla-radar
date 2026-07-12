@@ -14,9 +14,11 @@ import {
   recoverInterruptedJobs,
   workerState,
 } from "./codexWorker";
+import { retryCepik, startCepikWorker } from "./cepikWorker";
 
 const app = express();
 void recoverInterruptedJobs().catch(console.error);
+startCepikWorker();
 app.use(express.json({ limit: "32kb" }));
 app.get("/api/health", (_req, res) =>
   res.json({ ok: true, node: process.version }),
@@ -50,6 +52,16 @@ app.post("/api/codex/jobs/:id/process", async (req, res) => {
   } catch (error) {
     res.status(409).json({
       error: error instanceof Error ? error.message : "Błąd kolejki Codex",
+    });
+  }
+});
+app.post("/api/cars/:id/cepik", async (req, res) => {
+  try {
+    await retryCepik(req.params.id);
+    res.status(202).json({ queued: true });
+  } catch (error) {
+    res.status(404).json({
+      error: error instanceof Error ? error.message : "Błąd kolejki CEPiK",
     });
   }
 });

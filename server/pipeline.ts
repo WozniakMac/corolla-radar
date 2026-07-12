@@ -151,6 +151,8 @@ function toCar(
     body: "Touring Sports",
     seller: p.seller || new URL(p.finalUrl).hostname,
     vin: p.vin,
+    registrationNumber: p.registrationNumber,
+    firstRegistrationDate: p.firstRegistrationDate,
     firstSeen: now.slice(0, 10),
     verifiedAt: now,
     listings: [
@@ -179,6 +181,8 @@ function toCar(
         reserved: p.reserved,
         hybrid: p.hybrid,
         ecvt: p.ecvt,
+        registrationNumber: p.registrationNumber,
+        firstRegistrationDate: p.firstRegistrationDate,
       },
     ],
     notes: [
@@ -262,6 +266,8 @@ export function upsertParsedCar(
     reserved: p.reserved,
     hybrid: p.hybrid,
     ecvt: p.ecvt,
+    registrationNumber: p.registrationNumber,
+    firstRegistrationDate: p.firstRegistrationDate,
   };
   if (!duplicate) {
     const car = toCar(p, source, snapshotId);
@@ -290,6 +296,8 @@ export function upsertParsedCar(
   }
   if (p.seller) duplicate.seller = p.seller;
   duplicate.vin ||= p.vin;
+  duplicate.registrationNumber ||= p.registrationNumber;
+  duplicate.firstRegistrationDate ||= p.firstRegistrationDate;
   const activeListings = duplicate.listings.filter((item: any) => item.active);
   duplicate.year = Math.max(
     ...activeListings.map((item: any) => item.year || 0),

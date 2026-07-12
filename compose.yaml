@@ -10,6 +10,8 @@ services:
       PORT: 4174
       ENABLE_SCHEDULED_SCAN: "true"
       SCAN_INTERVAL_MINUTES: 240
+      ENABLE_CEPIK: "true"
+      CEPIK_INTERVAL_SECONDS: 300
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       NTFY_URL: ${NTFY_URL:-}
     volumes:
