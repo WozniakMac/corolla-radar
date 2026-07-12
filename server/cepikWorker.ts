@@ -16,6 +16,22 @@ const formatDate = (value: string) => {
 const valueAfter = (text: string, label: string) =>
   text.match(new RegExp(`${label}:?\\s*([^\\n]+)`, "i"))?.[1]?.trim();
 
+export function parseCepikTimeline(timelineText: string) {
+  const numberAfter = (pattern: RegExp) => {
+    const value = Number(timelineText.match(pattern)?.[1]);
+    return Number.isFinite(value) ? value : undefined;
+  };
+  return {
+    ownersTotal: numberAfter(
+      /Właściciele \(od rejestracji do wygenerowania raportu\):\s*(\d+)/i,
+    ),
+    currentOwners: numberAfter(/Liczba aktualnych właścicieli:\s*(\d+)/i),
+    coOwnersTotal: numberAfter(
+      /Współwłaściciele \(od rejestracji do wygenerowania raportu\):\s*(\d+)/i,
+    ),
+  };
+}
+
 export async function checkCepik(car: any) {
   browser ||= await chromium.launch({ headless: true });
   const page = await browser.newPage({ locale: "pl-PL" });
@@ -49,14 +65,7 @@ export async function checkCepik(car: any) {
       .getByRole("heading", { name: "Podsumowanie zdarzeń", exact: true })
       .waitFor({ state: "visible", timeout: 10_000 });
     const timelineText = await page.locator("main").innerText();
-    const ownersTotal = Number(
-      timelineText.match(
-        /Właściciele \(od rejestracji do wygenerowania raportu\):\s*(\d+)/i,
-      )?.[1],
-    );
-    const currentOwners = Number(
-      timelineText.match(/Liczba aktualnych właścicieli:\s*(\d+)/i)?.[1],
-    );
+    const owners = parseCepikTimeline(timelineText);
     const warning =
       !/Status rejestracji:\s*zarejestrowany/i.test(summary) ||
       !/Badanie techniczne:\s*aktualne/i.test(summary) ||
@@ -68,16 +77,7 @@ export async function checkCepik(car: any) {
       registrationStatus: valueAfter(summary, "Status rejestracji"),
       inspectionStatus: valueAfter(summary, "Badanie techniczne"),
       insuranceStatus: valueAfter(summary, "Polisa OC"),
-      ownersTotal: Number.isFinite(ownersTotal) ? ownersTotal : undefined,
-      currentOwners: Number.isFinite(currentOwners) ? currentOwners : undefined,
-      coOwnersTotal: (() => {
-        const value = Number(
-          timelineText.match(
-            /Współwłaściciele \(od rejestracji do wygenerowania raportu\):\s*(\d+)/i,
-          )?.[1],
-        );
-        return Number.isFinite(value) ? value : undefined;
-      })(),
+      ...owners,
       timeline: timelineText
         .split("\n")
         .map((line) => line.trim())

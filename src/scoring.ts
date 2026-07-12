@@ -215,10 +215,14 @@ export function scoreCar(car: Car, market?: MarketBenchmarks): ScoreBreakdown {
   const batteryProtected =
     car.hybridHealthCheck === true ||
     (car.year >= 2022 && car.mileage <= 100000);
+  const oneOwnerVerified =
+    car.cepik?.ownersTotal !== undefined
+      ? car.cepik.ownersTotal === 1
+      : car.oneOwner;
   const history =
     (car.aso ? 5 : 0) +
     (car.polishSalon ? 3 : 0) +
-    (car.oneOwner ? 2 : 0) +
+    (oneOwnerVerified ? 2 : 0) +
     (car.vin ? 2 : 0) +
     (car.noStructuralDamage ? 2 : 0) +
     (dealer ? 2 : 0) +
@@ -330,6 +334,10 @@ export function explainScore(
     /cena.{0,80}(?:dotyczy|obowiązuje).{0,60}finansowa|cena podana.{0,100}finansowa|zakup gotówkowy.{0,50}(?:szczegóły|ustalenia)/i.test(
       car.description || "",
     );
+  const oneOwnerVerified =
+    car.cepik?.ownersTotal !== undefined
+      ? car.cepik.ownersTotal === 1
+      : car.oneOwner;
   return [
     {
       key: "deal",
@@ -361,7 +369,9 @@ export function explainScore(
         [
           car.aso && "ASO",
           car.polishSalon && "salon Polska",
-          car.oneOwner && "1 właściciel",
+          oneOwnerVerified && "1 właściciel",
+          car.cepik?.ownersTotal !== undefined &&
+            `CEPiK: ${car.cepik.ownersTotal} właścicieli łącznie, ${car.cepik.currentOwners ?? "?"} aktualnie`,
           car.vin && "VIN",
           car.noStructuralDamage && "deklaracja bezwypadkowości",
           car.hybridHealthCheck
@@ -375,7 +385,10 @@ export function explainScore(
       deductions: [
         !car.aso && "Brak potwierdzonego serwisowania lub historii ASO: −5 pkt",
         !car.polishSalon && "Brak potwierdzenia salonu Polska: −3 pkt",
-        !car.oneOwner && "Brak potwierdzenia jednego właściciela: −2 pkt",
+        !oneOwnerVerified &&
+          (car.cepik?.ownersTotal !== undefined
+            ? `CEPiK potwierdza ${car.cepik.ownersTotal} właścicieli łącznie: −2 pkt`
+            : "Brak potwierdzenia jednego właściciela: −2 pkt"),
         !car.vin && "Brak VIN-u: −2 pkt",
         !car.noStructuralDamage &&
           "Brak deklaracji braku szkód konstrukcyjnych: −2 pkt",

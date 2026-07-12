@@ -94,7 +94,13 @@ export function CarCard({
           </div>
           <div>
             <small>WŁAŚCICIELE</small>
-            <strong>{car.oneOwner ? "1 właściciel" : "Brak danych"}</strong>
+            <strong>
+              {car.cepik?.ownersTotal !== undefined
+                ? `${car.cepik.ownersTotal} wg CEPiK`
+                : car.oneOwner
+                  ? "1 właściciel"
+                  : "Brak danych"}
+            </strong>
           </div>
         </div>
       </div>
