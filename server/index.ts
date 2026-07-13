@@ -7,6 +7,7 @@ import {
   runSources,
 } from "./pipeline";
 import { load } from "./store";
+import { loadSavedFilters, resetFilters, saveFilters } from "./preferences";
 import {
   publicJobs,
   queueAllPending,
@@ -25,6 +26,16 @@ app.get("/api/health", (_req, res) =>
 );
 app.get("/api/cars", async (_req, res) => res.json((await load()).cars));
 app.get("/api/sources", (_req, res) => res.json(getStatuses()));
+app.get("/api/preferences/filters", async (_req, res) =>
+  res.json({ filters: await loadSavedFilters() }),
+);
+app.put("/api/preferences/filters", async (req, res) => {
+  res.json({ filters: await saveFilters(req.body) });
+});
+app.delete("/api/preferences/filters", async (_req, res) => {
+  await resetFilters();
+  res.json({ filters: null });
+});
 app.get("/api/stats", async (_req, res) => {
   const store = await load();
   res.json({

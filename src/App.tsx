@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDown } from "lucide-react";
 import { CarCard } from "./components/CarCard";
 import { CodexQueue } from "./components/CodexQueue";
-import { Filters, type FilterState } from "./components/Filters";
+import { Filters } from "./components/Filters";
 import { MonitoringStats } from "./components/MonitoringStats";
 import { ScoreDrawer } from "./components/ScoreDrawer";
 import { Sidebar } from "./components/Sidebar";
@@ -17,21 +17,9 @@ import {
   worthTrip,
 } from "./scoring";
 import type { Car } from "./types";
+import { defaultFilters, engineVersion, matchesFilters } from "./filters";
 import { TRIM_VARIANTS, trimVariant } from "./corollaEquipment";
 import "./styles.css";
-
-const defaultFilters: FilterState = {
-  query: "",
-  source: "all",
-  trim: "all",
-  minPrice: 0,
-  maxPrice: 150000,
-  maxKm: 200000,
-  maxDistance: 0,
-  year: "all",
-  tech: false,
-  vat: false,
-};
 
 export default function App() {
   const {
@@ -46,10 +34,20 @@ export default function App() {
     monitoringStats,
     reprocessing,
     reprocessSnapshots,
+    savedFilters,
+    preferencesLoaded,
+    saveFilters,
+    resetFilters,
   } = useRadarApi();
   const [filters, setFilters] = useState(defaultFilters);
   const [selected, setSelected] = useState<Car | null>(null);
   const [view, setView] = useState<"ranking" | "codex" | "stats">("ranking");
+  const filtersHydrated = useRef(false);
+  useEffect(() => {
+    if (!preferencesLoaded || filtersHydrated.current) return;
+    filtersHydrated.current = true;
+    if (savedFilters) setFilters(savedFilters);
+  }, [preferencesLoaded, savedFilters]);
   const market = useMemo(() => buildMarketBenchmarks(cars), [cars]);
 
   const evaluated = useMemo(
@@ -66,25 +64,7 @@ export default function App() {
         .map((car) => ({ car, score: scoreCar(car, market) }))
         .filter(
           ({ car, score }) =>
-            `${car.title}${car.location}${car.trim}`
-              .toLowerCase()
-              .includes(filters.query.toLowerCase()) &&
-            effectivePrice(car) >= filters.minPrice &&
-            (filters.maxPrice === 0 ||
-              effectivePrice(car) <= filters.maxPrice) &&
-            car.mileage <= filters.maxKm &&
-            (filters.maxDistance === 0 ||
-              car.distance <= filters.maxDistance) &&
-            (filters.year === "all" || car.year === +filters.year) &&
-            (filters.trim === "all" || trimVariant(car) === filters.trim) &&
-            (filters.source === "all" ||
-              car.listings.some(
-                (listing) =>
-                  listing.active && listing.source === filters.source,
-              )) &&
-            (!filters.tech || car.tech) &&
-            (!filters.vat || car.vat23) &&
-            worthTrip(car, score, market),
+            matchesFilters(car, filters) && worthTrip(car, score, market),
         )
         .sort((a, b) => b.score.total - a.score.total),
     [cars, filters, market],
@@ -126,6 +106,21 @@ export default function App() {
     const present = new Set(cars.map(trimVariant));
     return TRIM_VARIANTS.filter((trim) => present.has(trim));
   }, [cars]);
+  const availableEngines = useMemo(
+    () =>
+      [
+        ...new Set(
+          cars
+            .filter(
+              (car) =>
+                car.listings.some((listing) => listing.active) &&
+                (car.hybrid || [122, 140, 178, 184, 196].includes(car.power)),
+            )
+            .map(engineVersion),
+        ),
+      ].sort(),
+    [cars],
+  );
 
   return (
     <div className="app">
@@ -212,7 +207,18 @@ export default function App() {
               value={filters}
               sources={listingSources}
               trims={availableTrims}
+              engines={availableEngines}
+              saved={savedFilters !== null}
+              dirty={
+                savedFilters !== null &&
+                JSON.stringify(filters) !== JSON.stringify(savedFilters)
+              }
               onChange={setFilters}
+              onSave={() => void saveFilters(filters)}
+              onReset={() => {
+                setFilters(defaultFilters);
+                void resetFilters();
+              }}
             />
             <SourcePanel
               sources={sources}

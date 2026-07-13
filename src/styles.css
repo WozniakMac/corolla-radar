@@ -196,8 +196,38 @@ header p {
 }
 .filterPrimary {
   display: grid;
-  grid-template-columns: minmax(260px, 1fr) repeat(3, minmax(135px, auto));
+  grid-template-columns: minmax(240px, 1fr) repeat(4, minmax(125px, auto));
   gap: 9px;
+}
+.filterMemory {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  border-top: 1px solid #edf0ee;
+  padding-top: 10px;
+}
+.filterMemory span {
+  margin-right: auto;
+  color: #77817c;
+  font-size: 11px;
+}
+.filterMemory button {
+  height: 34px;
+  border: 1px solid #d7ddd9;
+  border-radius: 8px;
+  background: #fff;
+  color: #48534d;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font: 600 11px DM Sans;
+}
+.filterMemory button svg {
+  width: 14px;
 }
 .search {
   height: 40px;
@@ -1259,6 +1289,14 @@ details input[type="range"] {
   }
 }
 @media (max-width: 650px) {
+  .filterMemory span {
+    width: 100%;
+    margin: 0;
+  }
+  .filterMemory button {
+    flex: 1;
+    justify-content: center;
+  }
   .monitorSummary {
     grid-template-columns: 1fr;
   }

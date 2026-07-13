@@ -1,4 +1,5 @@
 import { load as htmlLoad } from "cheerio";
+import { detectEngineSpec } from "../src/engine";
 import { resolvePolishCity } from "./distance";
 import { equipmentEvidence } from "./equipmentEvidence";
 const textMatch = (text: string, re: RegExp) => re.test(text.toLowerCase());
@@ -192,18 +193,12 @@ export function parseListingHtml(
     )?.[1] || text.match(/(?:hybrid|hev|hsd)\s+(\d{2,3})\s*(?:KM|HP)\b/i)?.[1];
   let power = rawPower ? Number(rawPower) : 0;
   const vehicleHeading = `${$("h1").first().text()} ${$(".vdp-header__title strong").first().text()}`;
-  const modelText = `${title} ${vehicleHeading} ${ogDescription || ""} ${description}`;
-  const hasTwoLiterHybrid =
-    /2[.,]0/i.test(modelText) && /(hybrid|hybryd)/i.test(modelText);
-  if (hasTwoLiterHybrid && ![178, 196].includes(power))
-    power = year >= 2023 ? 196 : 184;
-  else if (
-    /1[.,]8.{0,25}(?:hybrid|hybryd)|(?:hybrid|hybryd).{0,25}1[.,]8/i.test(
-      modelText,
-    ) &&
-    power < 120
-  )
-    power = year >= 2023 ? 140 : 122;
+  // Headers and the beginning of the offer describe the actual car. Full page
+  // text often contains generic marketing for both Toyota hybrid engines.
+  const modelText = `${title} ${vehicleHeading} ${ogDescription || ""} ${description.slice(0, 1600)}`;
+  const engine = detectEngineSpec(year, modelText);
+  if (engine) power = engine.power;
+  const engineVersion = engine?.label;
   const eligibleBody =
     /corolla/i.test(`${title} ${description}`) &&
     !/\bauris\b/i.test(`${title} ${description}`) &&
@@ -326,6 +321,7 @@ export function parseListingHtml(
     registrationNumber,
     firstRegistrationDate,
     power,
+    engineVersion,
     eligibleBody,
     camera,
     parkingSensors,

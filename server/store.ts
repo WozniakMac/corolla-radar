@@ -1,5 +1,6 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
+import { detectEngineSpec } from "../src/engine";
 const path = resolve("data/store.json");
 export type Job = {
   id: string;
@@ -61,9 +62,33 @@ export type Store = {
 export async function load(): Promise<Store> {
   try {
     const data = JSON.parse(await readFile(path, "utf8"));
+    const cars = (data.cars || []).map((car: any) => {
+      const listings = (car.listings || []).map((listing: any) => {
+        const engine = detectEngineSpec(
+          listing.year || car.year,
+          `${car.title || ""} ${(listing.description || "").slice(0, 2000)}`,
+        );
+        return engine
+          ? { ...listing, power: engine.power, engineVersion: engine.label }
+          : listing;
+      });
+      const newestEngine = [...listings]
+        .filter((listing: any) => listing.active && listing.engineVersion)
+        .sort((a: any, b: any) =>
+          String(b.checkedAt).localeCompare(String(a.checkedAt)),
+        )[0];
+      return newestEngine
+        ? {
+            ...car,
+            listings,
+            power: newestEngine.power,
+            engineVersion: newestEngine.engineVersion,
+          }
+        : { ...car, listings };
+    });
     return {
       ...data,
-      cars: data.cars || [],
+      cars,
       jobs: data.jobs || [],
       scanRuns: data.scanRuns || [],
       snapshots: data.snapshots || [],

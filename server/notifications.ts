@@ -5,13 +5,17 @@ import {
   scoreCar,
 } from "../src/scoring";
 import type { Car } from "../src/types";
+import { matchesFilters } from "../src/filters";
 import { load, save } from "./store";
+import { loadSavedFilters } from "./preferences";
 
 export async function notifyNewTopFive() {
   const store = await load();
+  const savedFilters = await loadSavedFilters();
   const market = buildMarketBenchmarks(store.cars as Car[]);
   const top = (store.cars as Car[])
     .filter(isEligible)
+    .filter((car) => !savedFilters || matchesFilters(car, savedFilters))
     .map((car) => ({ car, score: scoreCar(car, market).total }))
     .sort((a, b) => b.score - a.score)
     .slice(0, 5);
@@ -31,7 +35,9 @@ export async function notifyNewTopFive() {
       method: "POST",
       body: message,
       headers: {
-        Title: "Nowa Corolla w TOP 5",
+        Title: savedFilters
+          ? "Nowa Corolla w filtrowanym TOP 5"
+          : "Nowa Corolla w TOP 5",
         Tags: "car,rotating_light",
         ...(link ? { Click: link } : {}),
       },

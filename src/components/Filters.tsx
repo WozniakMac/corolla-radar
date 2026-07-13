@@ -1,25 +1,34 @@
-import { MapPin, Search, SlidersHorizontal } from "lucide-react";
-
-export type FilterState = {
-  query: string;
-  source: string;
-  trim: string;
-  minPrice: number;
-  maxPrice: number;
-  maxKm: number;
-  maxDistance: number;
-  year: string;
-  tech: boolean;
-  vat: boolean;
-};
+import {
+  MapPin,
+  RotateCcw,
+  Save,
+  Search,
+  SlidersHorizontal,
+} from "lucide-react";
+import type { FilterState } from "../types";
 type Props = {
   value: FilterState;
   sources: string[];
   trims: string[];
+  engines: string[];
+  saved: boolean;
+  dirty: boolean;
   onChange: (next: FilterState) => void;
+  onSave: () => void;
+  onReset: () => void;
 };
 
-export function Filters({ value, sources, trims, onChange }: Props) {
+export function Filters({
+  value,
+  sources,
+  trims,
+  engines,
+  saved,
+  dirty,
+  onChange,
+  onSave,
+  onReset,
+}: Props) {
   const set = <K extends keyof FilterState>(key: K, next: FilterState[K]) =>
     onChange({ ...value, [key]: next });
   const advancedCount = [
@@ -48,6 +57,18 @@ export function Filters({ value, sources, trims, onChange }: Props) {
           <option value="all">Wszystkie roczniki</option>
           {[2021, 2022, 2023, 2024].map((year) => (
             <option key={year}>{year}</option>
+          ))}
+        </select>
+        <select
+          value={value.engine}
+          onChange={(e) => set("engine", e.target.value)}
+          aria-label="Wersja silnika"
+        >
+          <option value="all">Wszystkie silniki</option>
+          {engines.map((engine) => (
+            <option value={engine} key={engine}>
+              {engine}
+            </option>
           ))}
         </select>
         <select
@@ -152,6 +173,21 @@ export function Filters({ value, sources, trims, onChange }: Props) {
           </label>
         </div>
       </details>
+      <div className="filterMemory">
+        <span>
+          {dirty
+            ? "Filtry zostały zmienione — zapisz je, aby wpłynęły na powiadomienia."
+            : saved
+              ? "Zapisane filtry są używane także w powiadomieniach TOP 5."
+              : "Filtry nie są zapisane — powiadomienia używają pełnego rankingu."}
+        </span>
+        <button type="button" onClick={onSave}>
+          <Save /> Zapisz filtry
+        </button>
+        <button type="button" onClick={onReset}>
+          <RotateCcw /> Resetuj pamięć
+        </button>
+      </div>
     </section>
   );
 }

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import type { Car, CodexJob, MonitoringStats } from "../types";
+import type { Car, CodexJob, FilterState, MonitoringStats } from "../types";
+import { normalizeFilters } from "../filters";
 
 export function useRadarApi() {
   const [cars, setCars] = useState<Car[]>([]);
@@ -17,6 +18,8 @@ export function useRadarApi() {
   >([]);
   const [scanning, setScanning] = useState(false);
   const [reprocessing, setReprocessing] = useState(false);
+  const [savedFilters, setSavedFilters] = useState<FilterState | null>(null);
+  const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const [codexJobs, setCodexJobs] = useState<CodexJob[]>([]);
   const [currentCodexJobId, setCurrentCodexJobId] = useState<string | null>(
     null,
@@ -29,18 +32,24 @@ export function useRadarApi() {
 
   const refresh = useCallback(async () => {
     try {
-      const [stored, sourceState, codexState, statsState] = await Promise.all([
-        fetch("/api/cars").then((response) => response.json()),
-        fetch("/api/sources").then((response) => response.json()),
-        fetch("/api/codex/jobs").then((response) => response.json()),
-        fetch("/api/stats").then((response) => response.json()),
-      ]);
+      const [stored, sourceState, codexState, statsState, preferences] =
+        await Promise.all([
+          fetch("/api/cars").then((response) => response.json()),
+          fetch("/api/sources").then((response) => response.json()),
+          fetch("/api/codex/jobs").then((response) => response.json()),
+          fetch("/api/stats").then((response) => response.json()),
+          fetch("/api/preferences/filters").then((response) => response.json()),
+        ]);
       setCars(stored as Car[]);
       setSources(sourceState);
       setCodexJobs(codexState.jobs);
       setCurrentCodexJobId(codexState.currentJobId);
       setMonitoringStats(statsState);
       setScanning(Boolean(statsState.activeScan));
+      setSavedFilters(
+        preferences.filters ? normalizeFilters(preferences.filters) : null,
+      );
+      setPreferencesLoaded(true);
     } catch {
       // Static production preview can work without the API.
     }
@@ -67,6 +76,24 @@ export function useRadarApi() {
       setScanning(false);
       console.error("Nie udało się uruchomić skanu:", error);
     }
+  };
+
+  const saveFilters = async (filters: FilterState) => {
+    const response = await fetch("/api/preferences/filters", {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(filters),
+    });
+    if (!response.ok) throw new Error("Nie udało się zapisać filtrów");
+    setSavedFilters(normalizeFilters(filters));
+  };
+
+  const resetFilters = async () => {
+    const response = await fetch("/api/preferences/filters", {
+      method: "DELETE",
+    });
+    if (!response.ok) throw new Error("Nie udało się zresetować filtrów");
+    setSavedFilters(null);
   };
 
   const processCodex = async (id: string, force = false) => {
@@ -110,5 +137,9 @@ export function useRadarApi() {
     monitoringStats,
     reprocessing,
     reprocessSnapshots,
+    savedFilters,
+    preferencesLoaded,
+    saveFilters,
+    resetFilters,
   };
 }

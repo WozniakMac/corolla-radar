@@ -129,6 +129,7 @@ function toCar(
     title: p.title,
     year: p.year,
     power: p.power,
+    engineVersion: p.engineVersion,
     price: p.price,
     cashPrice: p.cashPrice,
     mileage: p.mileage,
@@ -163,6 +164,7 @@ function toCar(
         year: p.year,
         mileage: p.mileage,
         power: p.power,
+        engineVersion: p.engineVersion,
         cashPrice: p.cashPrice,
         active: true,
         checkedAt: now,
@@ -248,6 +250,7 @@ export function upsertParsedCar(
     year: p.year,
     mileage: p.mileage,
     power: p.power,
+    engineVersion: p.engineVersion,
     cashPrice: p.cashPrice,
     active: true,
     checkedAt: new Date().toISOString(),
@@ -305,9 +308,14 @@ export function upsertParsedCar(
   duplicate.mileage = Math.max(
     ...activeListings.map((item: any) => item.mileage || 0),
   );
-  duplicate.power = Math.max(
-    ...activeListings.map((item: any) => item.power || 0),
-  );
+  const engineListings = activeListings
+    .filter((item: any) => item.engineVersion)
+    .sort((a: any, b: any) =>
+      String(b.checkedAt).localeCompare(String(a.checkedAt)),
+    );
+  const selectedEngine = engineListings[0];
+  duplicate.power = selectedEngine?.power || p.power || 0;
+  duplicate.engineVersion = selectedEngine?.engineVersion || p.engineVersion;
   duplicate.camera = activeListings.some((item: any) => item.camera === true);
   duplicate.parkingSensors = activeListings.some(
     (item: any) => item.parkingSensors === true,

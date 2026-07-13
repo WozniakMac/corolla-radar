@@ -5,6 +5,7 @@ export type Listing = {
   year?: number;
   mileage?: number;
   power?: number;
+  engineVersion?: string;
   cashPrice?: number;
   active: boolean;
   missedScans?: number;
@@ -43,6 +44,7 @@ export type Car = {
   title: string;
   year: number;
   power: number;
+  engineVersion?: string;
   price: number;
   cashPrice?: number;
   mileage: number;
@@ -84,6 +86,19 @@ export type Car = {
   notes: string[];
   description?: string;
   images?: string[];
+};
+export type FilterState = {
+  query: string;
+  source: string;
+  trim: string;
+  engine: string;
+  minPrice: number;
+  maxPrice: number;
+  maxKm: number;
+  maxDistance: number;
+  year: string;
+  tech: boolean;
+  vat: boolean;
 };
 export type CepikReport = {
   status: "pending" | "processing" | "ok" | "warning" | "failed";

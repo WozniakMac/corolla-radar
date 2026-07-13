@@ -129,9 +129,30 @@ describe("listing parser", () => {
         Dokonując płatności gotówką do podanej ceny należy doliczyć 4000 zł brutto.
       </body></html>
     `);
-    expect(parsed.power).toBe(196);
+    expect(parsed.power).toBe(178);
     expect(parsed.oneOwner).toBe(true);
     expect(parsed.cashPrice).toBe(136000);
+  });
+
+  it("does not let generic 2.0 marketing override an explicit 1.8 offer", () => {
+    const parsed = parseListingHtml(`
+      <title>Oferta Toyota Corolla 1.8 Hybryda 2023</title><body>
+      <h1>Corolla 1.8 HSD 140 KM Kombi</h1>
+      Rok produkcji 2023. Przebieg 47 100 km. Moc 140 KM.
+      <div>Sprawdź również nowy napęd 2.0 Hybrid Dynamic Force.</div>
+      </body>
+    `);
+    expect(parsed.power).toBe(140);
+    expect(parsed.engineVersion).toBe("1.8 Hybrid 140 KM");
+  });
+
+  it("uses the correct 2.0 system power for each model-year generation", () => {
+    const parse = (year: number) =>
+      parseListingHtml(`<title>Corolla Touring Sports 2.0 Hybrid ${year}</title>
+        <body>Rok produkcji ${year}. Przebieg 50 000 km. Moc silnika 133 KM.</body>`);
+    expect(parse(2022).power).toBe(184);
+    expect(parse(2023).power).toBe(196);
+    expect(parse(2025).power).toBe(178);
   });
 
   it("does not use accessory JSON-LD as the vehicle price", () => {
