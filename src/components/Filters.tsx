@@ -5,6 +5,7 @@ import {
   Search,
   SlidersHorizontal,
 } from "lucide-react";
+import { useState } from "react";
 import type { FilterState } from "../types";
 type Props = {
   value: FilterState;
@@ -29,6 +30,7 @@ export function Filters({
   onSave,
   onReset,
 }: Props) {
+  const [mobileOpen, setMobileOpen] = useState(false);
   const set = <K extends keyof FilterState>(key: K, next: FilterState[K]) =>
     onChange({ ...value, [key]: next });
   const advancedCount = [
@@ -39,8 +41,16 @@ export function Filters({
     value.tech,
     value.vat,
   ].filter(Boolean).length;
+  const allFilterCount =
+    advancedCount +
+    [
+      value.year !== "all",
+      value.engine !== "all",
+      value.trim !== "all",
+      value.source !== "all",
+    ].filter(Boolean).length;
   return (
-    <section className="filters">
+    <section className={`filters ${mobileOpen ? "mobileFiltersOpen" : ""}`}>
       <div className="filterPrimary">
         <div className="search">
           <Search />
@@ -50,6 +60,16 @@ export function Filters({
             placeholder="Szukaj wersji, miasta, sprzedawcy..."
           />
         </div>
+        <button
+          type="button"
+          className="mobileFiltersToggle"
+          aria-expanded={mobileOpen}
+          onClick={() => setMobileOpen((open) => !open)}
+        >
+          <SlidersHorizontal />
+          {mobileOpen ? "Ukryj filtry" : "Filtry"}
+          {allFilterCount > 0 && <b>{allFilterCount}</b>}
+        </button>
         <select
           value={value.year}
           onChange={(e) => set("year", e.target.value)}

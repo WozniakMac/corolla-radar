@@ -46,8 +46,10 @@ export function CarCard({
         )}
       </div>
       <div className={`score ${score.total >= 85 ? "great" : ""}`}>
-        <strong>{score.total}</strong>
-        <small>/100</small>
+        <div>
+          <strong>{score.total}</strong>
+          <small>/100</small>
+        </div>
         <small>{score.confidence}% pewn.</small>
       </div>
       <div className="carInfo">
@@ -142,34 +144,29 @@ export function CarCard({
                 : "Sprawdź z Codex"}
           </button>
         )}
-        <button
-          className="cardCepikButton"
-          disabled={
-            !canRunCepik ||
-            car.cepik?.status === "processing" ||
-            car.cepik?.status === "pending"
-          }
-          title={
-            canRunCepik
-              ? "Sprawdź ponownie w Historia Pojazdu"
-              : "Wymagane: VIN, numer rejestracyjny i data pierwszej rejestracji"
-          }
-          onClick={(event) => {
-            event.stopPropagation();
-            onProcessCepik(car.id);
-          }}
-        >
-          <ShieldCheck />
-          {!canRunCepik
-            ? "Brak danych do CEPiK"
-            : car.cepik?.status === "processing"
+        {canRunCepik && (
+          <button
+            className="cardCepikButton"
+            disabled={
+              car.cepik?.status === "processing" ||
+              car.cepik?.status === "pending"
+            }
+            title="Sprawdź ponownie w Historia Pojazdu"
+            onClick={(event) => {
+              event.stopPropagation();
+              onProcessCepik(car.id);
+            }}
+          >
+            <ShieldCheck />
+            {car.cepik?.status === "processing"
               ? "CEPiK pracuje…"
               : car.cepik?.status === "pending"
                 ? "CEPiK w kolejce"
                 : car.cepik
                   ? "Ponów CEPiK"
                   : "Sprawdź CEPiK"}
-        </button>
+          </button>
+        )}
         <a
           className="carPermalink"
           href={`/cars/${encodeURIComponent(car.id)}`}

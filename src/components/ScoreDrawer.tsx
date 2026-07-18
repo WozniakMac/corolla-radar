@@ -16,7 +16,13 @@ export function ScoreDrawer({
   const explanation = explainScore(car, market);
   return (
     <div className="overlay" onClick={onClose}>
-      <div className="drawer" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="drawer"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="car-detail-title"
+        onClick={(e) => e.stopPropagation()}
+      >
         <button className="close" onClick={onClose} aria-label="Zamknij">
           <X />
         </button>
@@ -27,7 +33,7 @@ export function ScoreDrawer({
               : "BRAK DANYCH"
           } • ZWERYFIKOWANO ${new Date(car.verifiedAt).toLocaleString("pl-PL")}`}
         </small>
-        <h2>{car.title}</h2>
+        <h2 id="car-detail-title">{car.title}</h2>
         {car.images?.length ? (
           <div className="gallery">
             {car.images.slice(0, 8).map((url, index) => (

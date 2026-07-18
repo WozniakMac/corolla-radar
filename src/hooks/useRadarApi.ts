@@ -17,6 +17,11 @@ export function useRadarApi() {
     }>
   >([]);
   const [scanning, setScanning] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [notice, setNotice] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
   const [reprocessing, setReprocessing] = useState(false);
   const [savedFilters, setSavedFilters] = useState<FilterState | null>(null);
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
@@ -52,6 +57,8 @@ export function useRadarApi() {
       setPreferencesLoaded(true);
     } catch {
       // Static production preview can work without the API.
+    } finally {
+      setReady(true);
     }
   }, []);
 
@@ -60,6 +67,12 @@ export function useRadarApi() {
     const timer = window.setInterval(refresh, 5_000);
     return () => window.clearInterval(timer);
   }, [refresh]);
+
+  useEffect(() => {
+    if (!notice) return;
+    const timer = window.setTimeout(() => setNotice(null), 4_000);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
 
   const runScan = async () => {
     setScanning(true);
@@ -72,28 +85,64 @@ export function useRadarApi() {
       const body = await response.json();
       if (!response.ok) throw new Error(body.error);
       await refresh();
+      setNotice({ type: "success", text: "Skan został uruchomiony." });
     } catch (error) {
       setScanning(false);
       console.error("Nie udało się uruchomić skanu:", error);
+      setNotice({
+        type: "error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Nie udało się uruchomić skanu.",
+      });
     }
   };
 
   const saveFilters = async (filters: FilterState) => {
-    const response = await fetch("/api/preferences/filters", {
-      method: "PUT",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(filters),
-    });
-    if (!response.ok) throw new Error("Nie udało się zapisać filtrów");
-    setSavedFilters(normalizeFilters(filters));
+    try {
+      const response = await fetch("/api/preferences/filters", {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(filters),
+      });
+      if (!response.ok) throw new Error("Nie udało się zapisać filtrów");
+      setSavedFilters(normalizeFilters(filters));
+      setNotice({
+        type: "success",
+        text: "Filtry zapisane — będą używane w powiadomieniach i kolejce CEPiK.",
+      });
+    } catch (error) {
+      setNotice({
+        type: "error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Nie udało się zapisać filtrów.",
+      });
+    }
   };
 
   const resetFilters = async () => {
-    const response = await fetch("/api/preferences/filters", {
-      method: "DELETE",
-    });
-    if (!response.ok) throw new Error("Nie udało się zresetować filtrów");
-    setSavedFilters(null);
+    try {
+      const response = await fetch("/api/preferences/filters", {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Nie udało się zresetować filtrów");
+      setSavedFilters(null);
+      setNotice({
+        type: "success",
+        text: "Pamięć filtrów została wyczyszczona.",
+      });
+    } catch (error) {
+      setNotice({
+        type: "error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Nie udało się zresetować filtrów.",
+      });
+    }
   };
 
   const processCodex = async (id: string, force = false) => {
@@ -111,12 +160,29 @@ export function useRadarApi() {
   };
 
   const processCepik = async (id: string) => {
-    const response = await fetch(`/api/cars/${encodeURIComponent(id)}/cepik`, {
-      method: "POST",
-    });
-    const body = await response.json();
-    if (!response.ok) throw new Error(body.error || "Błąd kolejki CEPiK");
-    await refresh();
+    try {
+      const response = await fetch(
+        `/api/cars/${encodeURIComponent(id)}/cepik`,
+        {
+          method: "POST",
+        },
+      );
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error || "Błąd kolejki CEPiK");
+      await refresh();
+      setNotice({
+        type: "success",
+        text: "Oferta została dodana do kolejki CEPiK.",
+      });
+    } catch (error) {
+      setNotice({
+        type: "error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Nie udało się uruchomić CEPiK.",
+      });
+    }
   };
 
   const reprocessSnapshots = async () => {
@@ -136,6 +202,8 @@ export function useRadarApi() {
 
   return {
     cars,
+    ready,
+    notice,
     sources,
     scanning,
     runScan,

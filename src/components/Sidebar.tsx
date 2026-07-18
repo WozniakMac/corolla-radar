@@ -6,6 +6,7 @@ type Props = {
   view: "ranking" | "codex" | "stats";
   onView: (view: "ranking" | "codex" | "stats") => void;
   codexPending: number;
+  monitoringActive: boolean;
 };
 
 export function Sidebar({
@@ -14,6 +15,7 @@ export function Sidebar({
   view,
   onView,
   codexPending,
+  monitoringActive,
 }: Props) {
   return (
     <aside>
@@ -53,7 +55,8 @@ export function Sidebar({
         <button onClick={() => onPreset("vat")}>FV 23%</button>
       </div>
       <div className="asideFoot">
-        <span className="pulse" /> Monitoring aktywny
+        <span className={`pulse ${monitoringActive ? "" : "off"}`} /> Monitoring
+        automatyczny {monitoringActive ? "aktywny" : "wyłączony"}
         <small>Odświeżanie co 5 sekund</small>
       </div>
     </aside>

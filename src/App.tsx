@@ -24,6 +24,8 @@ import "./styles.css";
 export default function App() {
   const {
     cars,
+    ready,
+    notice,
     sources,
     scanning,
     runScan,
@@ -52,6 +54,8 @@ export default function App() {
   };
   const [selectedId, setSelectedId] = useState<string | null>(carIdFromPath);
   const [view, setView] = useState<"ranking" | "codex" | "stats">("ranking");
+  const [visibleCount, setVisibleCount] = useState(30);
+  const [verificationVisibleCount, setVerificationVisibleCount] = useState(15);
   const filtersHydrated = useRef(false);
   useEffect(() => {
     if (!preferencesLoaded || filtersHydrated.current) return;
@@ -63,6 +67,25 @@ export default function App() {
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
+  useEffect(() => {
+    setVisibleCount(30);
+    setVerificationVisibleCount(15);
+  }, [filters]);
+  useEffect(() => {
+    if (!selectedId) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      window.history.pushState({}, "", "/");
+      setSelectedId(null);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [selectedId]);
   const selected = cars.find((car) => car.id === selectedId) || null;
   const openCar = (car: Car) => {
     window.history.pushState({}, "", `/cars/${encodeURIComponent(car.id)}`);
@@ -160,6 +183,7 @@ export default function App() {
           codexJobs.filter((job) => ["pending", "failed"].includes(job.status))
             .length
         }
+        monitoringActive={monitoringStats.scheduled}
       />
       <main>
         <header>
@@ -193,6 +217,14 @@ export default function App() {
             onProcess={(id, force) => void processCodex(id, force)}
             onProcessAll={() => void processAllCodex()}
           />
+        ) : !ready ? (
+          <section className="loadingState" aria-live="polite">
+            <span className="loadingPulse" />
+            <strong>Wczytuję aktualny ranking…</strong>
+            <small>
+              Pobieram zapisane oferty, filtry i status monitoringu.
+            </small>
+          </section>
         ) : (
           <>
             <section className="summary">
@@ -256,7 +288,7 @@ export default function App() {
               </span>
             </div>
             <section className="cards">
-              {ranked.map(({ car, score }, index) => (
+              {ranked.slice(0, visibleCount).map(({ car, score }, index) => (
                 <CarCard
                   key={car.id}
                   car={car}
@@ -269,12 +301,29 @@ export default function App() {
                       car.listings.some((listing) => listing.url === job.url),
                   )}
                   onProcessCodex={(id, force) => void processCodex(id, force)}
-                  onProcessCepik={(id) =>
-                    void processCepik(id).catch(console.error)
-                  }
+                  onProcessCepik={(id) => void processCepik(id)}
                 />
               ))}
             </section>
+            {ranked.length > visibleCount && (
+              <button
+                className="loadMoreButton"
+                onClick={() => setVisibleCount((count) => count + 30)}
+              >
+                Pokaż kolejne 30 ofert
+                <small>
+                  Wyświetlono {visibleCount} z {ranked.length}
+                </small>
+              </button>
+            )}
+            {ranked.length === 0 && verification.length === 0 && (
+              <section className="emptyResults">
+                <strong>Brak ofert dla tych filtrów</strong>
+                <span>
+                  Poszerz zakres ceny lub odległości albo zresetuj filtry.
+                </span>
+              </section>
+            )}
             {verification.length > 0 && (
               <details className="verificationResults">
                 <summary>
@@ -282,29 +331,39 @@ export default function App() {
                   warunków obowiązkowych
                 </summary>
                 <section className="cards">
-                  {verification.map(({ car, score }, index) => (
-                    <CarCard
-                      key={`verify-${car.id}`}
-                      car={car}
-                      score={score}
-                      rank={index + 1}
-                      onSelect={() => openCar(car)}
-                      codexJob={codexJobs.find(
-                        (job) =>
-                          job.carId === car.id ||
-                          car.listings.some(
-                            (listing) => listing.url === job.url,
-                          ),
-                      )}
-                      onProcessCodex={(id, force) =>
-                        void processCodex(id, force)
-                      }
-                      onProcessCepik={(id) =>
-                        void processCepik(id).catch(console.error)
-                      }
-                    />
-                  ))}
+                  {verification
+                    .slice(0, verificationVisibleCount)
+                    .map(({ car, score }, index) => (
+                      <CarCard
+                        key={`verify-${car.id}`}
+                        car={car}
+                        score={score}
+                        rank={index + 1}
+                        onSelect={() => openCar(car)}
+                        codexJob={codexJobs.find(
+                          (job) =>
+                            job.carId === car.id ||
+                            car.listings.some(
+                              (listing) => listing.url === job.url,
+                            ),
+                        )}
+                        onProcessCodex={(id, force) =>
+                          void processCodex(id, force)
+                        }
+                        onProcessCepik={(id) => void processCepik(id)}
+                      />
+                    ))}
                 </section>
+                {verification.length > verificationVisibleCount && (
+                  <button
+                    className="loadMoreButton"
+                    onClick={() =>
+                      setVerificationVisibleCount((count) => count + 15)
+                    }
+                  >
+                    Pokaż więcej ofert do weryfikacji
+                  </button>
+                )}
               </details>
             )}
           </>
@@ -312,6 +371,11 @@ export default function App() {
       </main>
       {selected && (
         <ScoreDrawer car={selected} market={market} onClose={closeCar} />
+      )}
+      {notice && (
+        <div className={`toast ${notice.type}`} role="status">
+          {notice.text}
+        </div>
       )}
     </div>
   );
