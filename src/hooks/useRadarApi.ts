@@ -110,6 +110,15 @@ export function useRadarApi() {
     await refresh();
   };
 
+  const processCepik = async (id: string) => {
+    const response = await fetch(`/api/cars/${encodeURIComponent(id)}/cepik`, {
+      method: "POST",
+    });
+    const body = await response.json();
+    if (!response.ok) throw new Error(body.error || "Błąd kolejki CEPiK");
+    await refresh();
+  };
+
   const reprocessSnapshots = async () => {
     setReprocessing(true);
     try {
@@ -134,6 +143,7 @@ export function useRadarApi() {
     currentCodexJobId,
     processCodex,
     processAllCodex,
+    processCepik,
     monitoringStats,
     reprocessing,
     reprocessSnapshots,

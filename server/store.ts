@@ -56,6 +56,7 @@ export type Store = {
   jobs: Job[];
   scanRuns?: ScanRun[];
   top5Ids?: string[];
+  notifiedCarKeys?: string[];
   snapshots?: SnapshotMeta[];
   cepikRuns?: CepikRun[];
 };

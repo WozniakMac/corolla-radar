@@ -31,6 +31,7 @@ export default function App() {
     currentCodexJobId,
     processCodex,
     processAllCodex,
+    processCepik,
     monitoringStats,
     reprocessing,
     reprocessSnapshots,
@@ -40,7 +41,16 @@ export default function App() {
     resetFilters,
   } = useRadarApi();
   const [filters, setFilters] = useState(defaultFilters);
-  const [selected, setSelected] = useState<Car | null>(null);
+  const carIdFromPath = () => {
+    const match = window.location.pathname.match(/^\/cars\/(.+)$/);
+    if (!match) return null;
+    try {
+      return decodeURIComponent(match[1]);
+    } catch {
+      return null;
+    }
+  };
+  const [selectedId, setSelectedId] = useState<string | null>(carIdFromPath);
   const [view, setView] = useState<"ranking" | "codex" | "stats">("ranking");
   const filtersHydrated = useRef(false);
   useEffect(() => {
@@ -48,6 +58,20 @@ export default function App() {
     filtersHydrated.current = true;
     if (savedFilters) setFilters(savedFilters);
   }, [preferencesLoaded, savedFilters]);
+  useEffect(() => {
+    const onPopState = () => setSelectedId(carIdFromPath());
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+  const selected = cars.find((car) => car.id === selectedId) || null;
+  const openCar = (car: Car) => {
+    window.history.pushState({}, "", `/cars/${encodeURIComponent(car.id)}`);
+    setSelectedId(car.id);
+  };
+  const closeCar = () => {
+    window.history.pushState({}, "", "/");
+    setSelectedId(null);
+  };
   const market = useMemo(() => buildMarketBenchmarks(cars), [cars]);
 
   const evaluated = useMemo(
@@ -238,13 +262,16 @@ export default function App() {
                   car={car}
                   score={score}
                   rank={index + 1}
-                  onSelect={() => setSelected(car)}
+                  onSelect={() => openCar(car)}
                   codexJob={codexJobs.find(
                     (job) =>
                       job.carId === car.id ||
                       car.listings.some((listing) => listing.url === job.url),
                   )}
                   onProcessCodex={(id, force) => void processCodex(id, force)}
+                  onProcessCepik={(id) =>
+                    void processCepik(id).catch(console.error)
+                  }
                 />
               ))}
             </section>
@@ -261,7 +288,7 @@ export default function App() {
                       car={car}
                       score={score}
                       rank={index + 1}
-                      onSelect={() => setSelected(car)}
+                      onSelect={() => openCar(car)}
                       codexJob={codexJobs.find(
                         (job) =>
                           job.carId === car.id ||
@@ -272,6 +299,9 @@ export default function App() {
                       onProcessCodex={(id, force) =>
                         void processCodex(id, force)
                       }
+                      onProcessCepik={(id) =>
+                        void processCepik(id).catch(console.error)
+                      }
                     />
                   ))}
                 </section>
@@ -281,11 +311,7 @@ export default function App() {
         )}
       </main>
       {selected && (
-        <ScoreDrawer
-          car={selected}
-          market={market}
-          onClose={() => setSelected(null)}
-        />
+        <ScoreDrawer car={selected} market={market} onClose={closeCar} />
       )}
     </div>
   );

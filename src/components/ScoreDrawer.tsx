@@ -21,7 +21,11 @@ export function ScoreDrawer({
           <X />
         </button>
         <small>
-          ZWERYFIKOWANO {new Date(car.verifiedAt).toLocaleString("pl-PL")}
+          {`PIERWSZY RAZ ${
+            car.firstSeen
+              ? new Date(car.firstSeen).toLocaleDateString("pl-PL")
+              : "BRAK DANYCH"
+          } • ZWERYFIKOWANO ${new Date(car.verifiedAt).toLocaleString("pl-PL")}`}
         </small>
         <h2>{car.title}</h2>
         {car.images?.length ? (

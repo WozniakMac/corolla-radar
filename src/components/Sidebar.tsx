@@ -24,7 +24,7 @@ export function Sidebar({
           <small>Twój asystent zakupu</small>
         </div>
       </div>
-      <nav>
+      <nav aria-label="Główna nawigacja">
         <button
           className={view === "ranking" ? "active" : ""}
           onClick={() => onView("ranking")}

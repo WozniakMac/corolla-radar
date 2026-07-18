@@ -559,7 +559,8 @@ details input[type="range"] {
 }
 .facts {
   display: flex;
-  gap: 34px;
+  flex-wrap: wrap;
+  gap: 16px 28px;
   margin-top: 15px;
 }
 .facts strong {
@@ -584,7 +585,8 @@ details input[type="range"] {
   padding: 3px 6px;
   border-radius: 4px;
 }
-.price button {
+.price button,
+.price .carPermalink {
   border: 0;
   background: transparent;
   color: #2a694b;
@@ -594,13 +596,15 @@ details input[type="range"] {
   padding: 0;
   display: flex;
   align-items: center;
+  text-decoration: none;
 }
-.price button svg {
+.price button svg,
+.price .carPermalink svg {
   width: 14px;
 }
 .overlay {
   position: fixed;
-  z-index: 10;
+  z-index: 30;
   inset: 0;
   background: #07150d75;
   backdrop-filter: blur(2px);
@@ -979,6 +983,18 @@ details input[type="range"] {
   background: #eef4ff;
   color: #285aa8;
 }
+.price .cardCepikButton {
+  background: #eaf7ef;
+  color: #216b47;
+}
+.price .cardCepikButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.price .cardCepikButton svg {
+  width: 15px;
+  height: 15px;
+}
 .price .cardCodexButton svg {
   width: 15px;
   height: 15px;
@@ -1253,11 +1269,54 @@ details input[type="range"] {
     grid-template-columns: repeat(2, 1fr);
   }
   aside {
+    inset: auto 0 0;
+    z-index: 20;
+    width: 100%;
+    height: 68px;
+    padding: 7px max(10px, env(safe-area-inset-right))
+      max(7px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+    display: block;
+    box-shadow: 0 -8px 24px #07150d24;
+  }
+  aside .brand,
+  aside .saved,
+  aside .asideFoot {
     display: none;
+  }
+  aside nav {
+    height: 100%;
+    padding: 0;
+    border: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  aside nav button {
+    position: relative;
+    min-width: 0;
+    padding: 6px 4px;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    text-align: center;
+    font-size: 10px;
+    line-height: 1.1;
+  }
+  aside nav button svg {
+    width: 18px;
+    height: 18px;
+  }
+  aside nav button span {
+    position: absolute;
+    top: 1px;
+    right: 10px;
+    margin: 0;
+    padding: 1px 5px;
+    font-size: 8px;
   }
   main {
     margin: 0;
-    padding: 25px;
+    padding: 25px 25px 92px;
   }
   .summary {
     grid-template-columns: 1fr 1fr;
@@ -1284,9 +1343,6 @@ details input[type="range"] {
     padding: 12px 0 0;
     text-align: left;
   }
-  .price button {
-    display: none;
-  }
 }
 @media (max-width: 650px) {
   .filterMemory span {
@@ -1301,7 +1357,11 @@ details input[type="range"] {
     grid-template-columns: 1fr;
   }
   main {
-    padding: 18px;
+    padding: 16px 12px 90px;
+    overflow: hidden;
+  }
+  h1 {
+    font-size: 23px;
   }
   header p {
     display: none;
@@ -1310,7 +1370,17 @@ details input[type="range"] {
     grid-template-columns: 1fr 1fr;
   }
   .summary > div {
-    padding: 14px;
+    min-width: 0;
+    padding: 12px;
+  }
+  .summary strong {
+    font-size: 20px;
+  }
+  .summary em {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .search {
     min-width: 100%;
@@ -1325,15 +1395,27 @@ details input[type="range"] {
     width: 100%;
   }
   .cards article {
-    grid-template-columns: 42px 92px 1fr;
-    padding: 16px 12px 16px 0;
+    grid-template-columns: 32px 94px 1fr;
+    padding: 12px 10px 12px 0;
   }
   .score {
     border: 0;
   }
   .carInfo {
     grid-column: 1/4;
-    padding: 14px;
+    min-width: 0;
+    padding: 12px;
+  }
+  .carInfo h2 {
+    font-size: 14px;
+    overflow-wrap: anywhere;
+  }
+  .carInfo > p {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .badges {
+    flex-wrap: wrap;
   }
   .facts {
     display: grid;
@@ -1342,10 +1424,56 @@ details input[type="range"] {
   }
   .price {
     grid-column: 1/4;
-    padding-left: 14px;
+    padding: 10px 12px 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 7px;
+  }
+  .price > small:first-child,
+  .price > strong {
+    width: 100%;
+  }
+  .price button,
+  .price .carPermalink,
+  .price .cardCodexStatus {
+    margin: 4px 0 0;
+    justify-content: flex-start;
+  }
+  .sourcePanel {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .sourcePanel > div:first-child {
+    min-width: 0;
+  }
+  .scanButton {
+    justify-content: center;
+  }
+  .resultsHead span:last-child {
+    display: none;
+  }
+  .codexQueue,
+  .scanHistory {
+    padding: 13px;
   }
   .drawer {
     width: 100%;
+    padding: 28px 18px max(30px, env(safe-area-inset-bottom));
+  }
+  .drawer h2 {
+    font-size: 19px;
+  }
+  .gallery {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+  }
+  .gallery img {
+    min-width: 100%;
+    height: 230px;
+    scroll-snap-align: start;
   }
 }
 .reprocessButton {

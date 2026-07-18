@@ -1,4 +1,4 @@
-import { Bot, ChevronRight, MapPin } from "lucide-react";
+import { Bot, ChevronRight, MapPin, ShieldCheck } from "lucide-react";
 import { distance, money } from "../format";
 import { effectivePrice, hasTechEquivalent } from "../scoring";
 import type { Car, CodexJob, ScoreBreakdown } from "../types";
@@ -11,6 +11,7 @@ export function CarCard({
   onSelect,
   codexJob,
   onProcessCodex,
+  onProcessCepik,
 }: {
   car: Car;
   score: ScoreBreakdown;
@@ -18,7 +19,11 @@ export function CarCard({
   onSelect: () => void;
   codexJob?: CodexJob;
   onProcessCodex: (id: string, force: boolean) => void;
+  onProcessCepik: (id: string) => void;
 }) {
+  const canRunCepik = Boolean(
+    car.vin && car.registrationNumber && car.firstRegistrationDate,
+  );
   const codexStatus = codexJob
     ? {
         pending:
@@ -102,6 +107,14 @@ export function CarCard({
                   : "Brak danych"}
             </strong>
           </div>
+          <div>
+            <small>PIERWSZY RAZ</small>
+            <strong>
+              {car.firstSeen
+                ? new Date(car.firstSeen).toLocaleDateString("pl-PL")
+                : "Brak danych"}
+            </strong>
+          </div>
         </div>
       </div>
       <div className="price">
@@ -129,9 +142,45 @@ export function CarCard({
                 : "Sprawdź z Codex"}
           </button>
         )}
-        <button>
-          Szczegóły <ChevronRight />
+        <button
+          className="cardCepikButton"
+          disabled={
+            !canRunCepik ||
+            car.cepik?.status === "processing" ||
+            car.cepik?.status === "pending"
+          }
+          title={
+            canRunCepik
+              ? "Sprawdź ponownie w Historia Pojazdu"
+              : "Wymagane: VIN, numer rejestracyjny i data pierwszej rejestracji"
+          }
+          onClick={(event) => {
+            event.stopPropagation();
+            onProcessCepik(car.id);
+          }}
+        >
+          <ShieldCheck />
+          {!canRunCepik
+            ? "Brak danych do CEPiK"
+            : car.cepik?.status === "processing"
+              ? "CEPiK pracuje…"
+              : car.cepik?.status === "pending"
+                ? "CEPiK w kolejce"
+                : car.cepik
+                  ? "Ponów CEPiK"
+                  : "Sprawdź CEPiK"}
         </button>
+        <a
+          className="carPermalink"
+          href={`/cars/${encodeURIComponent(car.id)}`}
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            onSelect();
+          }}
+        >
+          Szczegóły <ChevronRight />
+        </a>
       </div>
     </article>
   );

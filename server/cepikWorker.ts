@@ -8,9 +8,12 @@ import {
   scoreCar,
   worthTrip,
 } from "../src/scoring";
+import { matchesFilters } from "../src/filters";
+import { loadSavedFilters } from "./preferences";
 
 let browser: Browser | undefined;
 let busy = false;
+const manualQueue: string[] = [];
 
 const formatDate = (value: string) => {
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
@@ -97,39 +100,69 @@ export async function checkCepik(car: any) {
   }
 }
 
+export async function cepikTopIds(cars: any[], savedFilters: any) {
+  const market = buildMarketBenchmarks(cars);
+  const ranked = cars
+    .filter(
+      (item) =>
+        item.listings?.some((listing: any) => listing.active) &&
+        qualifyCar(item).status === "qualified",
+    )
+    .map((item) => ({ item, score: scoreCar(item, market) }))
+    .filter(({ item, score }) => worthTrip(item, score, market))
+    .sort((left, right) => right.score.total - left.score.total);
+  const ids = new Set(ranked.slice(0, 10).map(({ item }) => item.id));
+  if (savedFilters)
+    ranked
+      .filter(({ item }) => matchesFilters(item, savedFilters))
+      .slice(0, 10)
+      .forEach(({ item }) => ids.add(item.id));
+  return ids;
+}
+
 async function tick() {
-  if (busy || getActiveScan()) return;
+  if (busy) return;
+  if (getActiveScan()) {
+    if (manualQueue.length) setTimeout(() => void tick(), 5_000);
+    return;
+  }
   busy = true;
   try {
     const db = await load();
     const cars = db.cars as any[];
-    const market = buildMarketBenchmarks(cars);
-    const topTenIds = new Set(
-      cars
-        .filter(
+    const manualId = manualQueue.shift();
+    const topIds = await cepikTopIds(cars, await loadSavedFilters());
+    const car: any = manualId
+      ? cars.find((item) => item.id === manualId)
+      : cars.find(
           (item) =>
-            item.listings?.some((listing: any) => listing.active) &&
-            qualifyCar(item).status === "qualified",
-        )
-        .map((item) => ({ item, score: scoreCar(item, market) }))
-        .filter(({ item, score }) => worthTrip(item, score, market))
-        .sort((left, right) => right.score.total - left.score.total)
-        .slice(0, 10)
-        .map(({ item }) => item.id),
-    );
-    const car: any = cars.find(
-      (item) =>
-        topTenIds.has(item.id) &&
-        item.vin &&
-        item.registrationNumber &&
-        item.firstRegistrationDate &&
-        item.listings?.some(
-          (listing: any) =>
-            listing.active && /pewne auto/i.test(listing.source),
-        ) &&
-        (!item.cepik || item.cepik.status === "pending"),
-    );
-    if (!car) return;
+            topIds.has(item.id) &&
+            item.vin &&
+            item.registrationNumber &&
+            item.firstRegistrationDate &&
+            item.listings?.some(
+              (listing: any) =>
+                listing.active && /pewne auto/i.test(listing.source),
+            ) &&
+            (!item.cepik || item.cepik.status === "pending"),
+        );
+    if (
+      !car ||
+      !car.vin ||
+      !car.registrationNumber ||
+      !car.firstRegistrationDate
+    )
+      return;
+    if (!manualId && !topIds.has(car.id)) return;
+    if (
+      !manualId &&
+      !car.listings?.some(
+        (listing: any) => listing.active && /pewne auto/i.test(listing.source),
+      )
+    )
+      return;
+    /* Automatic candidates are selected above; manual candidates may come
+       from every supported listing that exposes the three CEPiK identifiers. */
     car.cepik = { status: "processing" };
     await save(db);
     const started = Date.now();
@@ -172,6 +205,7 @@ async function tick() {
     await save(db);
   } finally {
     busy = false;
+    if (manualQueue.length) setTimeout(() => void tick(), 0);
   }
 }
 
@@ -188,6 +222,12 @@ export async function retryCepik(carId: string) {
   const db = await load();
   const car: any = (db.cars as any[]).find((item) => item.id === carId);
   if (!car) throw new Error("Nie znaleziono auta");
+  if (!car.vin || !car.registrationNumber || !car.firstRegistrationDate)
+    throw new Error(
+      "Brak VIN-u, numeru rejestracyjnego lub daty pierwszej rejestracji",
+    );
   car.cepik = { status: "pending" };
   await save(db);
+  if (!manualQueue.includes(carId)) manualQueue.push(carId);
+  setTimeout(() => void tick(), 0);
 }

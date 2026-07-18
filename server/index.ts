@@ -81,7 +81,7 @@ app.post("/api/cars/:id/cepik", async (req, res) => {
     await retryCepik(req.params.id);
     res.status(202).json({ queued: true });
   } catch (error) {
-    res.status(404).json({
+    res.status(409).json({
       error: error instanceof Error ? error.message : "Błąd kolejki CEPiK",
     });
   }
