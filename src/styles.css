@@ -548,6 +548,11 @@ details input[type="range"] {
   color: #b42318;
   border: 1px solid #fca5a5;
 }
+.badges .priceDropBg {
+  background: #dcfce7;
+  color: #157347;
+  border: 1px solid #86d6a6;
+}
 .sensorConfirmed,
 .sensorMissing {
   padding: 10px 12px;
@@ -750,6 +755,147 @@ details input[type="range"] {
   margin: 6px 0;
   border-radius: 8px;
   font-size: 12px;
+}
+.priceHistorySummary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 9px;
+}
+.priceHistorySummary > div {
+  padding: 11px 12px;
+  border: 1px solid #dce2de;
+  border-radius: 9px;
+  background: #fff;
+}
+.priceHistorySummary small {
+  display: block;
+  color: #7a857f;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+.priceHistorySummary strong {
+  display: block;
+  margin-top: 5px;
+  color: #183e2b;
+  font: 800 17px Manrope;
+}
+.priceTimeline {
+  display: grid;
+  gap: 7px;
+}
+.overallPriceChanges {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.overallPriceChanges > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 11px;
+  border-radius: 8px;
+  background: #f1f4f2;
+  color: #68746e;
+  font-size: 9px;
+}
+.overallPriceChanges > div.drop {
+  background: #e7f6ed;
+  color: #176b43;
+}
+.overallPriceChanges > div.rise {
+  background: #fff0ed;
+  color: #984637;
+}
+.overallPriceChanges b {
+  white-space: nowrap;
+  font-size: 10px;
+}
+.priceEvent {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid #dce2de;
+  border-radius: 9px;
+  background: #fff;
+  color: #26362e;
+  text-decoration: none;
+}
+.priceEventIcon {
+  width: 29px;
+  height: 29px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #eef1ef;
+  color: #6c7872;
+}
+.priceEventIcon svg {
+  width: 15px;
+}
+.priceEvent.drop {
+  border-color: #b9dec9;
+  background: #f5fbf7;
+}
+.priceEvent.drop .priceEventIcon,
+.priceEvent.drop .priceEventValue span {
+  color: #187448;
+}
+.priceEvent.drop .priceEventIcon {
+  background: #dcf4e6;
+}
+.priceEvent.rise .priceEventIcon,
+.priceEvent.rise .priceEventValue span {
+  color: #ad4e3d;
+}
+.priceEvent > div:nth-child(2) {
+  min-width: 0;
+}
+.priceEvent b,
+.priceEvent time,
+.priceEvent small {
+  display: block;
+}
+.priceEvent b {
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.priceEvent time,
+.priceEvent small {
+  margin-top: 2px;
+  color: #738079;
+  font-size: 9px;
+}
+.priceEventValue {
+  text-align: right;
+}
+.priceEventValue strong,
+.priceEventValue span {
+  display: block;
+  white-space: nowrap;
+}
+.priceEventValue strong {
+  font: 800 13px Manrope;
+}
+.priceEventValue span {
+  margin-top: 3px;
+  color: #79847e;
+  font-size: 9px;
+  font-weight: 700;
+}
+.noPriceHistory {
+  padding: 18px;
+  border: 1px dashed #ccd5d0;
+  border-radius: 9px;
+  color: #74817a;
+  font-size: 11px;
+  text-align: center;
 }
 .source span {
   display: flex;
@@ -1603,6 +1749,22 @@ details input[type="range"] {
   }
   .drawer h2 {
     font-size: 19px;
+  }
+  .priceEvent {
+    grid-template-columns: 27px minmax(0, 1fr);
+  }
+  .priceEventValue {
+    grid-column: 2;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    text-align: left;
+  }
+  .overallPriceChanges > div {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
   }
   .gallery {
     display: flex;

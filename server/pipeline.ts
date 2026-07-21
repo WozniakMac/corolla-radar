@@ -22,6 +22,45 @@ const hasTechName = (text: string) =>
     text,
   );
 
+type PriceObservation = {
+  price: number;
+  cashPrice?: number;
+  checkedAt?: string;
+  priceHistory?: Array<{
+    capturedAt: string;
+    price: number;
+    cashPrice?: number;
+  }>;
+};
+
+export function recordPriceObservation(
+  current: PriceObservation,
+  next: PriceObservation,
+  capturedAt: string,
+) {
+  const history = current.priceHistory ? [...current.priceHistory] : [];
+  if (!history.length && current.price) {
+    history.push({
+      capturedAt: current.checkedAt || capturedAt,
+      price: current.price,
+      ...(current.cashPrice ? { cashPrice: current.cashPrice } : {}),
+    });
+  }
+  const latest = history.at(-1);
+  if (
+    !latest ||
+    latest.price !== next.price ||
+    (latest.cashPrice || undefined) !== (next.cashPrice || undefined)
+  ) {
+    history.push({
+      capturedAt,
+      price: next.price,
+      ...(next.cashPrice ? { cashPrice: next.cashPrice } : {}),
+    });
+  }
+  return history;
+}
+
 const descriptionSimilarity = (left = "", right = "") => {
   const tokens = (value: string) =>
     new Set(
@@ -132,6 +171,14 @@ function toCar(
     engineVersion: p.engineVersion,
     price: p.price,
     cashPrice: p.cashPrice,
+    priceHistory: [
+      {
+        capturedAt: now,
+        price: p.cashPrice || p.price,
+        source,
+        url: p.finalUrl,
+      },
+    ],
     mileage: p.mileage,
     location: p.location || "Do uzupełnienia",
     distance: distanceFromPoznan(p.location),
@@ -166,6 +213,13 @@ function toCar(
         power: p.power,
         engineVersion: p.engineVersion,
         cashPrice: p.cashPrice,
+        priceHistory: [
+          {
+            capturedAt: now,
+            price: p.price,
+            ...(p.cashPrice ? { cashPrice: p.cashPrice } : {}),
+          },
+        ],
         active: true,
         checkedAt: now,
         description: p.description,
@@ -230,6 +284,7 @@ export function upsertParsedCar(
   snapshotId?: string,
 ) {
   const cars = db.cars as any[];
+  const checkedAt = new Date().toISOString();
   const duplicate = cars.find(
     (car) =>
       (p.vin && car.vin === p.vin) ||
@@ -253,7 +308,7 @@ export function upsertParsedCar(
     engineVersion: p.engineVersion,
     cashPrice: p.cashPrice,
     active: true,
-    checkedAt: new Date().toISOString(),
+    checkedAt,
     description: p.description,
     images: p.images,
     camera: p.camera,
@@ -277,11 +332,25 @@ export function upsertParsedCar(
     cars.push(car);
     return car.id;
   }
+  const previousEffectivePrice = duplicate.cashPrice || duplicate.price;
   const old = duplicate.listings.find(
     (l: any) => normalize(l.url) === normalize(p.finalUrl),
   );
-  if (old) Object.assign(old, listing);
-  else duplicate.listings.push(listing);
+  if (old) {
+    const priceHistory = recordPriceObservation(old, listing, checkedAt);
+    Object.assign(old, listing, { priceHistory });
+  } else {
+    duplicate.listings.push({
+      ...listing,
+      priceHistory: [
+        {
+          capturedAt: checkedAt,
+          price: listing.price,
+          ...(listing.cashPrice ? { cashPrice: listing.cashPrice } : {}),
+        },
+      ],
+    });
+  }
   duplicate.price = Math.min(
     ...duplicate.listings.filter((l: any) => l.active).map((l: any) => l.price),
   );
@@ -290,6 +359,31 @@ export function upsertParsedCar(
       .filter((item: any) => item.active)
       .map((item: any) => item.cashPrice || item.price),
   );
+  const effectiveListing = duplicate.listings
+    .filter((item: any) => item.active)
+    .sort(
+      (a: any, b: any) => (a.cashPrice || a.price) - (b.cashPrice || b.price),
+    )[0];
+  const nextEffectivePrice = duplicate.cashPrice || duplicate.price;
+  duplicate.priceHistory ||= [
+    {
+      capturedAt: duplicate.verifiedAt || duplicate.firstSeen,
+      price: previousEffectivePrice,
+      source: effectiveListing?.source || source,
+      url: effectiveListing?.url || p.finalUrl,
+    },
+  ];
+  if (
+    duplicate.priceHistory.at(-1)?.price !== nextEffectivePrice &&
+    effectiveListing
+  ) {
+    duplicate.priceHistory.push({
+      capturedAt: checkedAt,
+      price: nextEffectivePrice,
+      source: effectiveListing.source,
+      url: effectiveListing.url,
+    });
+  }
   duplicate.verifiedAt = listing.checkedAt;
   duplicate.title = p.title || duplicate.title;
   if (p.trim) duplicate.trim = p.trim;
@@ -489,10 +583,9 @@ export async function runSources(
         );
       }
     }
-    if (!sourceId)
-      await notifyNewTopFive().catch((error) =>
-        console.error("Notification failed:", error),
-      );
+    await notifyNewTopFive().catch((error) =>
+      console.error("Notification failed:", error),
+    );
     const result = getStatuses();
     const relevant = result.filter(
       (status) => !sourceId || status.id === sourceId,

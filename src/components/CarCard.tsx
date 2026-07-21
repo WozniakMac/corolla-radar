@@ -24,6 +24,30 @@ export function CarCard({
   const canRunCepik = Boolean(
     car.vin && car.registrationNumber && car.firstRegistrationDate,
   );
+  const latestPriceChange = [
+    ...car.listings.flatMap((listing) => {
+      const history = listing.priceHistory || [];
+      return history.slice(1).flatMap((entry, index) => {
+        const previous = history[index];
+        const previousPrice = previous.cashPrice || previous.price;
+        const price = entry.cashPrice || entry.price;
+        return price !== previousPrice
+          ? [{ capturedAt: entry.capturedAt, delta: price - previousPrice }]
+          : [];
+      });
+    }),
+    ...(car.priceHistory || []).slice(1).flatMap((entry, index) => {
+      const previous = car.priceHistory![index];
+      return entry.price !== previous.price
+        ? [
+            {
+              capturedAt: entry.capturedAt,
+              delta: entry.price - previous.price,
+            },
+          ]
+        : [];
+    }),
+  ].sort((a, b) => b.capturedAt.localeCompare(a.capturedAt))[0];
   const codexStatus = codexJob
     ? {
         pending:
@@ -78,6 +102,11 @@ export function CarCard({
             <span className="warnBg">CZUJNIKI?</span>
           )}
           {car.distance <= 150 && <span className="greenBg">LOKALNIE</span>}
+          {latestPriceChange && latestPriceChange.delta < 0 && (
+            <span className="priceDropBg">
+              CENA −{money(Math.abs(latestPriceChange.delta))}
+            </span>
+          )}
         </div>
         <h2>{car.title}</h2>
         <p>

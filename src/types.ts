@@ -7,6 +7,7 @@ export type Listing = {
   power?: number;
   engineVersion?: string;
   cashPrice?: number;
+  priceHistory?: PriceHistoryEntry[];
   active: boolean;
   missedScans?: number;
   inactiveAt?: string;
@@ -39,6 +40,17 @@ export type Listing = {
   registrationNumber?: string;
   firstRegistrationDate?: string;
 };
+export type PriceHistoryEntry = {
+  capturedAt: string;
+  price: number;
+  cashPrice?: number;
+};
+export type CarPriceHistoryEntry = {
+  capturedAt: string;
+  price: number;
+  source: string;
+  url: string;
+};
 export type Car = {
   id: string;
   title: string;
@@ -47,6 +59,7 @@ export type Car = {
   engineVersion?: string;
   price: number;
   cashPrice?: number;
+  priceHistory?: CarPriceHistoryEntry[];
   mileage: number;
   location: string;
   distance: number;

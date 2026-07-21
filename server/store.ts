@@ -57,6 +57,7 @@ export type Store = {
   scanRuns?: ScanRun[];
   top5Ids?: string[];
   notifiedCarKeys?: string[];
+  notifiedPriceDropKeys?: string[];
   snapshots?: SnapshotMeta[];
   cepikRuns?: CepikRun[];
 };
@@ -69,23 +70,61 @@ export async function load(): Promise<Store> {
           listing.year || car.year,
           `${car.title || ""} ${(listing.description || "").slice(0, 2000)}`,
         );
-        return engine
-          ? { ...listing, power: engine.power, engineVersion: engine.label }
-          : listing;
+        const priceHistory = listing.priceHistory?.length
+          ? listing.priceHistory
+          : listing.price
+            ? [
+                {
+                  capturedAt:
+                    listing.checkedAt || car.verifiedAt || car.firstSeen,
+                  price: listing.price,
+                  ...(listing.cashPrice
+                    ? { cashPrice: listing.cashPrice }
+                    : {}),
+                },
+              ]
+            : [];
+        return {
+          ...listing,
+          ...(engine
+            ? { power: engine.power, engineVersion: engine.label }
+            : {}),
+          priceHistory,
+        };
       });
       const newestEngine = [...listings]
         .filter((listing: any) => listing.active && listing.engineVersion)
         .sort((a: any, b: any) =>
           String(b.checkedAt).localeCompare(String(a.checkedAt)),
         )[0];
+      const effectiveListing = [...listings]
+        .filter((listing: any) => listing.active !== false && listing.price)
+        .sort(
+          (a: any, b: any) =>
+            (a.cashPrice || a.price) - (b.cashPrice || b.price),
+        )[0];
+      const priceHistory = car.priceHistory?.length
+        ? car.priceHistory
+        : effectiveListing
+          ? [
+              {
+                capturedAt:
+                  car.verifiedAt || effectiveListing.checkedAt || car.firstSeen,
+                price: effectiveListing.cashPrice || effectiveListing.price,
+                source: effectiveListing.source,
+                url: effectiveListing.url,
+              },
+            ]
+          : [];
       return newestEngine
         ? {
             ...car,
             listings,
+            priceHistory,
             power: newestEngine.power,
             engineVersion: newestEngine.engineVersion,
           }
-        : { ...car, listings };
+        : { ...car, listings, priceHistory };
     });
     return {
       ...data,
@@ -94,6 +133,7 @@ export async function load(): Promise<Store> {
       scanRuns: data.scanRuns || [],
       snapshots: data.snapshots || [],
       cepikRuns: data.cepikRuns || [],
+      notifiedPriceDropKeys: data.notifiedPriceDropKeys || [],
     };
   } catch {
     return { cars: [], jobs: [], snapshots: [], cepikRuns: [] };
