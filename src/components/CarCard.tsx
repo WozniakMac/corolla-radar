@@ -1,4 +1,11 @@
-import { Bot, ChevronRight, MapPin, ShieldCheck } from "lucide-react";
+import {
+  Bot,
+  Check,
+  ChevronRight,
+  MapPin,
+  Plus,
+  ShieldCheck,
+} from "lucide-react";
 import { distance, money } from "../format";
 import { effectivePrice, hasTechEquivalent } from "../scoring";
 import type { Car, CodexJob, ScoreBreakdown } from "../types";
@@ -12,6 +19,10 @@ export function CarCard({
   codexJob,
   onProcessCodex,
   onProcessCepik,
+  comparisonMode = false,
+  comparisonSelected = false,
+  comparisonDisabled = false,
+  onToggleComparison,
 }: {
   car: Car;
   score: ScoreBreakdown;
@@ -20,6 +31,10 @@ export function CarCard({
   codexJob?: CodexJob;
   onProcessCodex: (id: string, force: boolean) => void;
   onProcessCepik: (id: string) => void;
+  comparisonMode?: boolean;
+  comparisonSelected?: boolean;
+  comparisonDisabled?: boolean;
+  onToggleComparison?: () => void;
 }) {
   const canRunCepik = Boolean(
     car.vin && car.registrationNumber && car.firstRegistrationDate,
@@ -60,7 +75,32 @@ export function CarCard({
       }[codexJob.status]
     : "Nie wymaga weryfikacji";
   return (
-    <article onClick={onSelect}>
+    <article
+      className={`${comparisonMode ? "comparisonMode" : ""} ${
+        comparisonSelected ? "comparisonSelected" : ""
+      }`}
+      onClick={comparisonMode ? onToggleComparison : onSelect}
+    >
+      {comparisonMode && (
+        <button
+          type="button"
+          className="compareSelect"
+          disabled={comparisonDisabled}
+          onClick={(event) => {
+            event.stopPropagation();
+            onToggleComparison?.();
+          }}
+          aria-pressed={comparisonSelected}
+          aria-label={
+            comparisonSelected
+              ? `Usuń ${car.title} z porównania`
+              : `Dodaj ${car.title} do porównania`
+          }
+        >
+          {comparisonSelected ? <Check /> : <Plus />}
+          {comparisonSelected ? "Wybrano" : "Dodaj"}
+        </button>
+      )}
       <div className="rank">#{rank}</div>
       <div className="thumb">
         {car.images?.[0] ? (

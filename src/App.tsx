@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, GitCompareArrows } from "lucide-react";
 import { CarCard } from "./components/CarCard";
 import { CodexQueue } from "./components/CodexQueue";
 import { Filters } from "./components/Filters";
 import { MonitoringStats } from "./components/MonitoringStats";
+import { ComparisonBar, OfferComparison } from "./components/OfferComparison";
 import { ScoreDrawer } from "./components/ScoreDrawer";
 import { Sidebar } from "./components/Sidebar";
 import { SourcePanel } from "./components/SourcePanel";
@@ -56,6 +57,9 @@ export default function App() {
   const [view, setView] = useState<"ranking" | "codex" | "stats">("ranking");
   const [visibleCount, setVisibleCount] = useState(30);
   const [verificationVisibleCount, setVerificationVisibleCount] = useState(15);
+  const [comparisonMode, setComparisonMode] = useState(false);
+  const [comparisonIds, setComparisonIds] = useState<string[]>([]);
+  const [comparisonOpen, setComparisonOpen] = useState(false);
   const filtersHydrated = useRef(false);
   useEffect(() => {
     if (!preferencesLoaded || filtersHydrated.current) return;
@@ -86,6 +90,19 @@ export default function App() {
       window.removeEventListener("keydown", onKeyDown);
     };
   }, [selectedId]);
+  useEffect(() => {
+    if (!comparisonOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setComparisonOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [comparisonOpen]);
   const selected = cars.find((car) => car.id === selectedId) || null;
   const openCar = (car: Car) => {
     window.history.pushState({}, "", `/cars/${encodeURIComponent(car.id)}`);
@@ -96,6 +113,22 @@ export default function App() {
     setSelectedId(null);
   };
   const market = useMemo(() => buildMarketBenchmarks(cars), [cars]);
+  const comparedOffers = comparisonIds
+    .map((id) => cars.find((car) => car.id === id))
+    .filter((car): car is Car => Boolean(car));
+  const toggleComparison = (id: string) => {
+    setComparisonIds((current) => {
+      if (current.includes(id))
+        return current.filter((selectedId) => selectedId !== id);
+      if (current.length >= 4) return current;
+      return [...current, id];
+    });
+  };
+  const cancelComparison = () => {
+    setComparisonMode(false);
+    setComparisonOpen(false);
+    setComparisonIds([]);
+  };
 
   const evaluated = useMemo(
     () =>
@@ -203,6 +236,23 @@ export default function App() {
                   : "Historia skanów ręcznych i automatycznego monitoringu ofert."}
             </p>
           </div>
+          {view === "ranking" && ready && (
+            <button
+              type="button"
+              className={`comparisonEntry ${comparisonMode ? "active" : ""}`}
+              onClick={() => {
+                if (comparisonMode) {
+                  cancelComparison();
+                } else {
+                  setComparisonMode(true);
+                }
+              }}
+            >
+              <GitCompareArrows />
+              {comparisonMode ? "Anuluj porównanie" : "Porównanie"}
+              {comparisonIds.length > 0 && <span>{comparisonIds.length}</span>}
+            </button>
+          )}
         </header>
         {view === "stats" ? (
           <MonitoringStats
@@ -302,6 +352,12 @@ export default function App() {
                   )}
                   onProcessCodex={(id, force) => void processCodex(id, force)}
                   onProcessCepik={(id) => void processCepik(id)}
+                  comparisonMode={comparisonMode}
+                  comparisonSelected={comparisonIds.includes(car.id)}
+                  comparisonDisabled={
+                    comparisonIds.length >= 4 && !comparisonIds.includes(car.id)
+                  }
+                  onToggleComparison={() => toggleComparison(car.id)}
                 />
               ))}
             </section>
@@ -351,6 +407,13 @@ export default function App() {
                           void processCodex(id, force)
                         }
                         onProcessCepik={(id) => void processCepik(id)}
+                        comparisonMode={comparisonMode}
+                        comparisonSelected={comparisonIds.includes(car.id)}
+                        comparisonDisabled={
+                          comparisonIds.length >= 4 &&
+                          !comparisonIds.includes(car.id)
+                        }
+                        onToggleComparison={() => toggleComparison(car.id)}
                       />
                     ))}
                 </section>
@@ -371,6 +434,27 @@ export default function App() {
       </main>
       {selected && (
         <ScoreDrawer car={selected} market={market} onClose={closeCar} />
+      )}
+      {comparisonMode && view === "ranking" && (
+        <ComparisonBar
+          offers={comparedOffers}
+          onRemove={toggleComparison}
+          onCancel={cancelComparison}
+          onCompare={() => setComparisonOpen(true)}
+        />
+      )}
+      {comparisonOpen && (
+        <OfferComparison
+          offers={comparedOffers.map((car) => ({
+            car,
+            score: scoreCar(car, market),
+          }))}
+          onClose={() => setComparisonOpen(false)}
+          onRemove={(id) => {
+            toggleComparison(id);
+            if (comparisonIds.length <= 2) setComparisonOpen(false);
+          }}
+        />
       )}
       {notice && (
         <div className={`toast ${notice.type}`} role="status">
