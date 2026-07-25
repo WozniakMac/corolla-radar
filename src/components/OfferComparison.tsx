@@ -1,5 +1,15 @@
-import { Check, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Calculator, Check, SlidersHorizontal, X } from "lucide-react";
 import { distance, money } from "../format";
+import {
+  calculateLeasing,
+  readLeasingSettings,
+  saveLeasingSettings,
+  type BuyoutDestination,
+  type LeasingSettings,
+  type VatActivity,
+  type VehicleUse,
+} from "../leasing";
 import { effectivePrice, hasTechEquivalent } from "../scoring";
 import type { Car, ScoreBreakdown } from "../types";
 import { trimVariant } from "../corollaEquipment";
@@ -19,6 +29,28 @@ type ComparisonRow = {
 
 const yesNo = (value: boolean | undefined) =>
   value === true ? "Tak" : value === false ? "Nie" : "Brak danych";
+
+const comparisonMoneyLabels = new Set([
+  "Cena brutto",
+  "Rata brutto",
+  "Rata po VAT",
+  "Rata + utrzymanie / mies.",
+  "VAT do odliczenia",
+  "Łączny wypływ gotówki",
+  "Realny koszt leasingu",
+  "Ubezpieczenie / rok",
+  "GAP / rok",
+  "Serwis / rok",
+  "Utrzymanie przez okres",
+  "Cały koszt z utrzymaniem",
+  "Koszt finansowania vs gotówka",
+  "Oszczędność PIT",
+]);
+
+const numberValue = (value: string) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
 
 export function ComparisonBar({
   offers,
@@ -98,6 +130,30 @@ export function OfferComparison({
   onClose: () => void;
   onRemove: (id: string) => void;
 }) {
+  const [leasingSettings, setLeasingSettings] =
+    useState<LeasingSettings>(readLeasingSettings);
+
+  useEffect(() => {
+    saveLeasingSettings(leasingSettings);
+  }, [leasingSettings]);
+
+  const updateLeasing = <K extends keyof LeasingSettings>(
+    key: K,
+    value: LeasingSettings[K],
+  ) =>
+    setLeasingSettings((current) => ({
+      ...current,
+      [key]: value,
+    }));
+
+  const leasingResults = offers.map(({ car }) =>
+    calculateLeasing({
+      ...leasingSettings,
+      grossPrice: effectivePrice(car),
+      invoiceKind: car.vat23 ? "vat23" : "margin",
+    }),
+  );
+
   const scoreRows: ComparisonRow[] = [
     {
       label: "Ocena łączna",
@@ -228,8 +284,112 @@ export function OfferComparison({
     },
   ];
 
+  const leasingRows: ComparisonRow[] = [
+    {
+      label: "Dokument auta",
+      values: offers.map(({ car }) =>
+        car.vat23 ? "Faktura VAT 23%" : "VAT-marża / brak FV 23%",
+      ),
+    },
+    {
+      label: "Sposób wykupu",
+      values: offers.map(() =>
+        leasingSettings.buyoutDestination === "private"
+          ? "Prywatny — bez odliczenia VAT"
+          : "Firmowy",
+      ),
+    },
+    {
+      label: "Rata brutto",
+      values: leasingResults.map((result) => Math.round(result.monthlyGross)),
+      best: "lowest",
+    },
+    {
+      label: "Rata po VAT",
+      values: leasingResults.map((result) =>
+        Math.round(result.monthlyAfterVat),
+      ),
+      best: "lowest",
+    },
+    {
+      label: "Rata + utrzymanie / mies.",
+      values: leasingResults.map((result) =>
+        Math.round(result.monthlyBudgetAfterVat),
+      ),
+      best: "lowest",
+    },
+    {
+      label: "Ubezpieczenie / rok",
+      values: leasingResults.map((result) =>
+        Math.round(result.annualInsuranceGross),
+      ),
+      best: "lowest",
+    },
+    {
+      label: "GAP / rok",
+      values: leasingResults.map(() => leasingSettings.annualGapGross),
+    },
+    {
+      label: "Serwis / rok",
+      values: leasingResults.map(() => leasingSettings.annualServiceGross),
+    },
+    {
+      label: "Utrzymanie przez okres",
+      values: leasingResults.map((result) =>
+        Math.round(result.effectiveRunningCost),
+      ),
+      best: "lowest",
+    },
+    {
+      label: "VAT do odliczenia",
+      values: leasingResults.map((result) => Math.round(result.deductibleVat)),
+    },
+    {
+      label: "Oszczędność PIT",
+      values: leasingResults.map((result) => result.pitSaving),
+    },
+    {
+      label: "Suma opłat netto",
+      values: leasingResults.map(
+        (result) =>
+          `${new Intl.NumberFormat("pl-PL", {
+            minimumFractionDigits: 1,
+            maximumFractionDigits: 1,
+          }).format(result.netFeePercent)}%`,
+      ),
+    },
+    {
+      label: "Łączny wypływ gotówki",
+      values: leasingResults.map((result) =>
+        Math.round(result.totalCashOutflow),
+      ),
+      best: "lowest",
+    },
+    {
+      label: "Realny koszt leasingu",
+      values: leasingResults.map((result) =>
+        Math.round(result.effectiveLeaseCost),
+      ),
+      best: "lowest",
+    },
+    {
+      label: "Cały koszt z utrzymaniem",
+      values: leasingResults.map((result) =>
+        Math.round(result.effectiveOwnershipCost),
+      ),
+      best: "lowest",
+    },
+    {
+      label: "Koszt finansowania vs gotówka",
+      values: leasingResults.map((result) =>
+        Math.round(result.financingPremium),
+      ),
+      best: "lowest",
+    },
+  ];
+
   const formatValue = (label: string, value: string | number) => {
-    if (label === "Cena brutto" && typeof value === "number")
+    if (comparisonMoneyLabels.has(label) && typeof value === "number")
       return money(value);
     if (label === "Przebieg" && typeof value === "number")
       return `${new Intl.NumberFormat("pl-PL").format(value)} km`;
@@ -306,6 +466,239 @@ export function OfferComparison({
             <X />
           </button>
         </div>
+        <details className="comparisonLeaseSettings">
+          <summary>
+            <span>
+              <SlidersHorizontal />
+              <b>Wspólne parametry leasingu</b>
+              <small>
+                {leasingSettings.upfrontPercent}% wpłaty ·{" "}
+                {leasingSettings.termMonths} mies. ·{" "}
+                {leasingSettings.buyoutPercent}% wykupu ·{" "}
+                {leasingSettings.annualRatePercent}% rocznie ·{" "}
+                {leasingSettings.buyoutDestination === "private"
+                  ? "wykup prywatny"
+                  : "wykup firmowy"}
+              </small>
+            </span>
+            <em>Edytuj</em>
+          </summary>
+          <div className="comparisonLeaseFields">
+            <label>
+              Wpłata własna
+              <span>
+                <input
+                  type="number"
+                  min="0"
+                  max="90"
+                  value={leasingSettings.upfrontPercent}
+                  onChange={(event) =>
+                    updateLeasing(
+                      "upfrontPercent",
+                      numberValue(event.target.value),
+                    )
+                  }
+                />
+                <i>%</i>
+              </span>
+            </label>
+            <label>
+              Okres
+              <select
+                value={leasingSettings.termMonths}
+                onChange={(event) =>
+                  updateLeasing("termMonths", numberValue(event.target.value))
+                }
+              >
+                {[24, 36, 48, 60].map((months) => (
+                  <option value={months} key={months}>
+                    {months} miesięcy
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Wykup
+              <span>
+                <input
+                  type="number"
+                  min="0"
+                  max="70"
+                  value={leasingSettings.buyoutPercent}
+                  onChange={(event) =>
+                    updateLeasing(
+                      "buyoutPercent",
+                      numberValue(event.target.value),
+                    )
+                  }
+                />
+                <i>%</i>
+              </span>
+            </label>
+            <label>
+              Oprocentowanie
+              <span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  value={leasingSettings.annualRatePercent}
+                  onChange={(event) =>
+                    updateLeasing(
+                      "annualRatePercent",
+                      numberValue(event.target.value),
+                    )
+                  }
+                />
+                <i>% / rok</i>
+              </span>
+            </label>
+            <label>
+              Przeznaczenie wykupu
+              <select
+                value={leasingSettings.buyoutDestination}
+                onChange={(event) =>
+                  updateLeasing(
+                    "buyoutDestination",
+                    event.target.value as BuyoutDestination,
+                  )
+                }
+              >
+                <option value="private">Prywatny — bez odliczenia VAT</option>
+                <option value="business">Firmowy</option>
+              </select>
+            </label>
+            <label>
+              Opłata administracyjna netto
+              <span>
+                <input
+                  type="number"
+                  min="0"
+                  step="100"
+                  value={leasingSettings.adminFeeNet}
+                  onChange={(event) =>
+                    updateLeasing(
+                      "adminFeeNet",
+                      numberValue(event.target.value),
+                    )
+                  }
+                />
+                <i>zł</i>
+              </span>
+            </label>
+            <label>
+              OC/AC/NNW rocznie
+              <span>
+                <input
+                  type="number"
+                  min="0"
+                  max="30"
+                  step="0.1"
+                  value={leasingSettings.annualInsurancePercent}
+                  onChange={(event) =>
+                    updateLeasing(
+                      "annualInsurancePercent",
+                      numberValue(event.target.value),
+                    )
+                  }
+                />
+                <i>% ceny</i>
+              </span>
+            </label>
+            <label>
+              GAP rocznie
+              <span>
+                <input
+                  type="number"
+                  min="0"
+                  step="100"
+                  value={leasingSettings.annualGapGross}
+                  onChange={(event) =>
+                    updateLeasing(
+                      "annualGapGross",
+                      numberValue(event.target.value),
+                    )
+                  }
+                />
+                <i>zł</i>
+              </span>
+            </label>
+            <label>
+              Serwis rocznie brutto
+              <span>
+                <input
+                  type="number"
+                  min="0"
+                  step="100"
+                  value={leasingSettings.annualServiceGross}
+                  onChange={(event) =>
+                    updateLeasing(
+                      "annualServiceGross",
+                      numberValue(event.target.value),
+                    )
+                  }
+                />
+                <i>zł</i>
+              </span>
+            </label>
+            <label>
+              Rodzaj sprzedaży
+              <select
+                value={leasingSettings.vatActivity}
+                onChange={(event) =>
+                  updateLeasing(
+                    "vatActivity",
+                    event.target.value as VatActivity,
+                  )
+                }
+              >
+                <option value="uk-services">
+                  B2B dla UK — NP z odliczeniem
+                </option>
+                <option value="taxable">Opodatkowana w Polsce</option>
+                <option value="mixed">Sprzedaż mieszana</option>
+                <option value="exempt">Zwolniona — bez odliczenia</option>
+              </select>
+            </label>
+            {leasingSettings.vatActivity === "mixed" && (
+              <label>
+                Proporcja działalności
+                <span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={leasingSettings.activityDeductionPercent}
+                    onChange={(event) =>
+                      updateLeasing(
+                        "activityDeductionPercent",
+                        numberValue(event.target.value),
+                      )
+                    }
+                  />
+                  <i>%</i>
+                </span>
+              </label>
+            )}
+            <label>
+              Używanie auta
+              <select
+                value={leasingSettings.vehicleUse}
+                onChange={(event) =>
+                  updateLeasing("vehicleUse", event.target.value as VehicleUse)
+                }
+              >
+                <option value="mixed">Firmowo i prywatnie — 50% VAT</option>
+                <option value="business">Wyłącznie firmowo — 100% VAT</option>
+              </select>
+            </label>
+          </div>
+          <p>
+            Typ faktury jest brany osobno z każdej oferty. Na ryczałcie
+            oszczędność PIT pozostaje zerowa. Ubezpieczenie jest zależne od ceny
+            auta; GAP i serwis są wspólne.
+          </p>
+        </details>
         <div className="comparisonTableWrap">
           <table className="comparisonTable">
             <thead>
@@ -346,6 +739,12 @@ export function OfferComparison({
                 <th colSpan={offers.length + 1}>Parametry ofert</th>
               </tr>
               {renderRows(parameterRows)}
+              <tr className="comparisonSection leasingComparisonSection">
+                <th colSpan={offers.length + 1}>
+                  <Calculator /> Leasing — realny koszt
+                </th>
+              </tr>
+              {renderRows(leasingRows)}
             </tbody>
           </table>
         </div>

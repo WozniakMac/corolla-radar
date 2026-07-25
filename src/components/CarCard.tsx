@@ -1,5 +1,6 @@
 import {
   Bot,
+  Calculator,
   Check,
   ChevronRight,
   MapPin,
@@ -23,6 +24,7 @@ export function CarCard({
   comparisonSelected = false,
   comparisonDisabled = false,
   onToggleComparison,
+  onCalculateLease,
 }: {
   car: Car;
   score: ScoreBreakdown;
@@ -35,6 +37,7 @@ export function CarCard({
   comparisonSelected?: boolean;
   comparisonDisabled?: boolean;
   onToggleComparison?: () => void;
+  onCalculateLease?: () => void;
 }) {
   const canRunCepik = Boolean(
     car.vin && car.registrationNumber && car.firstRegistrationDate,
@@ -236,6 +239,16 @@ export function CarCard({
                   : "Sprawdź CEPiK"}
           </button>
         )}
+        <button
+          className="cardLeaseButton"
+          onClick={(event) => {
+            event.stopPropagation();
+            onCalculateLease?.();
+          }}
+        >
+          <Calculator />
+          Policz leasing
+        </button>
         <a
           className="carPermalink"
           href={`/cars/${encodeURIComponent(car.id)}`}

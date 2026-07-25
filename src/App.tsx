@@ -4,9 +4,10 @@ import { CarCard } from "./components/CarCard";
 import { CodexQueue } from "./components/CodexQueue";
 import { Filters } from "./components/Filters";
 import { MonitoringStats } from "./components/MonitoringStats";
+import { LeasingCalculator } from "./components/LeasingCalculator";
 import { ComparisonBar, OfferComparison } from "./components/OfferComparison";
 import { ScoreDrawer } from "./components/ScoreDrawer";
-import { Sidebar } from "./components/Sidebar";
+import { Sidebar, type AppView } from "./components/Sidebar";
 import { SourcePanel } from "./components/SourcePanel";
 import { money } from "./format";
 import { useRadarApi } from "./hooks/useRadarApi";
@@ -54,7 +55,8 @@ export default function App() {
     }
   };
   const [selectedId, setSelectedId] = useState<string | null>(carIdFromPath);
-  const [view, setView] = useState<"ranking" | "codex" | "stats">("ranking");
+  const [view, setView] = useState<AppView>("ranking");
+  const [leaseCarId, setLeaseCarId] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(30);
   const [verificationVisibleCount, setVerificationVisibleCount] = useState(15);
   const [comparisonMode, setComparisonMode] = useState(false);
@@ -224,16 +226,20 @@ export default function App() {
             <h1>
               {view === "ranking"
                 ? "Ranking ofert"
-                : view === "codex"
-                  ? "Weryfikacja Codex"
-                  : "Statystyki monitoringu"}
+                : view === "leasing"
+                  ? "Kalkulator leasingu"
+                  : view === "codex"
+                    ? "Weryfikacja Codex"
+                    : "Statystyki monitoringu"}
             </h1>
             <p>
               {view === "ranking"
                 ? "Zweryfikowane Corolle Touring Sports, dopasowane do Twoich kryteriów."
-                : view === "codex"
-                  ? "Ręczna kolejka uzupełniania brakujących danych w ofertach."
-                  : "Historia skanów ręcznych i automatycznego monitoringu ofert."}
+                : view === "leasing"
+                  ? "Realny koszt dla JDG na ryczałcie 12% i usług B2B dla firmy z Anglii."
+                  : view === "codex"
+                    ? "Ręczna kolejka uzupełniania brakujących danych w ofertach."
+                    : "Historia skanów ręcznych i automatycznego monitoringu ofert."}
             </p>
           </div>
           {view === "ranking" && ready && (
@@ -254,7 +260,12 @@ export default function App() {
             </button>
           )}
         </header>
-        {view === "stats" ? (
+        {view === "leasing" ? (
+          <LeasingCalculator
+            cars={cars}
+            initialCarId={leaseCarId || ranked[0]?.car.id}
+          />
+        ) : view === "stats" ? (
           <MonitoringStats
             stats={monitoringStats}
             reprocessing={reprocessing}
@@ -358,6 +369,10 @@ export default function App() {
                     comparisonIds.length >= 4 && !comparisonIds.includes(car.id)
                   }
                   onToggleComparison={() => toggleComparison(car.id)}
+                  onCalculateLease={() => {
+                    setLeaseCarId(car.id);
+                    setView("leasing");
+                  }}
                 />
               ))}
             </section>
@@ -414,6 +429,10 @@ export default function App() {
                           !comparisonIds.includes(car.id)
                         }
                         onToggleComparison={() => toggleComparison(car.id)}
+                        onCalculateLease={() => {
+                          setLeaseCarId(car.id);
+                          setView("leasing");
+                        }}
                       />
                     ))}
                 </section>

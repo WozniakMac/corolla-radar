@@ -1,10 +1,12 @@
-import { BarChart3, Bot, CarFront } from "lucide-react";
+import { BarChart3, Bot, Calculator, CarFront } from "lucide-react";
+
+export type AppView = "ranking" | "leasing" | "codex" | "stats";
 
 type Props = {
   rankedCount: number;
   onPreset: (preset: "tech2022" | "local" | "vat") => void;
-  view: "ranking" | "codex" | "stats";
-  onView: (view: "ranking" | "codex" | "stats") => void;
+  view: AppView;
+  onView: (view: AppView) => void;
   codexPending: number;
   monitoringActive: boolean;
 };
@@ -32,6 +34,12 @@ export function Sidebar({
           onClick={() => onView("ranking")}
         >
           <CarFront /> Ranking <span>{rankedCount}</span>
+        </button>
+        <button
+          className={view === "leasing" ? "active" : ""}
+          onClick={() => onView("leasing")}
+        >
+          <Calculator /> Leasing
         </button>
         <button
           className={view === "stats" ? "active" : ""}

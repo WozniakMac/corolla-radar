@@ -1226,6 +1226,10 @@ details input[type="range"] {
   background: #eaf7ef;
   color: #216b47;
 }
+.price .cardLeaseButton {
+  background: #f3edff;
+  color: #62439b;
+}
 .price .cardCepikButton:disabled {
   cursor: not-allowed;
   opacity: 0.45;
@@ -1265,6 +1269,450 @@ details input[type="range"] {
   .codexJob {
     align-items: stretch;
     flex-direction: column;
+  }
+}
+
+.leasingPage {
+  display: grid;
+  gap: 16px;
+}
+.taxProfileBanner {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  border: 1px solid #b9d9c8;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #edf8f2, #f8fcf9);
+}
+.taxProfileIcon {
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
+  background: #d8f0e2;
+  color: #17613f;
+  display: grid;
+  place-items: center;
+}
+.taxProfileIcon svg {
+  width: 22px;
+}
+.taxProfileBanner small {
+  display: block;
+  color: #278157;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+.taxProfileBanner strong {
+  display: block;
+  margin-top: 4px;
+  font: 700 15px Manrope;
+}
+.taxProfileBanner p {
+  max-width: 800px;
+  margin: 4px 0 0;
+  color: #5d7066;
+  font-size: 11px;
+  line-height: 1.45;
+}
+.taxProfileBanner > span {
+  align-self: start;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #dff2e7;
+  color: #286b4b;
+  font-size: 9px;
+  font-weight: 800;
+}
+.leasingAskBanner {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 13px;
+  padding: 15px 18px;
+  border: 1px solid #d7c9ec;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f5f1fb, #fbf9fe);
+}
+.leasingAskBanner > svg {
+  width: 25px;
+  color: #67479d;
+}
+.leasingAskBanner small {
+  display: block;
+  color: #7251a6;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+.leasingAskBanner strong {
+  display: block;
+  margin-top: 3px;
+  color: #3f3157;
+  font: 800 14px Manrope;
+}
+.leasingAskBanner p {
+  margin: 3px 0 0;
+  color: #6f657c;
+  font-size: 10px;
+  line-height: 1.45;
+}
+.leasingAskBanner > span {
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #ede5f8;
+  color: #67479d;
+  font-size: 8px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.leasingLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(330px, 0.65fr);
+  align-items: start;
+  gap: 16px;
+}
+.leasingForm,
+.leasingResults,
+.leasingKnowledge {
+  border: 1px solid #dce2de;
+  border-radius: 13px;
+  background: #fff;
+}
+.leasingForm {
+  padding: 22px;
+}
+.leasingSectionHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.leasingSectionHead > svg {
+  width: 20px;
+  color: #28704e;
+}
+.leasingSectionHead h2 {
+  margin: 0;
+  font: 800 17px Manrope;
+}
+.leasingSectionHead p {
+  margin: 3px 0 0;
+  color: #748078;
+  font-size: 11px;
+}
+.taxSettingsHead {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e5eae7;
+}
+.leasingWideField,
+.leasingFields label {
+  display: grid;
+  gap: 6px;
+  color: #5d6963;
+  font-size: 10px;
+  font-weight: 800;
+}
+.leasingWideField {
+  margin-top: 18px;
+}
+.leasingFields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 13px;
+  margin-top: 13px;
+}
+.leasingForm select,
+.leasingForm input {
+  width: 100%;
+  height: 41px;
+  border: 1px solid #d4dcd7;
+  border-radius: 8px;
+  outline: 0;
+  background: #fff;
+  color: #26342d;
+  padding: 0 11px;
+  font: 600 12px DM Sans;
+}
+.leasingForm select:focus,
+.leasingForm input:focus {
+  border-color: #2f8a5e;
+  box-shadow: 0 0 0 3px #2f8a5e18;
+}
+.inputWithSuffix {
+  position: relative;
+  display: block;
+}
+.inputWithSuffix input {
+  padding-right: 58px;
+}
+.inputWithSuffix i {
+  position: absolute;
+  top: 50%;
+  right: 11px;
+  color: #7d8882;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 700;
+  transform: translateY(-50%);
+}
+.leasingWarning {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 13px;
+  padding: 10px 11px;
+  border: 1px solid #edd5a8;
+  border-radius: 8px;
+  background: #fff8e9;
+  color: #775921;
+  font-size: 10px;
+  line-height: 1.45;
+}
+.leasingWarning svg {
+  flex: 0 0 16px;
+  width: 16px;
+}
+.leasingWarning.strong {
+  margin: 12px;
+  border-color: #e6caa4;
+  background: #fff5e6;
+}
+.leasingResults {
+  position: sticky;
+  top: 20px;
+  overflow: hidden;
+}
+.leasingResultHero {
+  padding: 24px;
+  background: #173f31;
+  color: #fff;
+}
+.leasingResultHero small,
+.leasingMetrics small,
+.leaseVsCash small {
+  display: block;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+.leasingResultHero small {
+  color: #acd0be;
+}
+.leasingResultHero strong {
+  display: block;
+  margin-top: 6px;
+  font: 800 29px Manrope;
+}
+.leasingResultHero span {
+  display: block;
+  margin-top: 3px;
+  color: #bed4c9;
+  font-size: 10px;
+}
+.leasingMetrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.leasingMetrics > div {
+  min-width: 0;
+  padding: 16px;
+  border-right: 1px solid #e4e9e6;
+  border-bottom: 1px solid #e4e9e6;
+}
+.leasingMetrics > div:nth-child(2n) {
+  border-right: 0;
+}
+.leasingMetrics small {
+  color: #7c8781;
+}
+.leasingMetrics strong {
+  display: block;
+  margin-top: 5px;
+  font: 800 16px Manrope;
+}
+.leasingMetrics span {
+  display: block;
+  margin-top: 4px;
+  color: #7d8982;
+  font-size: 9px;
+  line-height: 1.35;
+}
+.leasingMetrics .positive strong {
+  color: #17804f;
+}
+.leasingMetrics .total {
+  background: #f0f8f3;
+}
+.leasingMetrics .total strong {
+  color: #17613f;
+}
+.leaseVsCash {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 12px;
+  padding: 12px;
+  border-radius: 9px;
+  background: #f3f0fa;
+  color: #62439b;
+}
+.leaseVsCash > svg {
+  flex: 0 0 20px;
+  width: 20px;
+}
+.leaseVsCash strong {
+  display: block;
+  margin-top: 4px;
+  font: 800 15px Manrope;
+}
+.leaseVsCash span {
+  display: block;
+  margin-top: 3px;
+  color: #716682;
+  font-size: 9px;
+  line-height: 1.4;
+}
+.leasingBreakdown {
+  display: grid;
+  padding: 0 13px 10px;
+}
+.leasingBreakdown > span {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 10px;
+  padding: 8px 3px;
+  border-bottom: 1px solid #edf0ee;
+  color: #6c7872;
+  font-size: 10px;
+}
+.leasingBreakdown b {
+  color: #2c3932;
+}
+.leasingBreakdown em {
+  grid-column: 1 / -1;
+  color: #9a7134;
+  font-size: 8px;
+  font-style: normal;
+}
+.selectedLeaseOffer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 12px 12px;
+  padding: 10px;
+  border: 1px solid #dce2de;
+  border-radius: 8px;
+  color: #3e4c45;
+  text-decoration: none;
+  font-size: 9px;
+}
+.selectedLeaseOffer b {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+}
+.selectedLeaseOffer svg {
+  width: 15px;
+  color: #278157;
+}
+.leasingKnowledge {
+  padding: 22px;
+}
+.leasingChecklist {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 9px;
+  margin-top: 16px;
+}
+.leasingChecklist > div {
+  padding: 13px;
+  border: 1px solid #e1e6e3;
+  border-radius: 9px;
+  background: #fbfcfb;
+}
+.leasingChecklist strong {
+  font: 700 12px Manrope;
+}
+.leasingChecklist p {
+  margin: 6px 0 0;
+  color: #69766f;
+  font-size: 10px;
+  line-height: 1.5;
+}
+.legalSources {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #e5e9e6;
+}
+.legalSources > span {
+  flex: 1 1 450px;
+  color: #7a5d25;
+  font-size: 9px;
+  line-height: 1.45;
+}
+.legalSources a {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #28684d;
+  font-size: 9px;
+  font-weight: 800;
+  text-decoration: none;
+}
+.legalSources a svg {
+  width: 12px;
+}
+
+@media (max-width: 1050px) {
+  .leasingLayout {
+    grid-template-columns: 1fr;
+  }
+  .leasingResults {
+    position: static;
+  }
+}
+
+@media (max-width: 760px) {
+  .taxProfileBanner {
+    grid-template-columns: auto 1fr;
+    padding: 14px;
+  }
+  .taxProfileBanner > span {
+    display: none;
+  }
+  .leasingAskBanner {
+    grid-template-columns: auto 1fr;
+    padding: 13px;
+  }
+  .leasingAskBanner > span {
+    display: none;
+  }
+  .taxProfileBanner strong {
+    font-size: 12px;
+  }
+  .leasingForm,
+  .leasingKnowledge {
+    padding: 15px;
+  }
+  .leasingFields,
+  .leasingChecklist {
+    grid-template-columns: 1fr;
+  }
+  .leasingMetrics {
+    grid-template-columns: 1fr;
+  }
+  .leasingMetrics > div,
+  .leasingMetrics > div:nth-child(2n) {
+    border-right: 0;
   }
 }
 .scanButton svg {
@@ -1739,7 +2187,7 @@ details input[type="range"] {
   background: #f8faf8;
   box-shadow: 0 24px 70px #0005;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
 }
 .comparisonModalHead {
   padding: 22px 26px 18px;
@@ -1776,6 +2224,95 @@ details input[type="range"] {
 }
 .comparisonModalHead > button svg {
   width: 16px;
+}
+.comparisonLeaseSettings {
+  border-bottom: 1px solid #dbe2de;
+  background: #fff;
+}
+.comparisonLeaseSettings > summary {
+  min-height: 52px;
+  padding: 9px 26px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+}
+.comparisonLeaseSettings > summary > span {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 2px 8px;
+}
+.comparisonLeaseSettings > summary svg {
+  grid-row: 1 / 3;
+  width: 17px;
+  color: #28704e;
+}
+.comparisonLeaseSettings > summary b {
+  color: #314039;
+  font: 700 11px Manrope;
+}
+.comparisonLeaseSettings > summary small {
+  color: #77837d;
+  font-size: 9px;
+}
+.comparisonLeaseSettings > summary em {
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: #eaf3ed;
+  color: #266a4b;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 800;
+}
+.comparisonLeaseFields {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 8px;
+  padding: 0 26px 11px;
+}
+.comparisonLeaseFields label {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  color: #64716a;
+  font-size: 8px;
+  font-weight: 800;
+}
+.comparisonLeaseFields label > span {
+  position: relative;
+}
+.comparisonLeaseFields input,
+.comparisonLeaseFields select {
+  width: 100%;
+  height: 34px;
+  border: 1px solid #d4dcd7;
+  border-radius: 7px;
+  outline: 0;
+  background: #fff;
+  color: #2c3932;
+  padding: 0 9px;
+  font: 600 10px DM Sans;
+}
+.comparisonLeaseFields label > span input {
+  padding-right: 45px;
+}
+.comparisonLeaseFields label i {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  color: #828d87;
+  font-size: 8px;
+  font-style: normal;
+  transform: translateY(-50%);
+}
+.comparisonLeaseSettings > p {
+  margin: 0;
+  padding: 0 26px 12px;
+  color: #7c6750;
+  font-size: 8px;
 }
 .comparisonTableWrap {
   overflow: auto;
@@ -1834,6 +2371,15 @@ details input[type="range"] {
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+.comparisonTable .leasingComparisonSection th {
+  background: #e8f3ed;
+  color: #225f43;
+}
+.comparisonTable .leasingComparisonSection svg {
+  width: 13px;
+  margin-right: 5px;
+  vertical-align: middle;
 }
 .comparisonMetric {
   display: grid;
@@ -2297,6 +2843,21 @@ details input[type="range"] {
   }
   .comparisonModalHead p {
     display: none;
+  }
+  .comparisonLeaseSettings > summary {
+    padding: 8px 16px;
+  }
+  .comparisonLeaseSettings > summary small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .comparisonLeaseFields {
+    grid-template-columns: 1fr 1fr;
+    padding: 0 16px 10px;
+  }
+  .comparisonLeaseSettings > p {
+    padding: 0 16px 10px;
   }
   .comparisonTable tr > :first-child {
     width: 120px;
