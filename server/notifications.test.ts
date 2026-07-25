@@ -97,6 +97,40 @@ describe("TOP 5 notification summary", () => {
         ],
         ["a", "b", "c"],
       ),
-    ).toBe("1. ↑2 • 92 pkt — Corolla C\n2. NOWE • 89 pkt — Corolla Nowa");
+    ).toBe(
+      `1. ↑2 • 92 pkt — Corolla C
+${first.listings[0].url}
+2. NOWE • 89 pkt — Corolla Nowa
+${second.listings[0].url}`,
+    );
+  });
+
+  it("links to the cheapest active listing for a merged car", () => {
+    const car = {
+      ...testCars[0],
+      id: "merged",
+      title: "Corolla scalona",
+      listings: [
+        { ...testCars[0].listings[0], price: 105_000 },
+        {
+          ...testCars[0].listings[0],
+          url: "https://example.test/najtansza",
+          price: 99_000,
+        },
+        {
+          ...testCars[0].listings[0],
+          url: "https://example.test/nieaktywna",
+          price: 95_000,
+          active: false,
+        },
+      ],
+    };
+
+    expect(topFiveMessage([{ car, score: 90 }], [])).toContain(
+      "https://example.test/najtansza",
+    );
+    expect(topFiveMessage([{ car, score: 90 }], [])).not.toContain(
+      "https://example.test/nieaktywna",
+    );
   });
 });

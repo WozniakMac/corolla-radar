@@ -145,10 +145,15 @@ export function positionChangeLabel(
 export function topFiveMessage(top: RankedCar[], previousIds: string[]) {
   if (!top.length) return "Brak aut spełniających warunki TOP 5.";
   return top
-    .map(
-      ({ car, score }, index) =>
-        `${index + 1}. ${positionChangeLabel(previousIds, car.id, index)} • ${score} pkt — ${car.title}`,
-    )
+    .map(({ car, score }, index) => {
+      const listing = car.listings
+        .filter(
+          ({ active, url }) => active !== false && /^https?:\/\//i.test(url),
+        )
+        .sort((a, b) => (a.cashPrice || a.price) - (b.cashPrice || b.price))[0];
+      const line = `${index + 1}. ${positionChangeLabel(previousIds, car.id, index)} • ${score} pkt — ${car.title}`;
+      return listing?.url ? `${line}\n${listing.url}` : line;
+    })
     .join("\n");
 }
 

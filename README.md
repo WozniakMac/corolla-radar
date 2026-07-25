@@ -92,7 +92,7 @@ docker compose up -d --build
 
 Panel będzie dostępny na porcie `4174`. Katalog `./data` jest montowany jako trwały wolumen i przechowuje bazę, snapshoty pełnych stron oraz poprzedni skład TOP 5. Kontener wykonuje pierwszy skan po uruchomieniu, a następne co 240 minut.
 
-Po każdym skanie aplikacja porównuje aktualne TOP 5 z poprzednim. Zmiana składu, kolejności lub punktacji generuje jedno zbiorcze powiadomienie ntfy z listą pięciu aut, aktualnymi punktami oraz zmianą pozycji (`↑`, `↓`, `→` lub `NOWE`). Pierwszy skan tylko ustala punkt odniesienia. Zapisane filtry ograniczają ranking używany w powiadomieniu; adres tematu konfiguruje `NTFY_URL` w `compose.yaml`.
+Po każdym skanie aplikacja porównuje aktualne TOP 5 z poprzednim. Zmiana składu, kolejności lub punktacji generuje jedno zbiorcze powiadomienie ntfy z listą pięciu aut, aktualnymi punktami, zmianą pozycji (`↑`, `↓`, `→` lub `NOWE`) oraz bezpośrednim linkiem do każdego ogłoszenia. Dla auta występującego na kilku portalach wybierana jest najtańsza aktywna publikacja. Pierwszy skan tylko ustala punkt odniesienia. Zapisane filtry ograniczają ranking używany w powiadomieniu; adres tematu konfiguruje `NTFY_URL` w `compose.yaml`.
 
 Deduplication scala publikacje tylko po identycznym VIN lub identycznym znormalizowanym URL-u. Podobna cena, przebieg i rocznik nie wystarczają do scalenia.
 
