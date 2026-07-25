@@ -1,12 +1,7 @@
-import {
-  buildMarketBenchmarks,
-  effectivePrice,
-  isEligible,
-  scoreCar,
-} from "../src/scoring";
+import { buildMarketBenchmarks, isEligible, scoreCar } from "../src/scoring";
 import type { Car } from "../src/types";
 import { matchesFilters } from "../src/filters";
-import { load, save } from "./store";
+import { load, save, type TopFiveSnapshotEntry } from "./store";
 import { loadSavedFilters } from "./preferences";
 
 const normalizeIdentity = (value: string) =>
@@ -115,6 +110,48 @@ async function sendNotification(
   if (!response.ok) throw new Error(`ntfy HTTP ${response.status}`);
 }
 
+type RankedCar = {
+  car: Car;
+  score: number;
+};
+
+export function hasTopFiveChanged(
+  previous: TopFiveSnapshotEntry[],
+  current: TopFiveSnapshotEntry[],
+) {
+  return (
+    previous.length !== current.length ||
+    current.some(
+      (entry, index) =>
+        previous[index]?.id !== entry.id ||
+        previous[index]?.score !== entry.score,
+    )
+  );
+}
+
+export function positionChangeLabel(
+  previousIds: string[],
+  id: string,
+  index: number,
+) {
+  const previousIndex = previousIds.indexOf(id);
+  if (previousIndex === -1) return "NOWE";
+  const movement = previousIndex - index;
+  if (movement > 0) return `↑${movement}`;
+  if (movement < 0) return `↓${Math.abs(movement)}`;
+  return "→";
+}
+
+export function topFiveMessage(top: RankedCar[], previousIds: string[]) {
+  if (!top.length) return "Brak aut spełniających warunki TOP 5.";
+  return top
+    .map(
+      ({ car, score }, index) =>
+        `${index + 1}. ${positionChangeLabel(previousIds, car.id, index)} • ${score} pkt — ${car.title}`,
+    )
+    .join("\n");
+}
+
 export async function notifyNewTopFive() {
   const store = await load();
   const savedFilters = await loadSavedFilters();
@@ -126,93 +163,33 @@ export async function notifyNewTopFive() {
     .sort((a, b) => b.score - a.score)
     .slice(0, 5);
   const currentIds = top.map(({ car }) => car.id);
-  const previousIds = store.top5Ids;
+  const currentSnapshot = top.map(({ car, score }) => ({
+    id: car.id,
+    score,
+  }));
+  const previousSnapshot = store.top5Snapshot;
+  const previousIds =
+    previousSnapshot?.map(({ id }) => id) || store.top5Ids || [];
+  const changed = previousSnapshot
+    ? hasTopFiveChanged(previousSnapshot, currentSnapshot)
+    : store.top5Ids !== undefined &&
+      (store.top5Ids.length !== currentIds.length ||
+        currentIds.some((id, index) => store.top5Ids![index] !== id));
+
   store.top5Ids = currentIds;
-  if (!store.notifiedCarKeys) {
-    // Migracja istniejącej instalacji: wszystkie już znane auta stają się
-    // bazą, więc aktualizacja aplikacji nie odtworzy starych powiadomień.
-    store.notifiedCarKeys = [
-      ...new Set((store.cars as Car[]).flatMap(notificationKeys)),
-    ];
-    await save(store);
-    return;
-  }
-  store.notifiedPriceDropKeys ||= [];
+  store.top5Snapshot = currentSnapshot;
   await save(store);
-  if (previousIds === undefined) {
-    store.notifiedCarKeys.push(
-      ...top.flatMap(({ car }) => notificationKeys(car)),
-    );
-    store.notifiedCarKeys = [...new Set(store.notifiedCarKeys)];
-    store.notifiedPriceDropKeys = [
-      ...new Set([
-        ...store.notifiedPriceDropKeys,
-        ...(store.cars as Car[]).flatMap((car) =>
-          priceDrops(car).map((drop) => drop.key),
-        ),
-      ]),
-    ];
-    await save(store);
-    return;
-  }
+
+  // Pierwszy skan ustala punkt odniesienia. Kolejne wysyłają jeden zbiorczy
+  // alert, jeśli zmienił się skład, kolejność albo punktacja TOP 5.
+  if (!changed) return;
   const ntfyUrl = process.env.NTFY_URL;
   if (!ntfyUrl) return;
-  const notificationErrors: Error[] = [];
-  for (const { car, score } of top) {
-    const keys = notificationKeys(car);
-    const drops = pendingPriceDrops(car, store.notifiedPriceDropKeys!);
-    if (drops.length) {
-      // Obniżka jest osobnym zdarzeniem od pierwszego znalezienia auta.
-      // Zapisujemy ją przed wysłaniem, zachowując semantykę at-most-once.
-      store.notifiedPriceDropKeys.push(...drops.map((drop) => drop.key));
-      store.notifiedCarKeys.push(...keys);
-      store.notifiedCarKeys = [...new Set(store.notifiedCarKeys)];
-      await save(store);
-      const latest = drops.at(-1)!;
-      const totalDrop = latest.previousPrice - latest.price;
-      const changes = drops
-        .map(
-          (drop) =>
-            `${drop.source}: ${drop.previousPrice.toLocaleString("pl-PL")} → ${drop.price.toLocaleString("pl-PL")} zł (−${(drop.previousPrice - drop.price).toLocaleString("pl-PL")} zł)`,
-        )
-        .join("\n");
-      try {
-        await sendNotification(
-          ntfyUrl,
-          `Obniżka ceny w TOP 5: −${totalDrop.toLocaleString("pl-PL")} zł`,
-          `${car.year} • ${car.mileage.toLocaleString("pl-PL")} km • ${score}/100\n${car.title}\n${changes}`,
-          latest.url,
-          "car,money_with_wings",
-        );
-      } catch (error) {
-        notificationErrors.push(
-          error instanceof Error ? error : new Error(String(error)),
-        );
-      }
-      continue;
-    }
-    if (keys.some((key) => store.notifiedCarKeys!.includes(key))) continue;
-    // Zapis przed wysłaniem daje semantykę at-most-once: nawet restart po
-    // wysłaniu ntfy nie spowoduje ponownego powiadomienia o tym aucie.
-    store.notifiedCarKeys.push(...keys);
-    await save(store);
-    const link = car.listings.find((listing) => listing.active)?.url;
-    const message = `${car.year} • ${car.mileage.toLocaleString("pl-PL")} km • ${effectivePrice(car).toLocaleString("pl-PL")} zł • ${score}/100\n${car.title}`;
-    try {
-      await sendNotification(
-        ntfyUrl,
-        savedFilters
-          ? "Nowa Corolla w filtrowanym TOP 5"
-          : "Nowa Corolla w TOP 5",
-        message,
-        link,
-        "car,rotating_light",
-      );
-    } catch (error) {
-      notificationErrors.push(
-        error instanceof Error ? error : new Error(String(error)),
-      );
-    }
-  }
-  if (notificationErrors.length) throw notificationErrors[0];
+  await sendNotification(
+    ntfyUrl,
+    savedFilters ? "Zmiana w filtrowanym TOP 5" : "Zmiana w TOP 5",
+    topFiveMessage(top, previousIds),
+    undefined,
+    "car,bar_chart",
+  );
 }

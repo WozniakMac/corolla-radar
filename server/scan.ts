@@ -5,7 +5,13 @@ async function main() {
   const source = process.argv[2];
   if (process.env.REBUILD_STORE === "true") {
     const store = await load();
-    await save({ ...store, cars: [], jobs: [], top5Ids: undefined });
+    await save({
+      ...store,
+      cars: [],
+      jobs: [],
+      top5Ids: undefined,
+      top5Snapshot: undefined,
+    });
   }
   const statuses = await runSources(source, "cli");
   console.table(

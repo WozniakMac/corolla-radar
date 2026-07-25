@@ -51,11 +51,16 @@ export type CepikRun = {
   error?: string;
   rawData: unknown;
 };
+export type TopFiveSnapshotEntry = {
+  id: string;
+  score: number;
+};
 export type Store = {
   cars: unknown[];
   jobs: Job[];
   scanRuns?: ScanRun[];
   top5Ids?: string[];
+  top5Snapshot?: TopFiveSnapshotEntry[];
   notifiedCarKeys?: string[];
   notifiedPriceDropKeys?: string[];
   snapshots?: SnapshotMeta[];
