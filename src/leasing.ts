@@ -5,6 +5,7 @@ export type VatActivity = "uk-services" | "taxable" | "mixed" | "exempt";
 export type InvoiceKind = "vat23" | "margin";
 export type Co2Class = "zero" | "below50" | "atLeast50";
 export type BuyoutDestination = "private" | "business";
+export type PrivateBuyoutMode = "market" | "contractual-confirmed";
 
 export type LeasingInputs = {
   grossPrice: number;
@@ -22,11 +23,13 @@ export type LeasingInputs = {
   activityDeductionPercent: number;
   co2Class: Co2Class;
   buyoutDestination: BuyoutDestination;
+  privateBuyoutMode: PrivateBuyoutMode;
+  annualDepreciationPercent: number;
 };
 
 export type LeasingSettings = Omit<LeasingInputs, "grossPrice" | "invoiceKind">;
 
-export const LEASING_STORAGE_KEY = "corolla-radar:leasing-settings:v4";
+export const LEASING_STORAGE_KEY = "corolla-radar:leasing-settings:v5";
 
 export const defaultLeasingSettings: LeasingSettings = {
   upfrontPercent: 10,
@@ -41,7 +44,9 @@ export const defaultLeasingSettings: LeasingSettings = {
   vatActivity: "uk-services",
   activityDeductionPercent: 100,
   co2Class: "atLeast50",
-  buyoutDestination: "private",
+  buyoutDestination: "business",
+  privateBuyoutMode: "market",
+  annualDepreciationPercent: 10,
 };
 
 export function readLeasingSettings(): LeasingSettings {
@@ -73,6 +78,10 @@ export type LeasingResult = {
   monthlyGross: number;
   monthlyAfterVat: number;
   buyoutNet: number;
+  contractualBuyoutGross: number;
+  marketBuyoutGross: number;
+  actualBuyoutGross: number;
+  actualBuyoutNet: number;
   totalNet: number;
   totalVat: number;
   deductibleVatPercent: number;
@@ -145,25 +154,40 @@ export function calculateLeasing(input: LeasingInputs): LeasingResult {
   const adminFeeNet = Math.max(0, input.adminFeeNet);
   const totalNet =
     upfrontNet + monthlyNet * termMonths + buyoutNet + adminFeeNet;
-  const totalVat = totalNet * VAT_RATE;
   const deductibleVatPercent = effectiveVatDeduction(
     input.vatActivity,
     input.activityDeductionPercent,
     input.vehicleUse,
   );
-  const buyoutVat = buyoutNet * VAT_RATE;
+  const years = termMonths / 12;
+  const contractualBuyoutGross = buyoutNet * (1 + VAT_RATE);
+  const annualDepreciation =
+    clamp(input.annualDepreciationPercent, 0, 50) / 100;
+  const marketBuyoutGross =
+    grossPrice * Math.pow(1 - annualDepreciation, years);
+  const usesMarketBuyout =
+    input.buyoutDestination === "private" &&
+    input.privateBuyoutMode === "market";
+  const actualBuyoutGross = usesMarketBuyout
+    ? marketBuyoutGross
+    : contractualBuyoutGross;
+  const actualBuyoutNet = actualBuyoutGross / (1 + VAT_RATE);
+  const buyoutVat = actualBuyoutGross - actualBuyoutNet;
   const deductibleVatOnBuyout =
     input.buyoutDestination === "business"
       ? buyoutVat * deductibleVatPercent
       : 0;
+  const feesNetExcludingBuyout = totalNet - buyoutNet;
+  const feesVatExcludingBuyout = feesNetExcludingBuyout * VAT_RATE;
+  const totalVat = feesVatExcludingBuyout + buyoutVat;
   const deductibleVat =
-    (totalVat - buyoutVat) * deductibleVatPercent + deductibleVatOnBuyout;
-  const totalCashOutflow = totalNet + totalVat;
+    feesVatExcludingBuyout * deductibleVatPercent + deductibleVatOnBuyout;
+  const totalCashOutflow =
+    feesNetExcludingBuyout * (1 + VAT_RATE) + actualBuyoutGross;
   const effectiveLeaseCost = totalCashOutflow - deductibleVat;
   const monthlyGross = monthlyNet * (1 + VAT_RATE);
   const monthlyAfterVat =
     monthlyGross - monthlyNet * VAT_RATE * deductibleVatPercent;
-  const years = termMonths / 12;
   const annualInsuranceGross =
     grossPrice * (clamp(input.annualInsurancePercent, 0, 30) / 100);
   const totalInsuranceGross = annualInsuranceGross * years;
@@ -194,6 +218,10 @@ export function calculateLeasing(input: LeasingInputs): LeasingResult {
     monthlyGross,
     monthlyAfterVat,
     buyoutNet,
+    contractualBuyoutGross,
+    marketBuyoutGross,
+    actualBuyoutGross,
+    actualBuyoutNet,
     totalNet,
     totalVat,
     deductibleVatPercent,

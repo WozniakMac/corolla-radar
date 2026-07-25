@@ -6,10 +6,11 @@ Widok „Leasing” przelicza orientacyjny harmonogram i realny koszt po odlicze
 VAT dla profilu JDG na ryczałcie. Rozróżnia FV 23% od VAT-marża, użytek mieszany
 od wyłącznie firmowego oraz sprzedaż zagraniczną NP z prawem do odliczenia od
 sprzedaży zwolnionej. Parametry kalkulatora są zapisywane lokalnie w przeglądarce.
-Domyślny scenariusz zakłada prywatny wykup, dlatego VAT z faktury wykupowej nie
-jest ujmowany jako podatek do odliczenia. Dodatkowy budżet uwzględnia OC/AC/NNW,
-GAP oraz serwis przez cały okres umowy; paliwo, opony i nieplanowane naprawy
-pozostają poza kalkulacją.
+Domyślny scenariusz zakłada firmowy wykup po cenie z harmonogramu. Przy wykupie
+prywatnym kalkulator stosuje prognozowaną cenę rynkową; umowną cenę 1% można
+wybrać tylko jako pisemnie potwierdzony wyjątek. Dodatkowy budżet uwzględnia
+OC/AC/NNW, GAP oraz serwis przez cały okres umowy; paliwo, opony i nieplanowane
+naprawy pozostają poza kalkulacją.
 
 ## Uruchomienie
 

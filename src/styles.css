@@ -2381,6 +2381,18 @@ details input[type="range"] {
   margin-right: 5px;
   vertical-align: middle;
 }
+.comparisonTable .comparisonLeaseNotice td {
+  padding: 10px 14px;
+  border-bottom-color: #d7e6dc;
+  background: #f5faf7;
+  color: #52665a;
+  font-size: 10px;
+  line-height: 1.5;
+}
+.comparisonTable .comparisonLeaseNotice strong {
+  margin-right: 5px;
+  color: #225f43;
+}
 .comparisonMetric {
   display: grid;
   gap: 6px;

@@ -19,6 +19,7 @@ import {
   type InvoiceKind,
   type LeasingInputs,
   type LeasingSettings,
+  type PrivateBuyoutMode,
   type VatActivity,
   type VehicleUse,
 } from "../leasing";
@@ -123,14 +124,13 @@ export function LeasingCalculator({
         <div>
           <small>REALISTYCZNY SCENARIUSZ BAZOWY DLA UŻYWANEJ COROLLI</small>
           <strong>
-            10% wpłaty · 36 miesięcy · 1% wykupu · ok. 7,5% rocznie
+            10% wpłaty · 36 miesięcy · firmowy wykup 1% · ok. 7,5% rocznie
           </strong>
           <p>
             Przyjmujemy ok. 112% sumy opłat netto, czyli ofertę możliwą do
             uzyskania bez zakładania najlepszej promocji. Wynik do 110% traktuj
-            jako dobrą ofertę. Zawsze wymagaj pisemnego potwierdzenia, że
-            faktura wykupu bez NIP może być wystawiona na Ciebie prywatnie po
-            cenie 1% z umowy — nie po wartości rynkowej.
+            jako dobrą ofertę. Prywatny nabywca zwykle płaci cenę rynkową, a nie
+            1% z harmonogramu.
           </p>
         </div>
         <span>Szacunek rynkowy, nie oferta</span>
@@ -242,13 +242,57 @@ export function LeasingCalculator({
                 }
               >
                 <option value="private">
-                  Prywatny — faktura bez NIP, bez odliczenia VAT
+                  Prywatny — zwykle cena rynkowa, bez odliczenia VAT
                 </option>
                 <option value="business">
-                  Firmowy — odliczenie VAT według profilu
+                  Firmowy — umowny wykup, odliczenie VAT według profilu
                 </option>
               </select>
             </label>
+            {settings.buyoutDestination === "private" && (
+              <>
+                <label>
+                  Cena prywatnego wykupu
+                  <select
+                    value={settings.privateBuyoutMode}
+                    onChange={(e) =>
+                      update(
+                        "privateBuyoutMode",
+                        e.target.value as PrivateBuyoutMode,
+                      )
+                    }
+                  >
+                    <option value="market">
+                      Przewidywana cena rynkowa — standard
+                    </option>
+                    <option value="contractual-confirmed">
+                      Umowny 1% — mam pisemne potwierdzenie
+                    </option>
+                  </select>
+                </label>
+                {settings.privateBuyoutMode === "market" && (
+                  <label>
+                    Zakładany spadek wartości auta
+                    <span className="inputWithSuffix">
+                      <input
+                        type="number"
+                        min="0"
+                        max="50"
+                        step="0.5"
+                        value={settings.annualDepreciationPercent}
+                        onChange={(e) =>
+                          update(
+                            "annualDepreciationPercent",
+                            numberValue(e.target.value),
+                          )
+                        }
+                      />
+                      <i>% / rok</i>
+                    </span>
+                  </label>
+                )}
+              </>
+            )}
             <label>
               Oprocentowanie nominalne
               <span className="inputWithSuffix">
@@ -509,10 +553,20 @@ export function LeasingCalculator({
               </b>
             </span>
             <span>
-              Wykup brutto
-              <b>{money(Math.round(result.buyoutNet * 1.23))}</b>
+              {settings.buyoutDestination === "private" &&
+              settings.privateBuyoutMode === "market"
+                ? "Przewidywany wykup prywatny"
+                : "Wykup brutto"}
+              <b>{money(Math.round(result.actualBuyoutGross))}</b>
               {settings.buyoutDestination === "private" && (
-                <em>VAT z prywatnego wykupu nie jest odliczany</em>
+                <em>
+                  VAT z prywatnego wykupu nie jest odliczany
+                  {settings.privateBuyoutMode === "market"
+                    ? `; umowny wykup dla JDG: ${money(
+                        Math.round(result.contractualBuyoutGross),
+                      )}`
+                    : ""}
+                </em>
               )}
             </span>
             <span>
@@ -525,11 +579,14 @@ export function LeasingCalculator({
                 %
               </b>
               <em>
-                {result.netFeePercent <= 110
-                  ? "dobra oferta — poniżej 110%"
-                  : result.netFeePercent <= 113
-                    ? "realistyczny przedział rynkowy: 110–113%"
-                    : "drogo — porównaj ofertę z innym leasingodawcą"}
+                {settings.buyoutDestination === "private" &&
+                settings.privateBuyoutMode === "market"
+                  ? "harmonogram firmowy; nie obejmuje prywatnej ceny rynkowej"
+                  : result.netFeePercent <= 110
+                    ? "dobra oferta — poniżej 110%"
+                    : result.netFeePercent <= 113
+                      ? "realistyczny przedział rynkowy: 110–113%"
+                      : "drogo — porównaj ofertę z innym leasingodawcą"}
               </em>
             </span>
             <span>
@@ -571,24 +628,40 @@ export function LeasingCalculator({
             <div className="leasingWarning strong">
               <CircleAlert />
               <span>
-                Auto bez FV 23% jest mniej korzystne: cała cena brutto staje się
-                bazą finansowania, a usługa leasingu nadal jest fakturowana z
-                23% VAT. Potwierdź, czy leasingodawca w ogóle sfinansuje tę
-                ofertę.
+                Dla oferty bez potwierdzonej FV 23% liczymy wariant ostrożny:
+                cała cena brutto staje się bazą finansowania, a usługa leasingu
+                nadal jest fakturowana z 23% VAT. Brak znacznika FV 23% w
+                ogłoszeniu nie dowodzi VAT-marży — potwierdź dokument sprzedaży
+                i możliwość finansowania u leasingodawcy.
               </span>
             </div>
           )}
-          {settings.buyoutDestination === "private" && (
-            <div className="leasingWarning strong">
-              <CircleAlert />
-              <span>
-                Warunek krytyczny: uzyskaj przed podpisaniem umowy potwierdzenie
-                prywatnej faktury po umownej cenie wykupu. Niektórzy
-                leasingodawcy sprzedają osobie fizycznej wyłącznie po cenie
-                rynkowej — wtedy 1% z harmonogramu nie obowiązuje.
-              </span>
-            </div>
-          )}
+          {settings.buyoutDestination === "private" &&
+            settings.privateBuyoutMode === "market" && (
+              <div className="leasingWarning strong">
+                <CircleAlert />
+                <span>
+                  Prywatny wykup jest liczony po przewidywanej wartości rynkowej
+                  auta. Przy takim wariancie leasing zazwyczaj przestaje być
+                  ekonomiczny, bo umowny wykup 1% przysługuje JDG, a nie
+                  prywatnemu nabywcy. Kalkulacja nie zakłada zwrotu nadwyżki ze
+                  sprzedaży na rzecz JDG — jeśli leasingodawca go przewiduje,
+                  musi to wynikać z indywidualnego rozliczenia umowy.
+                </span>
+              </div>
+            )}
+          {settings.buyoutDestination === "private" &&
+            settings.privateBuyoutMode === "contractual-confirmed" && (
+              <div className="leasingWarning strong">
+                <CircleAlert />
+                <span>
+                  Ten wariant jest wyjątkiem. Używaj go tylko, jeśli
+                  leasingodawca potwierdził w umowie lub OWUL fakturę bez NIP po
+                  umownej cenie wykupu — nie wystarczy ustna deklaracja
+                  sprzedawcy.
+                </span>
+              </div>
+            )}
           {selectedCar && (
             <a
               className="selectedLeaseOffer"

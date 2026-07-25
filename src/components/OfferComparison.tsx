@@ -7,6 +7,7 @@ import {
   saveLeasingSettings,
   type BuyoutDestination,
   type LeasingSettings,
+  type PrivateBuyoutMode,
   type VatActivity,
   type VehicleUse,
 } from "../leasing";
@@ -32,9 +33,12 @@ const yesNo = (value: boolean | undefined) =>
 
 const comparisonMoneyLabels = new Set([
   "Cena brutto",
+  "Podstawa rat netto",
   "Rata brutto",
   "Rata po VAT",
   "Rata + utrzymanie / mies.",
+  "Wykup z harmonogramu",
+  "Faktyczny wykup",
   "VAT do odliczenia",
   "Łączny wypływ gotówki",
   "Realny koszt leasingu",
@@ -153,6 +157,9 @@ export function OfferComparison({
       invoiceKind: car.vat23 ? "vat23" : "margin",
     }),
   );
+  const comparesDifferentInvoiceKinds =
+    offers.some(({ car }) => car.vat23) &&
+    offers.some(({ car }) => !car.vat23);
 
   const scoreRows: ComparisonRow[] = [
     {
@@ -267,8 +274,10 @@ export function OfferComparison({
       best: "lowest",
     },
     {
-      label: "Faktura VAT 23%",
-      values: offers.map(({ car }) => yesNo(car.vat23)),
+      label: "Status FV 23%",
+      values: offers.map(({ car }) =>
+        car.vat23 ? "Potwierdzona w ogłoszeniu" : "Niepotwierdzona",
+      ),
     },
     {
       label: "Gwarancja Toyota",
@@ -288,16 +297,38 @@ export function OfferComparison({
     {
       label: "Dokument auta",
       values: offers.map(({ car }) =>
-        car.vat23 ? "Faktura VAT 23%" : "VAT-marża / brak FV 23%",
+        car.vat23
+          ? "Faktura VAT 23%"
+          : "Brak znacznika FV 23% — wariant ostrożny",
       ),
+    },
+    {
+      label: "Podstawa rat netto",
+      values: leasingResults.map((result) => Math.round(result.assetBaseNet)),
+      best: "lowest",
     },
     {
       label: "Sposób wykupu",
       values: offers.map(() =>
         leasingSettings.buyoutDestination === "private"
-          ? "Prywatny — bez odliczenia VAT"
-          : "Firmowy",
+          ? leasingSettings.privateBuyoutMode === "market"
+            ? "Prywatny — przewidywana cena rynkowa"
+            : "Prywatny — umowna cena potwierdzona"
+          : "Firmowy — umowna cena",
       ),
+    },
+    {
+      label: "Wykup z harmonogramu",
+      values: leasingResults.map((result) =>
+        Math.round(result.contractualBuyoutGross),
+      ),
+    },
+    {
+      label: "Faktyczny wykup",
+      values: leasingResults.map((result) =>
+        Math.round(result.actualBuyoutGross),
+      ),
+      best: "lowest",
     },
     {
       label: "Rata brutto",
@@ -477,7 +508,9 @@ export function OfferComparison({
                 {leasingSettings.buyoutPercent}% wykupu ·{" "}
                 {leasingSettings.annualRatePercent}% rocznie ·{" "}
                 {leasingSettings.buyoutDestination === "private"
-                  ? "wykup prywatny"
+                  ? leasingSettings.privateBuyoutMode === "market"
+                    ? "prywatny po cenie rynkowej"
+                    : "prywatny 1% potwierdzony"
                   : "wykup firmowy"}
               </small>
             </span>
@@ -565,9 +598,51 @@ export function OfferComparison({
                 }
               >
                 <option value="private">Prywatny — bez odliczenia VAT</option>
-                <option value="business">Firmowy</option>
+                <option value="business">Firmowy — umowna cena</option>
               </select>
             </label>
+            {leasingSettings.buyoutDestination === "private" && (
+              <>
+                <label>
+                  Cena prywatnego wykupu
+                  <select
+                    value={leasingSettings.privateBuyoutMode}
+                    onChange={(event) =>
+                      updateLeasing(
+                        "privateBuyoutMode",
+                        event.target.value as PrivateBuyoutMode,
+                      )
+                    }
+                  >
+                    <option value="market">Przewidywana cena rynkowa</option>
+                    <option value="contractual-confirmed">
+                      Umowny 1% — potwierdzony pisemnie
+                    </option>
+                  </select>
+                </label>
+                {leasingSettings.privateBuyoutMode === "market" && (
+                  <label>
+                    Spadek wartości auta
+                    <span>
+                      <input
+                        type="number"
+                        min="0"
+                        max="50"
+                        step="0.5"
+                        value={leasingSettings.annualDepreciationPercent}
+                        onChange={(event) =>
+                          updateLeasing(
+                            "annualDepreciationPercent",
+                            numberValue(event.target.value),
+                          )
+                        }
+                      />
+                      <i>% / rok</i>
+                    </span>
+                  </label>
+                )}
+              </>
+            )}
             <label>
               Opłata administracyjna netto
               <span>
@@ -744,6 +819,18 @@ export function OfferComparison({
                   <Calculator /> Leasing — realny koszt
                 </th>
               </tr>
+              {comparesDifferentInvoiceKinds && (
+                <tr className="comparisonLeaseNotice">
+                  <td colSpan={offers.length + 1}>
+                    <strong>Dlaczego raty tak się różnią?</strong>
+                    Dla auta z FV 23% kalkulator finansuje cenę netto. Gdy
+                    ogłoszenie nie potwierdza FV 23%, ostrożnie przyjmuje całą
+                    cenę brutto jako podstawę, a leasing nadal dolicza 23% VAT.
+                    Brak znacznika w ogłoszeniu nie dowodzi VAT-marży — dokument
+                    sprzedaży trzeba potwierdzić u sprzedawcy.
+                  </td>
+                </tr>
+              )}
               {renderRows(leasingRows)}
             </tbody>
           </table>

@@ -21,6 +21,8 @@ const base: LeasingInputs = {
   activityDeductionPercent: 100,
   co2Class: "atLeast50",
   buyoutDestination: "private",
+  privateBuyoutMode: "contractual-confirmed",
+  annualDepreciationPercent: 10,
 };
 
 describe("kalkulator leasingu JDG", () => {
@@ -58,6 +60,23 @@ describe("kalkulator leasingu JDG", () => {
     expect(businessBuyout.deductibleVatOnBuyout).toBeGreaterThan(0);
     expect(privateBuyout.effectiveLeaseCost).toBeGreaterThan(
       businessBuyout.effectiveLeaseCost,
+    );
+  });
+
+  it("uses projected market value for a private buyout unless 1% is confirmed", () => {
+    const confirmed = calculateLeasing({ ...base, buyoutPercent: 1 });
+    const market = calculateLeasing({
+      ...base,
+      privateBuyoutMode: "market",
+      buyoutPercent: 1,
+    });
+    expect(market.marketBuyoutGross).toBeCloseTo(123_000 * 0.9 ** 3);
+    expect(market.actualBuyoutGross).toBe(market.marketBuyoutGross);
+    expect(market.actualBuyoutGross).toBeGreaterThan(
+      market.contractualBuyoutGross,
+    );
+    expect(market.effectiveLeaseCost).toBeGreaterThan(
+      confirmed.effectiveLeaseCost,
     );
   });
 
