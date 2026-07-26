@@ -1,13 +1,58 @@
 import { spawn } from "node:child_process";
-import { readFile, unlink } from "node:fs/promises";
+import { mkdir, readFile, unlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 
-function runCodex(args: string[]) {
+export function codexApiKeyConfigured(env: NodeJS.ProcessEnv = process.env) {
+  return Boolean(env.OPENAI_API_KEY?.trim());
+}
+
+export function requireCodexApiKey(env: NodeJS.ProcessEnv = process.env) {
+  const apiKey = env.OPENAI_API_KEY?.trim();
+  if (!apiKey)
+    throw new Error(
+      "Brak OPENAI_API_KEY. Ustaw klucz jako zmienną ENV kontenera.",
+    );
+  return apiKey;
+}
+
+export function codexEnvironment(
+  apiKey: string,
+  codexHome: string,
+  parent: NodeJS.ProcessEnv = process.env,
+) {
+  const inherited = [
+    "PATH",
+    "HOME",
+    "TMPDIR",
+    "LANG",
+    "LC_ALL",
+    "HTTPS_PROXY",
+    "HTTP_PROXY",
+    "NO_PROXY",
+    "SSL_CERT_FILE",
+    "NODE_EXTRA_CA_CERTS",
+  ];
+  return {
+    ...Object.fromEntries(
+      inherited.flatMap((key) =>
+        parent[key] === undefined ? [] : [[key, parent[key]]],
+      ),
+    ),
+    CODEX_HOME: codexHome,
+    OPENAI_API_KEY: apiKey,
+  };
+}
+
+async function runCodex(args: string[]) {
+  const apiKey = requireCodexApiKey();
+  const isolatedCodexHome = resolve(tmpdir(), "corolla-radar-codex");
+  await mkdir(isolatedCodexHome, { recursive: true });
   return new Promise<void>((resolve, reject) => {
     const child = spawn("codex", args, {
       stdio: ["ignore", "ignore", "pipe"],
+      env: codexEnvironment(apiKey, isolatedCodexHome),
     });
     let stderr = "";
     child.stderr.on("data", (chunk) => {

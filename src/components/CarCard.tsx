@@ -83,6 +83,19 @@ export function CarCard({
         comparisonSelected ? "comparisonSelected" : ""
       }`}
       onClick={comparisonMode ? onToggleComparison : onSelect}
+      onKeyDown={(event) => {
+        if (
+          comparisonMode ||
+          event.currentTarget !== event.target ||
+          !["Enter", " "].includes(event.key)
+        )
+          return;
+        event.preventDefault();
+        onSelect();
+      }}
+      role="group"
+      tabIndex={comparisonMode ? -1 : 0}
+      aria-label={`Oferta: ${car.title}. Naciśnij Enter, aby otworzyć szczegóły.`}
     >
       {comparisonMode && (
         <button

@@ -1,16 +1,20 @@
-import { parseWithCodex } from "./codexFallback";
+import {
+  codexApiKeyConfigured,
+  parseWithCodex,
+  requireCodexApiKey,
+} from "./codexFallback";
 import { calculateCodexPotential } from "./codexPotential";
 import { isDecisionMissing, missingListingFields } from "./codexMissing";
 import { fetchAndParse } from "./parser";
 import { upsertParsedCar } from "./pipeline";
-import { load, save, type Job } from "./store";
+import { load, save, type Job, type Store } from "./store";
 import { notifyNewTopFive } from "./notifications";
 
 let workerRunning = false;
 let currentJobId: string | null = null;
 
-export const publicJobs = async () => {
-  const store = await load();
+export const publicJobs = async (providedStore?: Store) => {
+  const store = providedStore || (await load());
   const jobs = store.jobs
     .map((job) => ({
       ...job,
@@ -33,7 +37,11 @@ export const publicJobs = async () => {
     .map(({ input: _input, ...job }) => job);
 };
 
-export const workerState = () => ({ workerRunning, currentJobId });
+export const workerState = () => ({
+  workerRunning,
+  currentJobId,
+  authConfigured: codexApiKeyConfigured(),
+});
 
 export async function recoverInterruptedJobs() {
   const db = await load();
@@ -62,6 +70,7 @@ export async function recoverInterruptedJobs() {
 }
 
 export async function queueOne(id: string, force = false) {
+  requireCodexApiKey();
   const db = await load();
   const job = db.jobs.find((item) => item.id === id);
   if (!job) throw new Error("Nie znaleziono zadania Codex");
@@ -79,6 +88,7 @@ export async function queueOne(id: string, force = false) {
 }
 
 export async function queueAllPending() {
+  requireCodexApiKey();
   const db = await load();
   let count = 0;
   for (const job of db.jobs) {

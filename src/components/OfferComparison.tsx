@@ -158,8 +158,7 @@ export function OfferComparison({
     }),
   );
   const comparesDifferentInvoiceKinds =
-    offers.some(({ car }) => car.vat23) &&
-    offers.some(({ car }) => !car.vat23);
+    offers.some(({ car }) => car.vat23) && offers.some(({ car }) => !car.vat23);
 
   const scoreRows: ComparisonRow[] = [
     {
@@ -493,6 +492,7 @@ export function OfferComparison({
             type="button"
             onClick={onClose}
             aria-label="Zamknij porównanie"
+            autoFocus
           >
             <X />
           </button>

@@ -3,4 +3,6 @@ dist/
 *.tsbuildinfo
 .DS_Store
 data/store.json
+data/store.json.bak
+data/store.json.*.tmp
 data/snapshots/

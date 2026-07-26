@@ -29,6 +29,14 @@ describe("portal discovery", () => {
     ]);
   });
 
+  it("rejects a matching path hosted outside the selected portal", () => {
+    const html =
+      '<a href="https://attacker.example/osobowe/oferta/corolla">auto</a>';
+    expect(
+      extractCandidates(html, "https://www.otomoto.pl/osobowe", "otomoto"),
+    ).toEqual([]);
+  });
+
   it("builds portal-specific pagination URLs", () => {
     expect(
       paginatedUrl("https://pewneauto.pl/oferty?brand=toyota", "pewneauto", 4),

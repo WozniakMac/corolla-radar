@@ -65,7 +65,12 @@ export function ScoreDrawer({
         aria-labelledby="car-detail-title"
         onClick={(e) => e.stopPropagation()}
       >
-        <button className="close" onClick={onClose} aria-label="Zamknij">
+        <button
+          className="close"
+          onClick={onClose}
+          aria-label="Zamknij"
+          autoFocus
+        >
           <X />
         </button>
         <small>

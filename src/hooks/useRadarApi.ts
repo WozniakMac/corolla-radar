@@ -29,32 +29,38 @@ export function useRadarApi() {
   const [currentCodexJobId, setCurrentCodexJobId] = useState<string | null>(
     null,
   );
+  const [codexAuthConfigured, setCodexAuthConfigured] = useState(false);
   const [monitoringStats, setMonitoringStats] = useState<MonitoringStats>({
     scheduled: false,
     intervalMinutes: 240,
     runs: [],
   });
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (full = false) => {
     try {
-      const [stored, sourceState, codexState, statsState, preferences] =
-        await Promise.all([
-          fetch("/api/cars").then((response) => response.json()),
-          fetch("/api/sources").then((response) => response.json()),
-          fetch("/api/codex/jobs").then((response) => response.json()),
-          fetch("/api/stats").then((response) => response.json()),
-          fetch("/api/preferences/filters").then((response) => response.json()),
+      const request = async (url: string) => {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);
+        return response.json();
+      };
+      const status = await request("/api/status");
+      setSources(status.sources);
+      setCodexJobs(status.codex.jobs);
+      setCurrentCodexJobId(status.codex.currentJobId);
+      setCodexAuthConfigured(Boolean(status.codex.authConfigured));
+      setMonitoringStats(status.stats);
+      setScanning(Boolean(status.stats.activeScan));
+      if (full) {
+        const [stored, preferences] = await Promise.all([
+          request("/api/cars"),
+          request("/api/preferences/filters"),
         ]);
-      setCars(stored as Car[]);
-      setSources(sourceState);
-      setCodexJobs(codexState.jobs);
-      setCurrentCodexJobId(codexState.currentJobId);
-      setMonitoringStats(statsState);
-      setScanning(Boolean(statsState.activeScan));
-      setSavedFilters(
-        preferences.filters ? normalizeFilters(preferences.filters) : null,
-      );
-      setPreferencesLoaded(true);
+        setCars(stored as Car[]);
+        setSavedFilters(
+          preferences.filters ? normalizeFilters(preferences.filters) : null,
+        );
+        setPreferencesLoaded(true);
+      }
     } catch {
       // Static production preview can work without the API.
     } finally {
@@ -63,9 +69,13 @@ export function useRadarApi() {
   }, []);
 
   useEffect(() => {
-    void refresh();
-    const timer = window.setInterval(refresh, 5_000);
-    return () => window.clearInterval(timer);
+    void refresh(true);
+    const statusTimer = window.setInterval(() => void refresh(false), 5_000);
+    const dataTimer = window.setInterval(() => void refresh(true), 60_000);
+    return () => {
+      window.clearInterval(statusTimer);
+      window.clearInterval(dataTimer);
+    };
   }, [refresh]);
 
   useEffect(() => {
@@ -84,7 +94,7 @@ export function useRadarApi() {
       });
       const body = await response.json();
       if (!response.ok) throw new Error(body.error);
-      await refresh();
+      await refresh(false);
       setNotice({ type: "success", text: "Skan został uruchomiony." });
     } catch (error) {
       setScanning(false);
@@ -146,17 +156,43 @@ export function useRadarApi() {
   };
 
   const processCodex = async (id: string, force = false) => {
-    await fetch(`/api/codex/jobs/${id}/process`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ force }),
-    });
-    await refresh();
+    try {
+      const response = await fetch(`/api/codex/jobs/${id}/process`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ force }),
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error || "Błąd kolejki Codex");
+      await refresh(true);
+    } catch (error) {
+      setNotice({
+        type: "error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Nie udało się uruchomić Codex.",
+      });
+    }
   };
 
   const processAllCodex = async () => {
-    await fetch("/api/codex/jobs/process-all", { method: "POST" });
-    await refresh();
+    try {
+      const response = await fetch("/api/codex/jobs/process-all", {
+        method: "POST",
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error || "Błąd kolejki Codex");
+      await refresh(true);
+    } catch (error) {
+      setNotice({
+        type: "error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Nie udało się uruchomić Codex.",
+      });
+    }
   };
 
   const processCepik = async (id: string) => {
@@ -169,7 +205,7 @@ export function useRadarApi() {
       );
       const body = await response.json();
       if (!response.ok) throw new Error(body.error || "Błąd kolejki CEPiK");
-      await refresh();
+      await refresh(true);
       setNotice({
         type: "success",
         text: "Oferta została dodana do kolejki CEPiK.",
@@ -193,7 +229,7 @@ export function useRadarApi() {
       });
       const body = await response.json();
       if (!response.ok) throw new Error(body.error);
-      await refresh();
+      await refresh(true);
       return body;
     } finally {
       setReprocessing(false);
@@ -209,6 +245,7 @@ export function useRadarApi() {
     runScan,
     codexJobs,
     currentCodexJobId,
+    codexAuthConfigured,
     processCodex,
     processAllCodex,
     processCepik,

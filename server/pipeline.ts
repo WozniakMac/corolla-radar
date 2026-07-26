@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { adapters } from "./adapters";
-import type { SourceStatus } from "./adapters/types";
+import type { SourceId, SourceStatus } from "./adapters/types";
 import { fetchAndParse, parseListingHtml } from "./parser";
 import { load, save } from "./store";
 import { distanceFromPoznan } from "./distance";
@@ -8,7 +8,13 @@ import { notifyNewTopFive } from "./notifications";
 import type { Store } from "./store";
 import { isDecisionMissing, missingListingFields } from "./codexMissing";
 import { equipmentEvidence } from "./equipmentEvidence";
-import { latestSnapshots, readSnapshot, saveSnapshot } from "./snapshots";
+import {
+  deletePrunedSnapshotFiles,
+  latestSnapshots,
+  pruneSnapshots,
+  readSnapshot,
+  saveSnapshot,
+} from "./snapshots";
 
 const hasHeatedSeats = (text: string) =>
   equipmentEvidence(
@@ -61,23 +67,6 @@ export function recordPriceObservation(
   return history;
 }
 
-const descriptionSimilarity = (left = "", right = "") => {
-  const tokens = (value: string) =>
-    new Set(
-      value
-        .toLowerCase()
-        .replace(/[^a-ząćęłńóśźż0-9]+/gi, " ")
-        .split(/\s+/)
-        .filter((word) => word.length >= 4)
-        .slice(0, 500),
-    );
-  const a = tokens(left);
-  const b = tokens(right);
-  if (a.size < 8 || b.size < 8) return 0;
-  const common = [...a].filter((word) => b.has(word)).length;
-  return common / Math.min(a.size, b.size);
-};
-
 const equipmentKeys = [
   "heatedWiperArea",
   "rainSensor",
@@ -92,7 +81,7 @@ const equipmentKeys = [
   "toyotaWarranty",
 ] as const;
 
-const statuses = new Map(
+const statuses: Map<SourceId, SourceStatus> = new Map(
   adapters.map((a) => [
     a.id,
     {
@@ -290,13 +279,7 @@ export function upsertParsedCar(
       (p.vin && car.vin === p.vin) ||
       car.listings?.some(
         (l: any) => normalize(l.url) === normalize(p.finalUrl),
-      ) ||
-      ((!p.vin || !car.vin || p.vin === car.vin) &&
-        car.year === p.year &&
-        car.mileage === p.mileage &&
-        car.price === p.price &&
-        car.location === (p.location || "Do uzupełnienia") &&
-        descriptionSimilarity(car.description, p.description) >= 0.65),
+      ),
   );
   const listing = {
     source,
@@ -575,7 +558,9 @@ export async function runSources(
             );
           }
         }
+        const prunedSnapshotIds = await pruneSnapshots(db);
         await save(db);
+        await deletePrunedSnapshotFiles(prunedSnapshotIds);
         status.lastSuccess = new Date().toISOString();
       } catch (error) {
         status.errors.push(
@@ -606,7 +591,9 @@ export async function runSources(
       errors: relevant.reduce((sum, item) => sum + item.errors.length, 0),
     });
     db.scanRuns = db.scanRuns.slice(-500);
+    const prunedSnapshotIds = await pruneSnapshots(db);
     await save(db);
+    await deletePrunedSnapshotFiles(prunedSnapshotIds);
     return result;
   } finally {
     activeScan = undefined;
@@ -658,7 +645,9 @@ export async function reprocessSavedSnapshots() {
     db.cars = (db.cars as any[]).filter((car) =>
       car.listings?.some((listing: any) => listing.active),
     );
+    const prunedSnapshotIds = await pruneSnapshots(db);
     await save(db);
+    await deletePrunedSnapshotFiles(prunedSnapshotIds);
     await notifyNewTopFive({
       trigger: "reprocess",
       source: "snapshots",

@@ -6,12 +6,18 @@ const allowedPaths: Record<SourceId, RegExp> = {
   otomoto: /^\/osobowe\/oferta\//,
   olx: /^\/d\/oferta\//,
 };
+const allowedHosts: Record<SourceId, RegExp> = {
+  pewneauto: /(^|\.)pewneauto\.pl$/i,
+  otomoto: /(^|\.)otomoto\.pl$/i,
+  olx: /(^|\.)olx\.pl$/i,
+};
 
 export function extractCandidates(html: string, baseUrl: string, id: SourceId) {
   const candidates = new Map<string, Candidate>();
   const add = (href: string) => {
     try {
       const url = new URL(href.replaceAll("\\/", "/"), baseUrl);
+      if (!allowedHosts[id].test(url.hostname)) return;
       if (!allowedPaths[id].test(url.pathname)) return;
       url.search = "";
       url.hash = "";

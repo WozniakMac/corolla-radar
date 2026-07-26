@@ -12,9 +12,13 @@ services:
       SCAN_INTERVAL_MINUTES: 240
       ENABLE_CEPIK: "true"
       CEPIK_INTERVAL_SECONDS: 300
+      SNAPSHOT_RETENTION_DAYS: 90
+      SNAPSHOT_VERSIONS_PER_URL: 5
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       NTFY_URL: ${NTFY_URL:-}
       APP_PUBLIC_URL: ${APP_PUBLIC_URL:-http://192.168.2.47:4174}
+      APP_USERNAME: ${APP_USERNAME:?Ustaw APP_USERNAME w pliku .env}
+      APP_PASSWORD: ${APP_PASSWORD:?Ustaw APP_PASSWORD w pliku .env}
     volumes:
       - ./data:/app/data
     healthcheck:

@@ -33,6 +33,7 @@ Frontend działa pod `http://127.0.0.1:5173`, a API Express pod `http://127.0.0.
 - `data/snapshots` — skompresowane, pełne HTML-e odwiedzonych ofert.
 
 Formatowanie całego projektu: `npm run format`. Kontrola bez zmian: `npm run format:check`.
+Pełna kontrola typów frontendu i backendu: `npm run typecheck`.
 
 ## Pobieranie ofert
 
@@ -48,7 +49,7 @@ Każda otwarta strona oferty jest zapisywana w całości jako skompresowany snap
 npm run reprocess
 ```
 
-To samo udostępnia `POST /api/snapshots/reprocess`. Snapshoty są identyfikowane skrótem treści, więc identyczny HTML nie zajmuje ponownie miejsca.
+To samo udostępnia `POST /api/snapshots/reprocess`. Snapshoty są identyfikowane skrótem treści, więc identyczny HTML nie zajmuje ponownie miejsca. Retencję można ograniczyć przez `SNAPSHOT_RETENTION_DAYS` i `SNAPSHOT_VERSIONS_PER_URL`. Wartość `0` wyłącza dane ograniczenie; najnowszy snapshot każdego URL-u jest zawsze zachowywany.
 
 Automatyczny harmonogram można włączyć zmiennymi z `.env.example`:
 
@@ -62,7 +63,13 @@ Oferty Toyota Pewne Auto z numerem rejestracyjnym, VIN-em i datą pierwszej reje
 
 Niepełne oferty trafiają do trwałej kolejki widocznej w aplikacji. Codex nigdy nie uruchamia się automatycznie: użytkownik może przetworzyć jedną ofertę albo wszystkie oczekujące. Zakończony URL nie jest przetwarzany ponownie podczas kolejnych skanów; wymaga użycia przycisku „Przetwórz ponownie”. Worker uruchamia lokalne `codex exec` w trybie `--ephemeral`, z sandboxem `read-only` i ścisłym schematem JSON. Wynik o pewności poniżej 0,8 jest ignorowany i nigdy nie może nadpisać jawnej informacji o sedanie, hatchbacku, SUV-ie ani Corolli Cross.
 
-Publiczny obraz dla `linux/amd64` i `linux/arm64` jest dostępny jako `ghcr.io/wozniakmac/corolla-radar:latest`. Przed `docker compose up -d` ustaw `OPENAI_API_KEY` oraz prywatny `NTFY_URL` w pliku `.env` obok `compose.yaml`; bez uwierzytelnienia skan nadal działa, ale brakujące dane pozostaną nieuzupełnione, a błąd Codex pojawi się w logach kontenera. Nie publikuj adresu topicu ntfy w repozytorium — pełni rolę sekretu powiadomień.
+Publiczny obraz dla `linux/amd64` i `linux/arm64` jest dostępny jako `ghcr.io/wozniakmac/corolla-radar:latest`. Przed `docker compose up -d` ustaw `OPENAI_API_KEY` oraz prywatny `NTFY_URL` w pliku `.env` obok `compose.yaml`. Worker przekazuje `OPENAI_API_KEY` bezpośrednio do `codex exec` i używa izolowanego `CODEX_HOME`, więc kontener nie wymaga interaktywnego `codex login` ani montowania lokalnych poświadczeń. Bez klucza skan nadal działa, ale API odrzuci ręczne uruchomienie kolejki Codex z czytelnym błędem. Nie publikuj klucza ani adresu topicu ntfy w repozytorium.
+
+Ustaw także `APP_USERNAME` i długie, losowe `APP_PASSWORD`. Przy nasłuchiwaniu
+poza localhostem serwer nie uruchomi się bez tych danych. Wyjątek
+`ALLOW_INSECURE_NETWORK=true` jest przeznaczony wyłącznie dla świadomie
+niezabezpieczonej, zaufanej sieci. Endpoint healthcheck pozostaje publiczny i
+nie zwraca danych ofert.
 
 Na Unraid ustaw mapowanie `/app/data` na trwały katalog aplikacji oraz port kontenera `4174`. Minimalne uruchomienie bez Compose:
 
@@ -76,8 +83,13 @@ docker run -d \
   -e SCAN_INTERVAL_MINUTES=240 \
   -e NTFY_URL=https://ntfy.sh/twoj-prywatny-topic \
   -e APP_PUBLIC_URL=http://192.168.2.47:4174 \
+  -e APP_USERNAME=radar \
+  -e APP_PASSWORD='ustaw-dlugie-losowe-haslo' \
   ghcr.io/wozniakmac/corolla-radar:latest
 ```
+
+Kontener działa jako nieuprzywilejowany użytkownik `node` (UID 1000). Katalog
+podmontowany jako `/app/data` musi umożliwiać temu użytkownikowi zapis.
 
 ## Baza miejscowości
 

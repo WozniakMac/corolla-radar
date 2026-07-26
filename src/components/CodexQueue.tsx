@@ -11,11 +11,13 @@ const labels = {
 export function CodexQueue({
   jobs,
   currentJobId,
+  authConfigured,
   onProcess,
   onProcessAll,
 }: {
   jobs: CodexJob[];
   currentJobId: string | null;
+  authConfigured: boolean;
   onProcess: (id: string, force: boolean) => void;
   onProcessAll: () => void;
 }) {
@@ -30,12 +32,20 @@ export function CodexQueue({
             <Bot /> Weryfikacja Codex
           </h2>
           <p>Codex nie uruchamia się automatycznie. W kolejce: {pending}.</p>
+          {!authConfigured && (
+            <p className="jobError">
+              Brak OPENAI_API_KEY w środowisku kontenera.
+            </p>
+          )}
           <p className="potentialHint">
             Kolejność: potencjał auta + wartość braków. Zielone warto sprawdzić,
             szare zwykle lepiej pominąć.
           </p>
         </div>
-        <button disabled={!pending || !!currentJobId} onClick={onProcessAll}>
+        <button
+          disabled={!authConfigured || !pending || !!currentJobId}
+          onClick={onProcessAll}
+        >
           <Play /> Przetwórz wszystkie wymagające
         </button>
       </div>
@@ -72,6 +82,7 @@ export function CodexQueue({
               </div>
               <button
                 disabled={
+                  !authConfigured ||
                   job.status === "processing" ||
                   (!!currentJobId && currentJobId !== job.id)
                 }

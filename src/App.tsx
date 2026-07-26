@@ -33,6 +33,7 @@ export default function App() {
     runScan,
     codexJobs,
     currentCodexJobId,
+    codexAuthConfigured,
     processCodex,
     processAllCodex,
     processCepik,
@@ -275,6 +276,7 @@ export default function App() {
           <CodexQueue
             jobs={codexJobs}
             currentJobId={currentCodexJobId}
+            authConfigured={codexAuthConfigured}
             onProcess={(id, force) => void processCodex(id, force)}
             onProcessAll={() => void processAllCodex()}
           />

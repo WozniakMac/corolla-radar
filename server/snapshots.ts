@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { gzip, gunzip } from "node:zlib";
 import { promisify } from "node:util";
@@ -60,4 +60,67 @@ export function latestSnapshots(snapshots: SnapshotMeta[]) {
       latest.set(key, snapshot);
   }
   return [...latest.values()];
+}
+
+export function snapshotsToRetain(
+  snapshots: SnapshotMeta[],
+  maxVersions: number,
+  retentionDays: number,
+  now = Date.now(),
+) {
+  if (maxVersions <= 0 && retentionDays <= 0) return new Set(snapshots);
+  const cutoff =
+    retentionDays > 0 ? now - retentionDays * 24 * 60 * 60 * 1000 : -Infinity;
+  const groups = new Map<string, SnapshotMeta[]>();
+  for (const snapshot of snapshots) {
+    const key = `${snapshot.source}:${snapshot.url}`;
+    const group = groups.get(key) || [];
+    group.push(snapshot);
+    groups.set(key, group);
+  }
+  const retained = new Set<SnapshotMeta>();
+  for (const group of groups.values()) {
+    group
+      .sort((a, b) => b.capturedAt.localeCompare(a.capturedAt))
+      .forEach((snapshot, index) => {
+        const withinCount = maxVersions <= 0 || index < maxVersions;
+        const withinAge =
+          retentionDays <= 0 ||
+          new Date(snapshot.capturedAt).getTime() >= cutoff;
+        if (index === 0 || (withinCount && withinAge)) retained.add(snapshot);
+      });
+  }
+  return retained;
+}
+
+export async function pruneSnapshots(
+  db: Store,
+  maxVersions = Number(process.env.SNAPSHOT_VERSIONS_PER_URL || 0),
+  retentionDays = Number(process.env.SNAPSHOT_RETENTION_DAYS || 0),
+) {
+  const snapshots = db.snapshots || [];
+  const retained = snapshotsToRetain(
+    snapshots,
+    Number.isFinite(maxVersions) ? Math.max(0, Math.floor(maxVersions)) : 0,
+    Number.isFinite(retentionDays) ? Math.max(0, retentionDays) : 0,
+  );
+  if (retained.size === snapshots.length) return [];
+  const retainedIds = new Set([...retained].map((snapshot) => snapshot.id));
+  const removedIds = new Set(
+    snapshots
+      .filter((snapshot) => !retained.has(snapshot))
+      .map((snapshot) => snapshot.id),
+  );
+  db.snapshots = snapshots.filter((snapshot) => retained.has(snapshot));
+  return [...removedIds].filter((id) => !retainedIds.has(id));
+}
+
+export async function deletePrunedSnapshotFiles(ids: string[]) {
+  for (const id of ids) {
+    await unlink(resolve(directory, `${id}.html.gz`)).catch(
+      (error: NodeJS.ErrnoException) => {
+        if (error.code !== "ENOENT") throw error;
+      },
+    );
+  }
 }

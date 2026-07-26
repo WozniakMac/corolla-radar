@@ -7,8 +7,11 @@ RUN npm run build
 
 FROM node:24-bookworm-slim AS runtime
 WORKDIR /app
-RUN npm install --global @openai/codex
-RUN npx playwright install --with-deps chromium
+ARG CODEX_VERSION=0.144.1
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN npm install --global "@openai/codex@${CODEX_VERSION}"
+RUN npx playwright install --with-deps chromium \
+    && chmod -R a+rX /ms-playwright
 ENV NODE_ENV=production \
     HOST=0.0.0.0 \
     PORT=4174 \
@@ -22,6 +25,8 @@ COPY --from=build /app/server ./server
 COPY --from=build /app/src ./src
 COPY --from=build /app/dist ./dist
 RUN mkdir -p /app/data
+RUN chown -R node:node /app/data
+USER node
 EXPOSE 4174
 VOLUME ["/app/data"]
 CMD ["npm", "run", "server"]

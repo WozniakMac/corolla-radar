@@ -141,4 +141,31 @@ describe("historia cen", () => {
     ]);
     expect(listing.priceHistory.at(-1).cashPrice).toBe(91_900);
   });
+
+  it("nie scala różnych URL-i bez identycznego VIN-u", () => {
+    const original = structuredClone(testCars[0]);
+    const db: Store = { cars: [original], jobs: [] };
+
+    upsertParsedCar(
+      db,
+      {
+        finalUrl: "https://www.otomoto.pl/osobowe/oferta/inny-egzemplarz",
+        title: original.title,
+        year: original.year,
+        power: original.power,
+        price: original.price,
+        mileage: original.mileage,
+        location: original.location,
+        trim: original.trim,
+        text: "Toyota Corolla Touring Sports Hybrid automat",
+        description: original.description,
+        images: [],
+        active: true,
+        eligibleBody: true,
+      } as any,
+      "OTOMOTO",
+    );
+
+    expect(db.cars).toHaveLength(2);
+  });
 });
