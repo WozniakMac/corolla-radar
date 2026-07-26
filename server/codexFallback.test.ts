@@ -19,7 +19,7 @@ describe("uwierzytelnienie Codex przez ENV", () => {
   it("nie przekazuje pozostałych sekretów aplikacji do procesu Codex", () => {
     const env = codexEnvironment("sk-test", "/tmp/codex", {
       PATH: "/usr/bin",
-      APP_PASSWORD: "secret",
+      SOME_OTHER_SECRET: "secret",
       NTFY_URL: "https://ntfy.example/secret",
     });
     expect(env).toMatchObject({
@@ -27,7 +27,7 @@ describe("uwierzytelnienie Codex przez ENV", () => {
       CODEX_HOME: "/tmp/codex",
       OPENAI_API_KEY: "sk-test",
     });
-    expect(env).not.toHaveProperty("APP_PASSWORD");
+    expect(env).not.toHaveProperty("SOME_OTHER_SECRET");
     expect(env).not.toHaveProperty("NTFY_URL");
   });
 });

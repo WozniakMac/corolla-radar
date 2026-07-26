@@ -17,11 +17,7 @@ import {
 } from "./codexWorker";
 import { retryCepik, startCepikWorker } from "./cepikWorker";
 import { loadServerConfig } from "./config";
-import {
-  basicAuth,
-  limitMutations,
-  rejectCrossSiteMutations,
-} from "./security";
+import { limitMutations, rejectCrossSiteMutations } from "./security";
 
 const config = loadServerConfig();
 const app = express();
@@ -39,7 +35,6 @@ app.use((_req, res, next) => {
   next();
 });
 app.use(express.json({ limit: "32kb" }));
-app.use(basicAuth(config.username, config.password));
 app.use(rejectCrossSiteMutations);
 app.use(limitMutations());
 app.get("/api/health", (_req, res) =>

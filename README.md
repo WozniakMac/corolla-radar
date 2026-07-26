@@ -65,11 +65,8 @@ Niepełne oferty trafiają do trwałej kolejki widocznej w aplikacji. Codex nigd
 
 Publiczny obraz dla `linux/amd64` i `linux/arm64` jest dostępny jako `ghcr.io/wozniakmac/corolla-radar:latest`. Przed `docker compose up -d` ustaw `OPENAI_API_KEY` oraz prywatny `NTFY_URL` w pliku `.env` obok `compose.yaml`. Worker przekazuje `OPENAI_API_KEY` bezpośrednio do `codex exec` i używa izolowanego `CODEX_HOME`, więc kontener nie wymaga interaktywnego `codex login` ani montowania lokalnych poświadczeń. Bez klucza skan nadal działa, ale API odrzuci ręczne uruchomienie kolejki Codex z czytelnym błędem. Nie publikuj klucza ani adresu topicu ntfy w repozytorium.
 
-Ustaw także `APP_USERNAME` i długie, losowe `APP_PASSWORD`. Przy nasłuchiwaniu
-poza localhostem serwer nie uruchomi się bez tych danych. Wyjątek
-`ALLOW_INSECURE_NETWORK=true` jest przeznaczony wyłącznie dla świadomie
-niezabezpieczonej, zaufanej sieci. Endpoint healthcheck pozostaje publiczny i
-nie zwraca danych ofert.
+Panel nie ma warstwy logowania i jest przeznaczony do uruchamiania wyłącznie w
+prywatnej, zaufanej sieci. Nie wystawiaj portu `4174` bezpośrednio do Internetu.
 
 Na Unraid ustaw mapowanie `/app/data` na trwały katalog aplikacji oraz port kontenera `4174`. Minimalne uruchomienie bez Compose:
 
@@ -83,8 +80,6 @@ docker run -d \
   -e SCAN_INTERVAL_MINUTES=240 \
   -e NTFY_URL=https://ntfy.sh/twoj-prywatny-topic \
   -e APP_PUBLIC_URL=http://192.168.2.47:4174 \
-  -e APP_USERNAME=radar \
-  -e APP_PASSWORD='ustaw-dlugie-losowe-haslo' \
   ghcr.io/wozniakmac/corolla-radar:latest
 ```
 
