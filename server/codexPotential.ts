@@ -118,9 +118,9 @@ export function calculateCodexPotential(job: Job) {
     clamp(qualityScore * 0.85 + informationValue),
   );
   if (rawInformationValue >= 5)
-    reasons.push("Codex może rozstrzygnąć ważne braki");
+    reasons.push("OpenAI może rozstrzygnąć ważne braki");
   if (job.missing.length === 1 && job.missing[0] === "VIN")
-    reasons.push("brakuje tylko VIN — niski zwrot z użycia Codex");
+    reasons.push("brakuje tylko VIN — niski zwrot z użycia OpenAI");
 
   return {
     potentialScore,

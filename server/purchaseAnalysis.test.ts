@@ -88,9 +88,33 @@ describe("doradca zakupowy TOP 10", () => {
     );
   });
 
-  it("wymaga zgodności zwycięzcy z pierwszą pozycją", () => {
+  it("pozwala wskazać niezależnego zwycięzcę bez zmiany listy", () => {
     const ids = purchaseCars.slice(0, 10).map((car) => car.id);
-    const invalid = { ...modelResult(ids), winnerId: ids[1] };
-    expect(() => validatePurchaseAnalysis(invalid, ids)).toThrow(/Zwycięzca/);
+    const result = validatePurchaseAnalysis(
+      { ...modelResult(ids), winnerId: ids[4] },
+      ids,
+    );
+    expect(result.winnerId).toBe(ids[4]);
+    expect(result.rankings.map((item) => item.carId)).toEqual(ids);
+  });
+
+  it("odrzuca próbę przestawienia kolejności TOP 10", () => {
+    const ids = purchaseCars.slice(0, 10).map((car) => car.id);
+    const invalid = modelResult(ids);
+    [invalid.rankings[0].carId, invalid.rankings[1].carId] = [
+      invalid.rankings[1].carId,
+      invalid.rankings[0].carId,
+    ];
+    expect(() => validatePurchaseAnalysis(invalid, ids)).toThrow(
+      /zmienić kolejność/,
+    );
+  });
+
+  it("odrzuca zwycięzcę spoza TOP 10", () => {
+    const ids = purchaseCars.slice(0, 10).map((car) => car.id);
+    const invalid = { ...modelResult(ids), winnerId: "inne-auto" };
+    expect(() => validatePurchaseAnalysis(invalid, ids)).toThrow(
+      /spoza TOP 10/,
+    );
   });
 });

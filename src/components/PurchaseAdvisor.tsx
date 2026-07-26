@@ -45,7 +45,7 @@ export function PurchaseAdvisor({
         <div>
           <small>DECYZJA ZAKUPOWA</small>
           <h2>
-            <Bot /> Codex analizuje dokładnie TOP 10
+            <Bot /> OpenAI analizuje dokładnie TOP 10
           </h2>
           <p>
             Analiza odświeża strony dokładnie dziesięciu ofert, ogląda ich
@@ -86,10 +86,11 @@ export function PurchaseAdvisor({
         <div className="advisorLoading" aria-live="polite">
           <span className="loadingPulse" />
           <div>
-            <strong>Codex porównuje dziesięć ofert</strong>
+            <strong>OpenAI porównuje dziesięć ofert</strong>
             <small>
-              Najpierw otwieram ogłoszenia i pobieram galerie, potem Codex
-              analizuje tekst oraz zdjęcia. Może to potrwać kilka minut.
+              Najpierw pobieram galerie, potem OpenAI samodzielnie przegląda
+              ogłoszenia w headless Chrome i analizuje tekst oraz zdjęcia. Może
+              to potrwać kilka minut.
             </small>
           </div>
         </div>
@@ -140,8 +141,8 @@ export function PurchaseAdvisor({
                     <span className="advisorRank">#{item.rank}</span>
                     <div>
                       <small>
-                        RADAR #{candidate?.radarRank} •{" "}
-                        {candidate?.radarScore ?? "?"} PKT
+                        KOLEJNOŚĆ RADARU • {candidate?.radarScore ?? "?"} PKT •
+                        NIEZALEŻNA OCENA OPENAI
                       </small>
                       <h3>{candidate?.title || item.carId}</h3>
                       <span>

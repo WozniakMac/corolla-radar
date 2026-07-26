@@ -237,7 +237,7 @@ export default function App() {
                   : view === "advisor"
                     ? "Doradca zakupowy TOP 10"
                     : view === "codex"
-                      ? "Weryfikacja Codex"
+                      ? "Weryfikacja OpenAI"
                       : "Statystyki monitoringu"}
             </h1>
             <p>

@@ -175,7 +175,7 @@ export function ScoreDrawer({
                               : entry.trigger === "cepik"
                                 ? "Historia Pojazdu / CEPiK"
                                 : entry.trigger === "codex"
-                                  ? "uzupełnienie Codex"
+                                  ? "uzupełnienie OpenAI"
                                   : entry.trigger === "reprocess"
                                     ? "ponowne przeliczenie danych"
                                     : "zapis punktacji"}

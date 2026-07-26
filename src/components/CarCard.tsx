@@ -210,7 +210,7 @@ export function CarCard({
         {effectivePrice(car) > car.price && <span>CENA GOTÓWKOWA</span>}
         {car.vat23 && <span>FV 23%</span>}
         <small className={`cardCodexStatus ${codexJob?.status || "notNeeded"}`}>
-          <Bot /> Codex: {codexStatus}
+          <Bot /> OpenAI: {codexStatus}
         </small>
         {codexJob && (
           <button
@@ -223,10 +223,10 @@ export function CarCard({
           >
             <Bot />
             {codexJob.status === "processing"
-              ? "Codex pracuje…"
+              ? "OpenAI pracuje…"
               : codexJob.status === "processed"
-                ? "Ponów Codex"
-                : "Sprawdź z Codex"}
+                ? "Ponów OpenAI"
+                : "Sprawdź z OpenAI"}
           </button>
         )}
         {canRunCepik && (

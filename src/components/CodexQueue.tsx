@@ -29,9 +29,9 @@ export function CodexQueue({
       <div className="codexQueueHead">
         <div>
           <h2>
-            <Bot /> Weryfikacja Codex
+            <Bot /> Weryfikacja OpenAI
           </h2>
-          <p>Codex nie uruchamia się automatycznie. W kolejce: {pending}.</p>
+          <p>OpenAI nie uruchamia się automatycznie. W kolejce: {pending}.</p>
           {!authConfigured && (
             <p className="jobError">
               Brak OPENAI_API_KEY w środowisku kontenera.

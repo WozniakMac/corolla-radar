@@ -1,8 +1,8 @@
 import {
-  codexApiKeyConfigured,
-  parseWithCodex,
-  requireCodexApiKey,
-} from "./codexFallback";
+  openAiApiKeyConfigured,
+  parseWithOpenAi,
+  requireOpenAiApiKey,
+} from "./openai";
 import { calculateCodexPotential } from "./codexPotential";
 import { isDecisionMissing, missingListingFields } from "./codexMissing";
 import { fetchAndParse } from "./parser";
@@ -40,7 +40,7 @@ export const publicJobs = async (providedStore?: Store) => {
 export const workerState = () => ({
   workerRunning,
   currentJobId,
-  authConfigured: codexApiKeyConfigured(),
+  authConfigured: openAiApiKeyConfigured(),
 });
 
 export async function recoverInterruptedJobs() {
@@ -70,10 +70,10 @@ export async function recoverInterruptedJobs() {
 }
 
 export async function queueOne(id: string, force = false) {
-  requireCodexApiKey();
+  requireOpenAiApiKey();
   const db = await load();
   const job = db.jobs.find((item) => item.id === id);
-  if (!job) throw new Error("Nie znaleziono zadania Codex");
+  if (!job) throw new Error("Nie znaleziono zadania OpenAI");
   if (job.status === "processing") return;
   if (job.status === "processed" && !force)
     throw new Error("Oferta była już przetworzona; wymagane jest ponowienie");
@@ -88,7 +88,7 @@ export async function queueOne(id: string, force = false) {
 }
 
 export async function queueAllPending() {
-  requireCodexApiKey();
+  requireOpenAiApiKey();
   const db = await load();
   let count = 0;
   for (const job of db.jobs) {
@@ -127,9 +127,9 @@ async function runWorker(onlyJobIds?: string[]) {
       await save(db);
       try {
         const p = await fetchAndParse(job.url);
-        const ai = await parseWithCodex(p.text, true);
+        const ai = await parseWithOpenAi(p.text, true);
         if (!ai)
-          throw new Error("Codex nie zwrócił wyniku o pewności min. 80%");
+          throw new Error("OpenAI nie zwróciło wyniku o pewności min. 80%");
         p.price ||= ai.price || 0;
         p.mileage ||= ai.mileage || 0;
         p.year ||= ai.year || 0;
@@ -162,7 +162,7 @@ async function runWorker(onlyJobIds?: string[]) {
         if (failed) {
           failed.status = "failed";
           failed.finishedAt = new Date().toISOString();
-          failed.error = error instanceof Error ? error.message : "Błąd Codex";
+          failed.error = error instanceof Error ? error.message : "Błąd OpenAI";
           await save(db);
         }
       }

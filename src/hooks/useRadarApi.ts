@@ -175,7 +175,7 @@ export function useRadarApi() {
         body: JSON.stringify({ force }),
       });
       const body = await response.json();
-      if (!response.ok) throw new Error(body.error || "Błąd kolejki Codex");
+      if (!response.ok) throw new Error(body.error || "Błąd kolejki OpenAI");
       await refresh(true);
     } catch (error) {
       setNotice({
@@ -183,7 +183,7 @@ export function useRadarApi() {
         text:
           error instanceof Error
             ? error.message
-            : "Nie udało się uruchomić Codex.",
+            : "Nie udało się uruchomić OpenAI.",
       });
     }
   };
@@ -194,7 +194,7 @@ export function useRadarApi() {
         method: "POST",
       });
       const body = await response.json();
-      if (!response.ok) throw new Error(body.error || "Błąd kolejki Codex");
+      if (!response.ok) throw new Error(body.error || "Błąd kolejki OpenAI");
       await refresh(true);
     } catch (error) {
       setNotice({
@@ -202,7 +202,7 @@ export function useRadarApi() {
         text:
           error instanceof Error
             ? error.message
-            : "Nie udało się uruchomić Codex.",
+            : "Nie udało się uruchomić OpenAI.",
       });
     }
   };

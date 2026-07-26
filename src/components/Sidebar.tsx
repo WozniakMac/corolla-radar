@@ -57,7 +57,7 @@ export function Sidebar({
           className={view === "codex" ? "active" : ""}
           onClick={() => onView("codex")}
         >
-          <Bot /> Weryfikacja Codex <span>{codexPending}</span>
+          <Bot /> Weryfikacja OpenAI <span>{codexPending}</span>
         </button>
       </nav>
       <div className="saved">

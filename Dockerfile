@@ -7,12 +7,11 @@ RUN npm run build
 
 FROM node:24-bookworm-slim AS runtime
 WORKDIR /app
-ARG CODEX_VERSION=0.144.1
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends gosu \
+    && apt-get install -y --no-install-recommends ca-certificates gosu \
+    && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
-RUN npm install --global "@openai/codex@${CODEX_VERSION}"
 RUN npx playwright install --with-deps chromium \
     && chmod -R a+rX /ms-playwright
 ENV NODE_ENV=production \

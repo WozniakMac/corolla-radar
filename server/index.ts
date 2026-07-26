@@ -113,7 +113,8 @@ app.post("/api/codex/jobs/process-all", async (_req, res) => {
     res.status(202).json({ queued: await queueAllPending() });
   } catch (error) {
     res.status(409).json({
-      error: error instanceof Error ? error.message : "Błąd konfiguracji Codex",
+      error:
+        error instanceof Error ? error.message : "Błąd konfiguracji OpenAI",
     });
   }
 });
@@ -123,7 +124,7 @@ app.post("/api/codex/jobs/:id/process", async (req, res) => {
     res.status(202).json({ queued: true });
   } catch (error) {
     res.status(409).json({
-      error: error instanceof Error ? error.message : "Błąd kolejki Codex",
+      error: error instanceof Error ? error.message : "Błąd kolejki OpenAI",
     });
   }
 });
