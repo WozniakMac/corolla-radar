@@ -9,6 +9,28 @@ Salon Polska, pełna historia ASO, 1 właściciel, bezwypadkowy, FV 23%.
 VIN SB1ZB3AE20E040424.</p></body></html>`;
 
 describe("listing parser", () => {
+  it("extracts color from structured data and a visible listing field", () => {
+    const structured = parseListingHtml(`
+      <script type="application/ld+json">
+        {
+          "@type": "Vehicle",
+          "name": "Toyota Corolla Touring Sports",
+          "vehicleColor": "Biały perłowy"
+        }
+      </script>
+      <body>Toyota Corolla Touring Sports Hybrid</body>
+    `);
+    const labeled = parseListingHtml(`
+      <body>
+        <h1>Toyota Corolla Touring Sports Hybrid</h1>
+        <dl><dt>Kolor nadwozia</dt><dd>Niebieski metalik</dd></dl>
+      </body>
+    `);
+
+    expect(structured.color).toBe("Biały perłowy");
+    expect(labeled.color).toBe("Niebieski metalik");
+  });
+
   it("parses the wording used by Toyota Pewne Auto offer 409278", () => {
     const parsed = parseListingHtml(`
       <html><head><title>Toyota Corolla Kombi 2023 99 900 zł</title></head><body>

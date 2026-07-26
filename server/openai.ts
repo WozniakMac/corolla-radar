@@ -1,15 +1,8 @@
 import { readFile } from "node:fs/promises";
-import { extname, resolve } from "node:path";
-import {
-  createComputerBrowser,
-  type BrowserListing,
-  type ComputerAction,
-  type ComputerBrowser,
-} from "./computerBrowser";
+import { resolve } from "node:path";
 
 const defaultModel = "gpt-5.6-sol";
 const defaultBaseUrl = "https://api.openai.com/v1";
-const maxImagePayloadBytes = 48 * 1024 * 1024;
 
 type FetchLike = (
   input: string | URL | Request,
@@ -23,8 +16,6 @@ type ResponsesApiResult = {
   output_text?: string;
   output?: Array<{
     type?: string;
-    call_id?: string;
-    actions?: ComputerAction[];
     content?: Array<{
       type?: string;
       text?: string;
@@ -33,10 +24,6 @@ type ResponsesApiResult = {
   }>;
   error?: { message?: string };
 };
-
-type ComputerBrowserFactory = (
-  listings: BrowserListing[],
-) => Promise<ComputerBrowser>;
 
 export function openAiApiKeyConfigured(env: NodeJS.ProcessEnv = process.env) {
   return Boolean(env.OPENAI_API_KEY?.trim());
@@ -66,24 +53,9 @@ function reasoningEffort(env: NodeJS.ProcessEnv = process.env) {
     : "high";
 }
 
-function imageMimeType(path: string) {
-  switch (extname(path).toLowerCase()) {
-    case ".jpg":
-    case ".jpeg":
-      return "image/jpeg";
-    case ".png":
-      return "image/png";
-    case ".webp":
-      return "image/webp";
-    default:
-      throw new Error(`Nieobsługiwany format obrazu: ${path}`);
-  }
-}
-
 export function buildResponsesRequest(
   prompt: string,
   schema: unknown,
-  imageDataUrls: string[] = [],
   env: NodeJS.ProcessEnv = process.env,
 ) {
   return {
@@ -94,14 +66,7 @@ export function buildResponsesRequest(
     input: [
       {
         role: "user",
-        content: [
-          { type: "input_text", text: prompt },
-          ...imageDataUrls.map((image_url) => ({
-            type: "input_image",
-            image_url,
-            detail: "high",
-          })),
-        ],
+        content: [{ type: "input_text", text: prompt }],
       },
     ],
     text: {
@@ -157,40 +122,16 @@ function connectionError(error: unknown) {
     : new Error("Nie udało się połączyć z OpenAI API", { cause: error });
 }
 
-async function imageDataUrls(imagePaths: string[]) {
-  let totalBytes = 0;
-  return Promise.all(
-    imagePaths.map(async (path) => {
-      const bytes = await readFile(path);
-      totalBytes += bytes.byteLength;
-      if (totalBytes > maxImagePayloadBytes)
-        throw new Error(
-          "Łączny rozmiar zdjęć przekracza limit 48 MB dla jednej analizy OpenAI.",
-        );
-      return `data:${imageMimeType(path)};base64,${bytes.toString("base64")}`;
-    }),
-  );
-}
-
 export async function runOpenAiStructured<T>(
   prompt: string,
   schemaPath: string,
   timeoutMs = 90_000,
-  imagePaths: string[] = [],
   env: NodeJS.ProcessEnv = process.env,
   fetchImpl: FetchLike = fetch,
 ): Promise<T> {
   const apiKey = requireOpenAiApiKey(env);
-  const [schemaText, images] = await Promise.all([
-    readFile(resolve(schemaPath), "utf8"),
-    imageDataUrls(imagePaths),
-  ]);
-  const body = buildResponsesRequest(
-    prompt,
-    JSON.parse(schemaText),
-    images,
-    env,
-  );
+  const schemaText = await readFile(resolve(schemaPath), "utf8");
+  const body = buildResponsesRequest(prompt, JSON.parse(schemaText), env);
   const result = await requestOpenAi(body, apiKey, timeoutMs, env, fetchImpl);
   return parseStructuredResult<T>(result);
 }
@@ -250,121 +191,6 @@ function parseStructuredResult<T>(result: ResponsesApiResult) {
     throw new Error(
       "OpenAI API zwróciło odpowiedź niebędącą poprawnym JSON-em",
     );
-  }
-}
-
-export async function runOpenAiComputerStructured<T>(
-  prompt: string,
-  schemaPath: string,
-  timeoutMs: number,
-  listings: BrowserListing[],
-  env: NodeJS.ProcessEnv = process.env,
-  fetchImpl: FetchLike = fetch,
-  browserFactory: ComputerBrowserFactory = createComputerBrowser,
-): Promise<T> {
-  const apiKey = requireOpenAiApiKey(env);
-  const schemaText = await readFile(resolve(schemaPath), "utf8");
-  const schema = JSON.parse(schemaText);
-  const base = {
-    // Computer Use accepts its own screenshots, but not multiple image inputs.
-    // Listing photos are inspected in the browser instead of being attached.
-    ...buildResponsesRequest(prompt, schema, [], env),
-    store: true,
-    tools: [{ type: "computer" }],
-  };
-  const browser = await browserFactory(listings);
-  const deadline = Date.now() + timeoutMs;
-  try {
-    let result = await requestOpenAi(
-      base,
-      apiKey,
-      Math.max(1, deadline - Date.now()),
-      env,
-      fetchImpl,
-    );
-    let missingAtLastReminder = Number.POSITIVE_INFINITY;
-    for (let turn = 0; turn < 50; turn++) {
-      const computerCall = result.output?.find(
-        (item) => item.type === "computer_call",
-      );
-      if (!computerCall) {
-        const missing = browser.missingListings();
-        if (!missing.length) return parseStructuredResult<T>(result);
-        if (missing.length >= missingAtLastReminder)
-          throw new Error(
-            `OpenAI nie otworzyło wszystkich ogłoszeń w headless Chrome. Pominięte: ${missing.map((listing) => listing.carId).join(", ")}`,
-          );
-        missingAtLastReminder = missing.length;
-        if (!result.id)
-          throw new Error("OpenAI nie zwróciło identyfikatora odpowiedzi");
-        const remaining = deadline - Date.now();
-        if (remaining <= 0)
-          throw new Error(
-            `OpenAI API z przeglądarką przekroczyło limit ${Math.round(timeoutMs / 1000)} sekund`,
-          );
-        result = await requestOpenAi(
-          {
-            ...buildResponsesRequest("", schema, [], env),
-            store: true,
-            previous_response_id: result.id,
-            input: [
-              {
-                role: "user",
-                content: [
-                  {
-                    type: "input_text",
-                    text: `Nie zakończyłeś inspekcji w przeglądarce. Użyj narzędzia computer i otwórz pozostałe ogłoszenia z paska TOP 10: ${missing.map((listing) => `${listing.label} (${listing.carId})`).join(", ")}. Dopiero potem zwróć końcowy JSON.`,
-                  },
-                ],
-              },
-            ],
-            tools: [{ type: "computer" }],
-          },
-          apiKey,
-          remaining,
-          env,
-          fetchImpl,
-        );
-        continue;
-      }
-      if (!computerCall.call_id || !Array.isArray(computerCall.actions))
-        throw new Error("OpenAI zwróciło nieprawidłową akcję przeglądarki");
-      await browser.runActions(computerCall.actions);
-      const screenshot = await browser.screenshot();
-      if (!result.id)
-        throw new Error("OpenAI nie zwróciło identyfikatora odpowiedzi");
-      const remaining = deadline - Date.now();
-      if (remaining <= 0)
-        throw new Error(
-          `OpenAI API z przeglądarką przekroczyło limit ${Math.round(timeoutMs / 1000)} sekund`,
-        );
-      result = await requestOpenAi(
-        {
-          ...buildResponsesRequest("", schema, [], env),
-          store: true,
-          previous_response_id: result.id,
-          input: [
-            {
-              type: "computer_call_output",
-              call_id: computerCall.call_id,
-              output: {
-                type: "computer_screenshot",
-                image_url: `data:image/png;base64,${screenshot.toString("base64")}`,
-                detail: "original",
-              },
-            },
-          ],
-          tools: [{ type: "computer" }],
-        },
-        apiKey,
-        remaining,
-        env,
-        fetchImpl,
-      );
-    }
-    throw new Error("OpenAI przekroczyło limit 50 kroków przeglądarki");
-  } finally {
-    await browser.close();
   }
 }
 

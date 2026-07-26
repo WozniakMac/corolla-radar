@@ -68,30 +68,24 @@ odtwarza ranking z bieżących filtrów przesłanych przez interfejs i wymaga
 dokładnie dziesięciu kwalifikujących się aut. OpenAI otrzymuje wyłącznie ten
 zamknięty zestaw wraz z punktacją, dowodami, historią cen, aktywnymi
 publikacjami i dostępnym podsumowaniem CEPiK. Przed uruchomieniem modelu
-aplikacja ponownie pobiera wszystkie aktywne strony wybranych aut oraz do
-czterech zdjęć każdego egzemplarza. Obrazy są przekazywane do Responses API
-jako wejścia obrazowe, z jednoznacznym przypisaniem pliku do `carId`;
-tymczasowe pliki są usuwane po analizie. Liczbę zdjęć można ustawić przez
-`PURCHASE_ANALYSIS_IMAGES_PER_CAR` w zakresie 1–6. Ścisły schemat oraz walidacja
-po odpowiedzi zabraniają pominięcia, podmiany i duplikowania `carId`. Wynik
-zawiera jednego niezależnie rekomendowanego zwycięzcę oraz ocenę każdego auta
-bez zmiany składu ani kolejności TOP 10 radaru, osobną ocenę zdjęć, ryzyka, plan
-weryfikacji i — gdy dane na to pozwalają — cel negocjacyjny. Interfejs
-pokazuje faktyczną liczbę odświeżonych stron i obejrzanych zdjęć, więc częściowa
+aplikacja ponownie pobiera wszystkie aktywne strony wybranych aut. Z każdej
+strony przekazuje modelowi status pobrania, końcowy URL, tytuł, ceny, rocznik,
+przebieg, moc, wykryty kolor, opis oraz do 20 000 znaków oczyszczonego tekstu.
+Kolor jest wydzielonym polem i trafia również na początek opisu. Zdjęcia są
+celowo ignorowane i nie są pobierane ani wysyłane do OpenAI. Ścisły schemat oraz
+walidacja po odpowiedzi zabraniają pominięcia, podmiany i duplikowania `carId`.
+Wynik zawiera jednego niezależnie rekomendowanego zwycięzcę oraz ocenę każdego
+auta bez zmiany składu ani kolejności TOP 10 radaru, ryzyka, plan weryfikacji
+i — gdy dane na to pozwalają — cel negocjacyjny. Interfejs pokazuje faktyczną
+liczbę odświeżonych stron i aut z potwierdzonym kolorem, więc częściowa
 inspekcja nie jest przedstawiana jako pełna. Analiza nie uruchamia się
 automatycznie i wymaga `OPENAI_API_KEY`.
 
-Podczas analizy zakupowej model ma również narzędzie Computer Use połączone z
-osobną instancją Chromium uruchomioną przez Playwright w trybie headless. Model
-może klikać, przewijać i oglądać aktualne strony ogłoszeń, a po każdej serii
-akcji otrzymuje nowy zrzut ekranu. Przeglądarka działa bez rozszerzeń, dostępu do
-lokalnych plików i odziedziczonych zmiennych środowiskowych. Nawigacja głównej
-ramki jest ograniczona do dokładnych adresów ogłoszeń przygotowanego TOP 10,
-żądania modyfikujące i pobieranie plików są blokowane, a treść stron jest
-traktowana jako niezaufana. Ustawiony przez `OPENAI_MODEL` model musi obsługiwać
-narzędzie `computer`. Pętla przeglądarkowa korzysta z `previous_response_id` i
-`store: true`, aby nie przesyłać ponownie całej historii zrzutów przy każdym
-kroku; zwykłe wywołania bez przeglądarki pozostają przy `store: false`.
+Analiza zakupowa nie udostępnia OpenAI przeglądarki ani narzędzia Computer Use.
+Backend sam zbiera materiały i wysyła jedno żądanie `store: false`: JSON zawiera
+bieżące filtry, pełne dane TOP 10, punktację z uzasadnieniami, historię cen,
+CEPiK, odświeżone opisy i teksty stron, wykryty kolor oraz status każdego
+pobrania. Model nie musi otwierać żadnego linku.
 
 Publiczny obraz dla `linux/amd64` i `linux/arm64` jest dostępny jako `ghcr.io/wozniakmac/corolla-radar:latest`. Przed `docker compose up -d` ustaw `OPENAI_API_KEY` oraz prywatny `NTFY_URL` w pliku `.env` obok `compose.yaml`. Kontener łączy się bezpośrednio z OpenAI Responses API i nie instaluje Codex CLI, nie potrzebuje `codex login`, `CODEX_HOME`, repozytorium Git ani bubblewrapa. Domyślny model to `gpt-5.6-sol`; można go zmienić przez `OPENAI_MODEL`, a poziom rozumowania przez `OPENAI_REASONING_EFFORT`. Bez klucza skan nadal działa, ale API odrzuci ręczne uruchomienie analizy z czytelnym błędem. Nie publikuj klucza ani adresu topicu ntfy w repozytorium.
 

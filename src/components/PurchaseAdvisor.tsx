@@ -48,8 +48,8 @@ export function PurchaseAdvisor({
             <Bot /> OpenAI analizuje dokładnie TOP 10
           </h2>
           <p>
-            Analiza odświeża strony dokładnie dziesięciu ofert, ogląda ich
-            zdjęcia i łączy je z historią cen, punktacją oraz wynikami CEPiK.
+            Analiza odświeża strony dokładnie dziesięciu ofert i łączy ich
+            opisy, kolory oraz parametry z historią cen, punktacją i CEPiK.
           </p>
         </div>
         <button
@@ -88,9 +88,9 @@ export function PurchaseAdvisor({
           <div>
             <strong>OpenAI porównuje dziesięć ofert</strong>
             <small>
-              Najpierw odświeżam dane, potem OpenAI samodzielnie przegląda
-              ogłoszenia i ich galerie w headless Chrome. Może to potrwać kilka
-              minut.
+              Najpierw odświeżam strony i odczytuję ich parametry, potem OpenAI
+              analizuje komplet tekstów, kolorów, historii i danych. Może to
+              potrwać kilka minut.
             </small>
           </div>
         </div>
@@ -119,8 +119,9 @@ export function PurchaseAdvisor({
                 {result.evidence.pagesRefreshed}/
                 {result.evidence.pagesAttempted} stron odświeżonych
               </span>
-              <span>{result.evidence.imagesAttached} zdjęć pobranych</span>
-              <span>zdjęcia dla {result.evidence.carsWithImages}/10 aut</span>
+              <span>
+                kolor potwierdzony dla {result.evidence.carsWithColor}/10 aut
+              </span>
             </div>
             {result.evidence.warnings.map((warning) => (
               <p key={warning}>

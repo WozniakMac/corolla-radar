@@ -266,7 +266,6 @@ export type PurchaseEvidenceSummary = {
   pagesAttempted: number;
   pagesRefreshed: number;
   pagesFailed: number;
-  imagesAttached: number;
-  carsWithImages: number;
+  carsWithColor: number;
   warnings: string[];
 };

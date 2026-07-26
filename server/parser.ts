@@ -312,6 +312,30 @@ export function parseListingHtml(
       /(?:sprzedawca|dealer|diler)[^A-ZĄĆĘŁŃÓŚŹŻ0-9]{0,15}([A-ZĄĆĘŁŃÓŚŹŻ][^|•]{2,60})/i,
     )?.[1]
     ?.trim();
+  const labeledColor = $("body *")
+    .filter((_, element) =>
+      /^(?:kolor|kolor nadwozia|lakier|barwa)$/i.test(
+        $(element).clone().children().remove().end().text().trim(),
+      ),
+    )
+    .map((_, element) => $(element).next().first().text().trim())
+    .get()
+    .find((value) => value && value.length <= 60);
+  const color =
+    String(product?.vehicleColor || product?.color || "")
+      .trim()
+      .slice(0, 60) ||
+    $('meta[itemprop="vehicleColor"], meta[itemprop="color"]')
+      .first()
+      .attr("content")
+      ?.trim()
+      .slice(0, 60) ||
+    labeledColor ||
+    text
+      .match(
+        /(?:kolor(?: nadwozia| zewnętrzny)?|lakier)\s*:?\s*((?:biały|bialy|czarny|srebrny|szary|grafitowy|granatowy|niebieski|czerwony|bordowy|zielony|brązowy|brazowy|beżowy|bezowy|złoty|zloty|pomarańczowy|pomaranczowy|żółty|zolty|fioletowy)(?:\s+(?:metalizowany|metalik|perłowy|perlowy|matowy))?)/i,
+      )?.[1]
+      ?.trim();
   return {
     finalUrl,
     title,
@@ -338,8 +362,9 @@ export function parseListingHtml(
     location,
     trim,
     seller,
+    color,
     description,
     images,
-    text: text.slice(0, 12000),
+    text: text.slice(0, 20000),
   };
 }

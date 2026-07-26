@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { testCars } from "../src/data";
 import type { PurchaseAnalysis } from "../src/types";
 import {
+  buildPurchaseAnalysisInput,
   rankTopTenForPurchase,
   validatePurchaseAnalysis,
 } from "./purchaseAnalysis";
@@ -48,6 +49,49 @@ const modelResult = (ids: string[]): Omit<PurchaseAnalysis, "generatedAt"> => ({
 });
 
 describe("doradca zakupowy TOP 10", () => {
+  it("przekazuje modelowi pełne TOP 10 i odświeżone dane strony z kolorem", () => {
+    const selection = rankTopTenForPurchase(purchaseCars, {});
+    const input = buildPurchaseAnalysisInput(
+      selection.ranked,
+      selection.filters,
+      {
+        inspectedAt: "2026-07-26T20:00:00.000Z",
+        listings: [
+          {
+            carId: selection.ranked[0].car.id,
+            source: "Otomoto",
+            requestedUrl: "https://www.otomoto.pl/oferta/test",
+            fetchedAt: "2026-07-26T20:00:00.000Z",
+            status: "refreshed",
+            color: "Niebieski metalik",
+            description: "Kolor nadwozia: Niebieski metalik.\nPełny opis.",
+            pageText: "Pełny tekst odświeżonej strony",
+            parsedFacts: {
+              vin: "SB1ZB3AE20E040424",
+              hybrid: true,
+              aso: true,
+            },
+          },
+        ],
+      },
+    );
+
+    expect(input.cars).toHaveLength(10);
+    expect(input.liveInspection.listings[0]).toMatchObject({
+      color: "Niebieski metalik",
+      description: expect.stringContaining("Kolor nadwozia"),
+      pageText: "Pełny tekst odświeżonej strony",
+      parsedFacts: {
+        vin: "SB1ZB3AE20E040424",
+        hybrid: true,
+        aso: true,
+      },
+    });
+    expect(input.cars[0]).toHaveProperty("priceHistory");
+    expect(input.cars[0]).toHaveProperty("cepik");
+    expect(input.cars[0]).toHaveProperty("scoreEvidence");
+  });
+
   it("wybiera dokładnie pierwsze 10 aut po zastosowaniu filtrów", () => {
     const selection = rankTopTenForPurchase(purchaseCars, {
       maxPrice: 150_000,
