@@ -10,4 +10,4 @@ if ! chown -R node:node "$data_dir"; then
   exit 1
 fi
 
-exec gosu node "$@"
+exec setpriv --reuid=node --regid=node --init-groups "$@"

@@ -5,15 +5,14 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM node:24-bookworm-slim AS runtime
+FROM mcr.microsoft.com/playwright:v1.61.1-noble AS runtime
 WORKDIR /app
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates gosu \
-    && update-ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
-RUN npx playwright install --with-deps chromium \
-    && chmod -R a+rX /ms-playwright
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/package.json ./package.json
+RUN usermod --login node --home /home/node --move-home ubuntu \
+    && groupmod --new-name node ubuntu \
+    && node -e "require('node:fs').accessSync(require('playwright').chromium.executablePath())"
 ENV NODE_ENV=production \
     HOST=0.0.0.0 \
     PORT=4174 \
@@ -21,8 +20,6 @@ ENV NODE_ENV=production \
     SCAN_INTERVAL_MINUTES=240 \
     ENABLE_CEPIK=true \
     CEPIK_INTERVAL_SECONDS=300
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/server ./server
 COPY --from=build /app/src ./src
 COPY --from=build /app/dist ./dist

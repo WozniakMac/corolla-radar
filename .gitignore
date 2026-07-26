@@ -2,6 +2,7 @@ node_modules/
 dist/
 *.tsbuildinfo
 .DS_Store
+.env
 data/store.json
 data/store.json.bak
 data/store.json.*.tmp

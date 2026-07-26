@@ -95,6 +95,10 @@ kroku; zwykłe wywołania bez przeglądarki pozostają przy `store: false`.
 
 Publiczny obraz dla `linux/amd64` i `linux/arm64` jest dostępny jako `ghcr.io/wozniakmac/corolla-radar:latest`. Przed `docker compose up -d` ustaw `OPENAI_API_KEY` oraz prywatny `NTFY_URL` w pliku `.env` obok `compose.yaml`. Kontener łączy się bezpośrednio z OpenAI Responses API i nie instaluje Codex CLI, nie potrzebuje `codex login`, `CODEX_HOME`, repozytorium Git ani bubblewrapa. Domyślny model to `gpt-5.6-sol`; można go zmienić przez `OPENAI_MODEL`, a poziom rozumowania przez `OPENAI_REASONING_EFFORT`. Bez klucza skan nadal działa, ale API odrzuci ręczne uruchomienie analizy z czytelnym błędem. Nie publikuj klucza ani adresu topicu ntfy w repozytorium.
 
+Warstwa runtime bazuje na oficjalnym obrazie Playwright `v1.61.1-noble`,
+zgodnym z wersją biblioteki przypiętą w projekcie. Build sprawdza, czy
+oczekiwany executable Chromium rzeczywiście istnieje w `/ms-playwright`.
+
 Jeśli ruch wychodzi przez firmowe proxy przechwytujące TLS, zamontuj jego
 certyfikat CA w kontenerze i ustaw `NODE_EXTRA_CA_CERTS` na ścieżkę wewnątrz
 kontenera. Compose przekazuje również `HTTPS_PROXY`, `HTTP_PROXY` i `NO_PROXY`.
