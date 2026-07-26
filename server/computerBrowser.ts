@@ -4,6 +4,7 @@ import {
   type BrowserContext,
   type Page,
 } from "playwright";
+import { chromiumSandboxEnabled } from "./browserLaunch";
 
 export type BrowserListing = {
   carId: string;
@@ -295,7 +296,7 @@ export async function createComputerBrowser(
   try {
     browser = await chromium.launch({
       headless: true,
-      chromiumSandbox: true,
+      chromiumSandbox: chromiumSandboxEnabled(),
       env: {},
       args: ["--disable-extensions", "--disable-file-system"],
     });

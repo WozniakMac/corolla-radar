@@ -16,6 +16,7 @@ RUN usermod --login node --home /home/node --move-home ubuntu \
 ENV NODE_ENV=production \
     HOST=0.0.0.0 \
     PORT=4174 \
+    CHROMIUM_SANDBOX=false \
     ENABLE_SCHEDULED_SCAN=true \
     SCAN_INTERVAL_MINUTES=240 \
     ENABLE_CEPIK=true \

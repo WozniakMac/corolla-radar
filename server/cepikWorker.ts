@@ -11,6 +11,7 @@ import {
 import { matchesFilters } from "../src/filters";
 import { loadSavedFilters } from "./preferences";
 import { notifyNewTopTen } from "./notifications";
+import { chromiumSandboxEnabled } from "./browserLaunch";
 
 let browser: Browser | undefined;
 let busy = false;
@@ -44,7 +45,10 @@ export function parseCepikTimeline(timelineText: string) {
 }
 
 export async function checkCepik(car: any) {
-  browser ||= await chromium.launch({ headless: true });
+  browser ||= await chromium.launch({
+    headless: true,
+    chromiumSandbox: chromiumSandboxEnabled(),
+  });
   const page = await browser.newPage({ locale: "pl-PL" });
   try {
     await page.goto(

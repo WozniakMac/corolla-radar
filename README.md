@@ -98,6 +98,10 @@ Publiczny obraz dla `linux/amd64` i `linux/arm64` jest dostępny jako `ghcr.io/w
 Warstwa runtime bazuje na oficjalnym obrazie Playwright `v1.61.1-noble`,
 zgodnym z wersją biblioteki przypiętą w projekcie. Build sprawdza, czy
 oczekiwany executable Chromium rzeczywiście istnieje w `/ms-playwright`.
+Chromium działa domyślnie z `CHROMIUM_SANDBOX=false`, ponieważ typowe hosty
+kontenerowe blokują wymagane user namespaces. Sandbox można włączyć przez
+`CHROMIUM_SANDBOX=true` dopiero na hoście skonfigurowanym zgodnie z wymaganiami
+Playwrighta.
 
 Jeśli ruch wychodzi przez firmowe proxy przechwytujące TLS, zamontuj jego
 certyfikat CA w kontenerze i ustaw `NODE_EXTRA_CA_CERTS` na ścieżkę wewnątrz
