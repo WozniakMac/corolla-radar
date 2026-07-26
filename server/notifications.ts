@@ -1,7 +1,7 @@
 import { buildMarketBenchmarks, isEligible, scoreCar } from "../src/scoring";
 import type { Car, ScoreBreakdown, ScoreHistoryEntry } from "../src/types";
 import { matchesFilters } from "../src/filters";
-import { load, save, type TopFiveSnapshotEntry } from "./store";
+import { load, save, type TopTenSnapshotEntry } from "./store";
 import { loadSavedFilters } from "./preferences";
 import {
   captureAllScoreHistories,
@@ -137,9 +137,9 @@ function breakdownChanged(
   return scoreKeys.some((key) => previous[key] !== current[key]);
 }
 
-export function hasTopFiveChanged(
-  previous: TopFiveSnapshotEntry[],
-  current: TopFiveSnapshotEntry[],
+export function hasTopTenChanged(
+  previous: TopTenSnapshotEntry[],
+  current: TopTenSnapshotEntry[],
 ) {
   return (
     previous.length !== current.length ||
@@ -200,12 +200,12 @@ export function localCarUrl(
   return `${appPublicUrl.replace(/\/+$/, "")}/cars/${encodeURIComponent(carId)}`;
 }
 
-export function topFiveMessage(
+export function topTenMessage(
   top: RankedCar[],
   previousIds: string[],
   appPublicUrl?: string,
 ) {
-  if (!top.length) return "Brak aut spełniających warunki TOP 5.";
+  if (!top.length) return "Brak aut spełniających warunki TOP 10.";
   return top
     .map(({ car, score, scoreChange }, index) => {
       const listing = car.listings
@@ -223,7 +223,7 @@ export function topFiveMessage(
     .join("\n\n");
 }
 
-export async function notifyNewTopFive(context: ScoreCaptureContext = {}) {
+export async function notifyNewTopTen(context: ScoreCaptureContext = {}) {
   const store = await load();
   const savedFilters = await loadSavedFilters();
   const cars = store.cars as Car[];
@@ -238,35 +238,40 @@ export async function notifyNewTopFive(context: ScoreCaptureContext = {}) {
       scoreChange: scoreChanges.get(car.id),
     }))
     .sort((a, b) => b.score.total - a.score.total)
-    .slice(0, 5);
+    .slice(0, 10);
   const currentIds = top.map(({ car }) => car.id);
   const currentSnapshot = top.map(({ car, score }) => ({
     id: car.id,
     score: score.total,
     breakdown: score,
   }));
-  const previousSnapshot = store.top5Snapshot;
+  const previousSnapshot = store.top10Snapshot || store.top5Snapshot;
   const previousIds =
-    previousSnapshot?.map(({ id }) => id) || store.top5Ids || [];
+    previousSnapshot?.map(({ id }) => id) ||
+    store.top10Ids ||
+    store.top5Ids ||
+    [];
   const changed = previousSnapshot
-    ? hasTopFiveChanged(previousSnapshot, currentSnapshot)
-    : store.top5Ids !== undefined &&
-      (store.top5Ids.length !== currentIds.length ||
-        currentIds.some((id, index) => store.top5Ids![index] !== id));
+    ? hasTopTenChanged(previousSnapshot, currentSnapshot)
+    : store.top10Ids !== undefined &&
+      (store.top10Ids.length !== currentIds.length ||
+        currentIds.some((id, index) => store.top10Ids![index] !== id));
 
-  store.top5Ids = currentIds;
-  store.top5Snapshot = currentSnapshot;
+  store.top10Ids = currentIds;
+  store.top10Snapshot = currentSnapshot;
+  delete store.top5Ids;
+  delete store.top5Snapshot;
   await save(store);
 
   // Pierwszy skan ustala punkt odniesienia. Kolejne wysyłają jeden zbiorczy
-  // alert, jeśli zmienił się skład, kolejność albo punktacja TOP 5.
+  // alert, jeśli zmienił się skład, kolejność albo punktacja TOP 10.
   if (!changed) return;
   const ntfyUrl = process.env.NTFY_URL;
   if (!ntfyUrl) return;
   await sendNotification(
     ntfyUrl,
-    savedFilters ? "Zmiana w filtrowanym TOP 5" : "Zmiana w TOP 5",
-    topFiveMessage(top, previousIds),
+    savedFilters ? "Zmiana w filtrowanym TOP 10" : "Zmiana w TOP 10",
+    topTenMessage(top, previousIds),
     undefined,
     "car,bar_chart",
   );

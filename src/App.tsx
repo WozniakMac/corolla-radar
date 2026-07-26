@@ -5,6 +5,7 @@ import { CodexQueue } from "./components/CodexQueue";
 import { Filters } from "./components/Filters";
 import { MonitoringStats } from "./components/MonitoringStats";
 import { LeasingCalculator } from "./components/LeasingCalculator";
+import { PurchaseAdvisor } from "./components/PurchaseAdvisor";
 import { ComparisonBar, OfferComparison } from "./components/OfferComparison";
 import { ScoreDrawer } from "./components/ScoreDrawer";
 import { Sidebar, type AppView } from "./components/Sidebar";
@@ -44,6 +45,10 @@ export default function App() {
     preferencesLoaded,
     saveFilters,
     resetFilters,
+    purchaseAnalysis,
+    purchaseAnalysisError,
+    analyzingPurchase,
+    analyzePurchase,
   } = useRadarApi();
   const [filters, setFilters] = useState(defaultFilters);
   const carIdFromPath = () => {
@@ -229,18 +234,22 @@ export default function App() {
                 ? "Ranking ofert"
                 : view === "leasing"
                   ? "Kalkulator leasingu"
-                  : view === "codex"
-                    ? "Weryfikacja Codex"
-                    : "Statystyki monitoringu"}
+                  : view === "advisor"
+                    ? "Doradca zakupowy TOP 10"
+                    : view === "codex"
+                      ? "Weryfikacja Codex"
+                      : "Statystyki monitoringu"}
             </h1>
             <p>
               {view === "ranking"
                 ? "Zweryfikowane Corolle Touring Sports, dopasowane do Twoich kryteriów."
                 : view === "leasing"
                   ? "Realny koszt dla JDG na ryczałcie 12% i usług B2B dla firmy z Anglii."
-                  : view === "codex"
-                    ? "Ręczna kolejka uzupełniania brakujących danych w ofertach."
-                    : "Historia skanów ręcznych i automatycznego monitoringu ofert."}
+                  : view === "advisor"
+                    ? "Pogłębione porównanie dokładnie dziesięciu najlepszych ofert z bieżących filtrów."
+                    : view === "codex"
+                      ? "Ręczna kolejka uzupełniania brakujących danych w ofertach."
+                      : "Historia skanów ręcznych i automatycznego monitoringu ofert."}
             </p>
           </div>
           {view === "ranking" && ready && (
@@ -265,6 +274,19 @@ export default function App() {
           <LeasingCalculator
             cars={cars}
             initialCarId={leaseCarId || ranked[0]?.car.id}
+          />
+        ) : view === "advisor" ? (
+          <PurchaseAdvisor
+            filters={filters}
+            authConfigured={codexAuthConfigured}
+            running={analyzingPurchase}
+            result={purchaseAnalysis}
+            error={purchaseAnalysisError}
+            onAnalyze={() => void analyzePurchase(filters)}
+            onOpenCar={(id) => {
+              const car = cars.find((item) => item.id === id);
+              if (car) openCar(car);
+            }}
           />
         ) : view === "stats" ? (
           <MonitoringStats

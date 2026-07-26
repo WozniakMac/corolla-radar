@@ -9,6 +9,9 @@ FROM node:24-bookworm-slim AS runtime
 WORKDIR /app
 ARG CODEX_VERSION=0.144.1
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends gosu \
+    && rm -rf /var/lib/apt/lists/*
 RUN npm install --global "@openai/codex@${CODEX_VERSION}"
 RUN npx playwright install --with-deps chromium \
     && chmod -R a+rX /ms-playwright
@@ -24,9 +27,10 @@ COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/server ./server
 COPY --from=build /app/src ./src
 COPY --from=build /app/dist ./dist
-RUN mkdir -p /app/data
-RUN chown -R node:node /app/data
-USER node
+COPY --chmod=755 docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN mkdir -p /app/data \
+    && chown -R node:node /app/data
 EXPOSE 4174
 VOLUME ["/app/data"]
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["npm", "run", "server"]

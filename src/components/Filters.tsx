@@ -249,7 +249,7 @@ export function Filters({
           {dirty
             ? "Filtry zostały zmienione — zapisz je, aby wpłynęły na powiadomienia."
             : saved
-              ? "Zapisane filtry są używane także w powiadomieniach TOP 5."
+              ? "Zapisane filtry są używane także w powiadomieniach TOP 10."
               : "Filtry nie są zapisane — powiadomienia używają pełnego rankingu."}
         </span>
         <button type="button" onClick={onSave}>

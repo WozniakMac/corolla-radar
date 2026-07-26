@@ -218,3 +218,42 @@ export type MonitoringStats = {
     rawData?: unknown;
   }>;
 };
+
+export type PurchaseRecommendation = {
+  rank: number;
+  carId: string;
+  recommendation: "kup" | "shortlista" | "sprawdź" | "odrzuć";
+  purchaseScore: number;
+  rationale: string;
+  strengths: string[];
+  risks: string[];
+  nextSteps: string[];
+  negotiationTarget: number | null;
+  maxRecommendedPrice: number | null;
+};
+
+export type PurchaseAnalysis = {
+  generatedAt: string;
+  winnerId: string;
+  verdict: string;
+  comparisonSummary: string;
+  confidence: number;
+  rankings: PurchaseRecommendation[];
+  commonChecks: string[];
+  dealBreakers: string[];
+};
+
+export type PurchaseAnalysisCandidate = {
+  id: string;
+  title: string;
+  radarRank: number;
+  radarScore: number;
+  effectivePrice: number;
+  url?: string;
+};
+
+export type PurchaseAnalysisResponse = {
+  analysis: PurchaseAnalysis;
+  candidates: PurchaseAnalysisCandidate[];
+  filters: FilterState;
+};

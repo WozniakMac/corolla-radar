@@ -3077,3 +3077,246 @@ details input[type="range"] {
     width: 120px;
   }
 }
+
+.purchaseAdvisor {
+  display: grid;
+  gap: 20px;
+}
+.advisorHero,
+.advisorVerdict,
+.advisorCandidate,
+.advisorChecklist,
+.advisorLoading,
+.advisorWarning,
+.advisorError {
+  border: 1px solid #dfe6e1;
+  border-radius: 16px;
+  background: white;
+}
+.advisorHero {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: center;
+  padding: 24px;
+}
+.advisorHero h2,
+.advisorChecklist h3 {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  margin: 5px 0 8px;
+}
+.advisorHero h2 svg,
+.advisorChecklist h3 svg {
+  width: 21px;
+}
+.advisorHero p,
+.advisorSummary,
+.advisorCandidate p {
+  color: #59675f;
+  line-height: 1.55;
+}
+.advisorHero > button,
+.advisorVerdict button,
+.advisorCandidateFoot button {
+  border: 0;
+  border-radius: 10px;
+  background: #1f6a49;
+  color: white;
+  min-height: 44px;
+  padding: 0 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.advisorHero > button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+.advisorHero button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.advisorWarning,
+.advisorError {
+  padding: 14px 16px;
+  color: #8a3b26;
+  background: #fff6f1;
+  border-color: #f0c9bb;
+}
+.advisorWarning {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.advisorWarning svg {
+  width: 19px;
+}
+.advisorLoading {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 22px;
+}
+.advisorLoading small {
+  display: block;
+  margin-top: 4px;
+  color: #738078;
+}
+.advisorVerdict {
+  padding: 24px;
+  background: linear-gradient(135deg, #173d2d, #246847);
+  color: white;
+  border: 0;
+}
+.advisorVerdict h3 {
+  margin: 7px 0;
+  font: 800 24px Manrope;
+}
+.advisorVerdict p {
+  max-width: 850px;
+  line-height: 1.6;
+  color: #e5f1e9;
+}
+.advisorVerdict button {
+  background: white;
+  color: #19432f;
+}
+.advisorSummary {
+  margin: 0;
+  padding: 0 4px;
+}
+.advisorRanking {
+  display: grid;
+  gap: 14px;
+}
+.advisorCandidate {
+  padding: 20px;
+  border-left: 5px solid #aeb9b2;
+}
+.advisorCandidate.kup {
+  border-left-color: #36a565;
+}
+.advisorCandidate.shortlista {
+  border-left-color: #5a8fd1;
+}
+.advisorCandidate.sprawdź {
+  border-left-color: #d49a31;
+}
+.advisorCandidate.odrzuć {
+  border-left-color: #c45b52;
+}
+.advisorCandidateHead {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+}
+.advisorRank {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  background: #edf3ef;
+  font: 800 17px Manrope;
+}
+.advisorCandidateHead h3 {
+  margin: 3px 0;
+  font: 700 16px Manrope;
+}
+.advisorCandidateHead small,
+.advisorCandidateHead span,
+.advisorTimestamp {
+  color: #718078;
+}
+.advisorCandidateHead > b {
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: #edf3ef;
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+}
+.advisorColumns,
+.advisorChecklist {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+.advisorColumns {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e8ede9;
+}
+.advisorColumns ul,
+.advisorChecklist ul {
+  margin: 8px 0 0;
+  padding-left: 19px;
+  color: #536158;
+  line-height: 1.5;
+}
+.advisorColumns li + li,
+.advisorChecklist li + li {
+  margin-top: 5px;
+}
+.advisorCandidateFoot {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+  font-size: 12px;
+  color: #66746c;
+}
+.advisorCandidateFoot button {
+  margin-left: auto;
+  min-height: 34px;
+}
+.advisorCandidateFoot a {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #256747;
+  font-weight: 700;
+  text-decoration: none;
+}
+.advisorCandidateFoot svg {
+  width: 14px;
+}
+.advisorChecklist {
+  grid-template-columns: 1fr 1fr;
+  padding: 22px;
+}
+.advisorChecklist h3 {
+  font-size: 15px;
+}
+.advisorTimestamp {
+  justify-self: end;
+}
+
+@media (max-width: 760px) {
+  .advisorHero {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .advisorHero > button {
+    justify-content: center;
+  }
+  .advisorCandidateHead {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .advisorCandidateHead > b {
+    grid-column: 2;
+    justify-self: start;
+  }
+  .advisorColumns,
+  .advisorChecklist {
+    grid-template-columns: 1fr;
+  }
+  .advisorCandidateFoot button {
+    margin-left: 0;
+  }
+}

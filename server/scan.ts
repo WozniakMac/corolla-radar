@@ -9,8 +9,8 @@ async function main() {
       ...store,
       cars: [],
       jobs: [],
-      top5Ids: undefined,
-      top5Snapshot: undefined,
+      top10Ids: undefined,
+      top10Snapshot: undefined,
     });
   }
   const statuses = await runSources(source, "cli");

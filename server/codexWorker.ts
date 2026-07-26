@@ -8,7 +8,7 @@ import { isDecisionMissing, missingListingFields } from "./codexMissing";
 import { fetchAndParse } from "./parser";
 import { upsertParsedCar } from "./pipeline";
 import { load, save, type Job, type Store } from "./store";
-import { notifyNewTopFive } from "./notifications";
+import { notifyNewTopTen } from "./notifications";
 
 let workerRunning = false;
 let currentJobId: string | null = null;
@@ -152,7 +152,7 @@ async function runWorker(onlyJobIds?: string[]) {
         if (p.active && p.eligibleBody && p.price && p.year && p.mileage)
           freshJob.carId = upsertParsedCar(db, p, freshJob.source);
         await save(db);
-        await notifyNewTopFive({
+        await notifyNewTopTen({
           trigger: "codex",
           source: freshJob.source,
         }).catch((error) => console.error("Notification failed:", error));

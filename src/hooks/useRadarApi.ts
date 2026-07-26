@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
-import type { Car, CodexJob, FilterState, MonitoringStats } from "../types";
+import type {
+  Car,
+  CodexJob,
+  FilterState,
+  MonitoringStats,
+  PurchaseAnalysisResponse,
+} from "../types";
 import { normalizeFilters } from "../filters";
 
 export function useRadarApi() {
@@ -30,6 +36,12 @@ export function useRadarApi() {
     null,
   );
   const [codexAuthConfigured, setCodexAuthConfigured] = useState(false);
+  const [purchaseAnalysis, setPurchaseAnalysis] =
+    useState<PurchaseAnalysisResponse | null>(null);
+  const [purchaseAnalysisError, setPurchaseAnalysisError] = useState<
+    string | null
+  >(null);
+  const [analyzingPurchase, setAnalyzingPurchase] = useState(false);
   const [monitoringStats, setMonitoringStats] = useState<MonitoringStats>({
     scheduled: false,
     intervalMinutes: 240,
@@ -236,6 +248,30 @@ export function useRadarApi() {
     }
   };
 
+  const analyzePurchase = async (filters: FilterState) => {
+    setAnalyzingPurchase(true);
+    setPurchaseAnalysisError(null);
+    try {
+      const response = await fetch("/api/purchase-analysis", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ filters }),
+      });
+      const body = await response.json();
+      if (!response.ok)
+        throw new Error(body.error || "Nie udało się przeanalizować TOP 10");
+      setPurchaseAnalysis(body as PurchaseAnalysisResponse);
+    } catch (error) {
+      setPurchaseAnalysisError(
+        error instanceof Error
+          ? error.message
+          : "Nie udało się przeanalizować TOP 10",
+      );
+    } finally {
+      setAnalyzingPurchase(false);
+    }
+  };
+
   return {
     cars,
     ready,
@@ -256,5 +292,9 @@ export function useRadarApi() {
     preferencesLoaded,
     saveFilters,
     resetFilters,
+    purchaseAnalysis,
+    purchaseAnalysisError,
+    analyzingPurchase,
+    analyzePurchase,
   };
 }

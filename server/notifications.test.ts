@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import { testCars } from "../src/data";
 import type { ScoreBreakdown, ScoreHistoryEntry } from "../src/types";
 import {
-  hasTopFiveChanged,
+  hasTopTenChanged,
   localCarUrl,
   notificationKeys,
   positionChangeLabel,
   scoreChangeMessage,
-  topFiveMessage,
+  topTenMessage,
 } from "./notifications";
 
 const breakdown = (
@@ -62,7 +62,7 @@ describe("notification identity", () => {
   });
 });
 
-describe("TOP 5 notification summary", () => {
+describe("TOP 10 notification summary", () => {
   const previous = [
     { id: "a", score: 90 },
     { id: "b", score: 88 },
@@ -70,23 +70,23 @@ describe("TOP 5 notification summary", () => {
   ];
 
   it("detects membership, order and score changes", () => {
-    expect(hasTopFiveChanged(previous, previous)).toBe(false);
+    expect(hasTopTenChanged(previous, previous)).toBe(false);
     expect(
-      hasTopFiveChanged(previous, [
+      hasTopTenChanged(previous, [
         { id: "a", score: 91 },
         { id: "b", score: 88 },
         { id: "c", score: 86 },
       ]),
     ).toBe(true);
     expect(
-      hasTopFiveChanged(previous, [
+      hasTopTenChanged(previous, [
         { id: "b", score: 88 },
         { id: "a", score: 90 },
         { id: "c", score: 86 },
       ]),
     ).toBe(true);
     expect(
-      hasTopFiveChanged(previous, [
+      hasTopTenChanged(previous, [
         { id: "a", score: 90 },
         { id: "b", score: 88 },
         { id: "d", score: 84 },
@@ -96,7 +96,7 @@ describe("TOP 5 notification summary", () => {
 
   it("detects a changed component even when the total stays the same", () => {
     expect(
-      hasTopFiveChanged(
+      hasTopTenChanged(
         [{ id: "a", score: 90, breakdown: breakdown(90) }],
         [
           {
@@ -122,7 +122,7 @@ describe("TOP 5 notification summary", () => {
     const second = { ...testCars[1], id: "new", title: "Corolla Nowa" };
 
     expect(
-      topFiveMessage(
+      topTenMessage(
         [
           { car: first, score: breakdown(92) },
           { car: second, score: breakdown(89) },
@@ -164,10 +164,10 @@ Aplikacja: http://192.168.2.47:4174/cars/new`,
       ],
     };
 
-    expect(topFiveMessage([{ car, score: breakdown(90) }], [])).toContain(
+    expect(topTenMessage([{ car, score: breakdown(90) }], [])).toContain(
       "https://example.test/najtansza",
     );
-    expect(topFiveMessage([{ car, score: breakdown(90) }], [])).not.toContain(
+    expect(topTenMessage([{ car, score: breakdown(90) }], [])).not.toContain(
       "https://example.test/nieaktywna",
     );
   });

@@ -63,6 +63,16 @@ Oferty Toyota Pewne Auto z numerem rejestracyjnym, VIN-em i datą pierwszej reje
 
 Niepełne oferty trafiają do trwałej kolejki widocznej w aplikacji. Codex nigdy nie uruchamia się automatycznie: użytkownik może przetworzyć jedną ofertę albo wszystkie oczekujące. Zakończony URL nie jest przetwarzany ponownie podczas kolejnych skanów; wymaga użycia przycisku „Przetwórz ponownie”. Worker uruchamia lokalne `codex exec` w trybie `--ephemeral`, z sandboxem `read-only` i ścisłym schematem JSON. Wynik o pewności poniżej 0,8 jest ignorowany i nigdy nie może nadpisać jawnej informacji o sedanie, hatchbacku, SUV-ie ani Corolli Cross.
 
+Widok „Doradca TOP 10” uruchamia osobną, ręczną analizę zakupową. Backend
+odtwarza ranking z bieżących filtrów przesłanych przez interfejs i wymaga
+dokładnie dziesięciu kwalifikujących się aut. Codex otrzymuje wyłącznie ten
+zamknięty zestaw wraz z punktacją, dowodami, historią cen, aktywnymi
+publikacjami i dostępnym podsumowaniem CEPiK. Ścisły schemat oraz walidacja po
+odpowiedzi zabraniają pominięcia, podmiany i duplikowania `carId`. Wynik zawiera
+jednego zwycięzcę, pełny ranking zakupowy, ryzyka, plan weryfikacji i — gdy dane
+na to pozwalają — cel negocjacyjny. Analiza nie uruchamia się automatycznie i
+wymaga `OPENAI_API_KEY`.
+
 Publiczny obraz dla `linux/amd64` i `linux/arm64` jest dostępny jako `ghcr.io/wozniakmac/corolla-radar:latest`. Przed `docker compose up -d` ustaw `OPENAI_API_KEY` oraz prywatny `NTFY_URL` w pliku `.env` obok `compose.yaml`. Worker przekazuje `OPENAI_API_KEY` bezpośrednio do `codex exec` i używa izolowanego `CODEX_HOME`, więc kontener nie wymaga interaktywnego `codex login` ani montowania lokalnych poświadczeń. Bez klucza skan nadal działa, ale API odrzuci ręczne uruchomienie kolejki Codex z czytelnym błędem. Nie publikuj klucza ani adresu topicu ntfy w repozytorium.
 
 Panel nie ma warstwy logowania i jest przeznaczony do uruchamiania wyłącznie w
@@ -98,9 +108,17 @@ Aktualizacja indeksu: pobierz bieżący `PL.zip` z GeoNames i wykonaj `node scri
 docker compose up -d --build
 ```
 
-Panel będzie dostępny na porcie `4174`. Katalog `./data` jest montowany jako trwały wolumen i przechowuje bazę, snapshoty pełnych stron oraz poprzedni skład TOP 5. Kontener wykonuje pierwszy skan po uruchomieniu, a następne co 240 minut.
+Panel będzie dostępny na porcie `4174`. Katalog `./data` jest montowany jako trwały wolumen i przechowuje bazę, snapshoty pełnych stron oraz poprzedni skład TOP 10. Kontener wykonuje pierwszy skan po uruchomieniu, a następne co 240 minut.
 
-Po każdym skanie aplikacja porównuje aktualne TOP 5 z poprzednim. Zmiana składu, kolejności, łącznej punktacji lub którejkolwiek składowej oceny generuje jedno zbiorcze powiadomienie ntfy. Zawiera ono listę pięciu aut, aktualne punkty, zmianę pozycji (`↑`, `↓`, `→` lub `NOWE`), przyczynę zmiany punktów, bezpośredni link do ogłoszenia oraz link do szczegółów auta w aplikacji. Dla auta występującego na kilku portalach wybierana jest najtańsza aktywna publikacja. Pierwszy skan tylko ustala punkt odniesienia. Zapisane filtry ograniczają ranking używany w powiadomieniu. Adres tematu konfiguruje `NTFY_URL`, a bazowy adres aplikacji dla linków — `APP_PUBLIC_URL` (domyślnie `http://192.168.2.47:4174`).
+Przy każdym uruchomieniu entrypoint nadaje użytkownikowi aplikacji prawa do
+zamontowanego `/app/data`, a następnie uruchamia proces jako nieuprzywilejowany
+użytkownik `node`. Dzięki temu istniejący bind mount `./data` działa również
+wtedy, gdy jego pliki zostały wcześniej utworzone przez roota lub użytkownika o
+innym UID. Jeśli system plików hosta blokuje zmianę właściciela, kontener
+zatrzyma się z czytelnym komunikatem zamiast uruchomić panel bez możliwości
+zapisu.
+
+Po każdym skanie aplikacja porównuje aktualne TOP 10 z poprzednim. Zmiana składu, kolejności, łącznej punktacji lub którejkolwiek składowej oceny generuje jedno zbiorcze powiadomienie ntfy. Zawiera ono listę dziesięciu aut, aktualne punkty, zmianę pozycji (`↑`, `↓`, `→` lub `NOWE`), przyczynę zmiany punktów, bezpośredni link do ogłoszenia oraz link do szczegółów auta w aplikacji. Dla auta występującego na kilku portalach wybierana jest najtańsza aktywna publikacja. Pierwszy skan tylko ustala punkt odniesienia. Zapisane filtry ograniczają ranking używany w powiadomieniu. Adres tematu konfiguruje `NTFY_URL`, a bazowy adres aplikacji dla linków — `APP_PUBLIC_URL` (domyślnie `http://192.168.2.47:4174`).
 
 Każde auto z kompletnymi danymi podstawowymi przechowuje ostatnie 100 zmian punktacji. Historia w szczegółach auta pokazuje poprzedni i nowy wynik każdej składowej oraz konkretne przesłanki, które pojawiły się, zniknęły albo zmieniły wartość. Zapis powstaje po skanie, ponownym przetworzeniu snapshotów oraz po uzupełnieniu danych przez CEPiK lub Codex; identyczny wynik nie tworzy duplikatu.
 

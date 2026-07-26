@@ -56,7 +56,7 @@ export type CepikRun = {
   error?: string;
   rawData: unknown;
 };
-export type TopFiveSnapshotEntry = {
+export type TopTenSnapshotEntry = {
   id: string;
   score: number;
   breakdown?: ScoreBreakdown;
@@ -65,8 +65,11 @@ export type Store = {
   cars: unknown[];
   jobs: Job[];
   scanRuns?: ScanRun[];
+  top10Ids?: string[];
+  top10Snapshot?: TopTenSnapshotEntry[];
+  /** Pola migracyjne zapisane przez wersje sprzed TOP 10. */
   top5Ids?: string[];
-  top5Snapshot?: TopFiveSnapshotEntry[];
+  top5Snapshot?: TopTenSnapshotEntry[];
   notifiedCarKeys?: string[];
   notifiedPriceDropKeys?: string[];
   snapshots?: SnapshotMeta[];

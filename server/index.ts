@@ -18,9 +18,16 @@ import {
 import { retryCepik, startCepikWorker } from "./cepikWorker";
 import { loadServerConfig } from "./config";
 import { limitMutations, rejectCrossSiteMutations } from "./security";
+import {
+  analyzeTopTenPurchase,
+  publicPurchaseCandidates,
+  rankTopTenForPurchase,
+} from "./purchaseAnalysis";
+import type { Car } from "../src/types";
 
 const config = loadServerConfig();
 const app = express();
+let purchaseAnalysisRunning = false;
 app.disable("x-powered-by");
 void recoverInterruptedJobs().catch(console.error);
 startCepikWorker();
@@ -147,6 +154,45 @@ app.post("/api/snapshots/reprocess", async (_req, res) => {
           ? error.message
           : "Nie udało się przetworzyć snapshotów",
     });
+  }
+});
+app.post("/api/purchase-analysis", async (req, res) => {
+  if (purchaseAnalysisRunning)
+    return res.status(409).json({ error: "Analiza TOP 10 już trwa" });
+  if (!workerState().authConfigured)
+    return res.status(409).json({
+      error: "Brak OPENAI_API_KEY. Ustaw klucz jako zmienną ENV kontenera.",
+    });
+  const store = await load();
+  const selection = rankTopTenForPurchase(
+    store.cars as Car[],
+    req.body?.filters,
+  );
+  if (selection.ranked.length !== 10)
+    return res.status(422).json({
+      error: `Bieżące filtry dają ${selection.available} kwalifikujących się aut; analiza wymaga dokładnie 10.`,
+      available: selection.available,
+    });
+  purchaseAnalysisRunning = true;
+  try {
+    const analysis = await analyzeTopTenPurchase(
+      selection.ranked,
+      selection.filters,
+    );
+    res.json({
+      analysis,
+      candidates: publicPurchaseCandidates(selection.ranked),
+      filters: selection.filters,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error:
+        error instanceof Error
+          ? error.message
+          : "Nie udało się wykonać analizy",
+    });
+  } finally {
+    purchaseAnalysisRunning = false;
   }
 });
 

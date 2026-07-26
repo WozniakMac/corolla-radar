@@ -10,7 +10,7 @@ import {
 } from "../src/scoring";
 import { matchesFilters } from "../src/filters";
 import { loadSavedFilters } from "./preferences";
-import { notifyNewTopFive } from "./notifications";
+import { notifyNewTopTen } from "./notifications";
 
 let browser: Browser | undefined;
 let busy = false;
@@ -204,7 +204,7 @@ async function tick() {
     });
     db.cepikRuns = db.cepikRuns.slice(-500);
     await save(db);
-    await notifyNewTopFive({
+    await notifyNewTopTen({
       trigger: "cepik",
       source: "Historia Pojazdu",
     }).catch((error) => console.error("Notification failed:", error));

@@ -4,7 +4,7 @@ import type { SourceId, SourceStatus } from "./adapters/types";
 import { fetchAndParse, parseListingHtml } from "./parser";
 import { load, save } from "./store";
 import { distanceFromPoznan } from "./distance";
-import { notifyNewTopFive } from "./notifications";
+import { notifyNewTopTen } from "./notifications";
 import type { Store } from "./store";
 import { isDecisionMissing, missingListingFields } from "./codexMissing";
 import { equipmentEvidence } from "./equipmentEvidence";
@@ -568,7 +568,7 @@ export async function runSources(
         );
       }
     }
-    await notifyNewTopFive({
+    await notifyNewTopTen({
       trigger,
       source: sourceId,
     }).catch((error) => console.error("Notification failed:", error));
@@ -648,7 +648,7 @@ export async function reprocessSavedSnapshots() {
     const prunedSnapshotIds = await pruneSnapshots(db);
     await save(db);
     await deletePrunedSnapshotFiles(prunedSnapshotIds);
-    await notifyNewTopFive({
+    await notifyNewTopTen({
       trigger: "reprocess",
       source: "snapshots",
     }).catch((error) => console.error("Notification failed:", error));

@@ -1,6 +1,6 @@
-import { BarChart3, Bot, Calculator, CarFront } from "lucide-react";
+import { BarChart3, Bot, Calculator, CarFront, ListChecks } from "lucide-react";
 
-export type AppView = "ranking" | "leasing" | "codex" | "stats";
+export type AppView = "ranking" | "leasing" | "advisor" | "codex" | "stats";
 
 type Props = {
   rankedCount: number;
@@ -40,6 +40,12 @@ export function Sidebar({
           onClick={() => onView("leasing")}
         >
           <Calculator /> Leasing
+        </button>
+        <button
+          className={view === "advisor" ? "active" : ""}
+          onClick={() => onView("advisor")}
+        >
+          <ListChecks /> Doradca TOP 10
         </button>
         <button
           className={view === "stats" ? "active" : ""}
