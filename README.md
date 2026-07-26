@@ -80,7 +80,7 @@ pokazuje faktyczną liczbę odświeżonych stron i obejrzanych zdjęć, więc cz
 inspekcja nie jest przedstawiana jako pełna. Analiza nie uruchamia się
 automatycznie i wymaga `OPENAI_API_KEY`.
 
-Publiczny obraz dla `linux/amd64` i `linux/arm64` jest dostępny jako `ghcr.io/wozniakmac/corolla-radar:latest`. Przed `docker compose up -d` ustaw `OPENAI_API_KEY` oraz prywatny `NTFY_URL` w pliku `.env` obok `compose.yaml`. Worker przekazuje `OPENAI_API_KEY` bezpośrednio do `codex exec` i używa izolowanego `CODEX_HOME`, więc kontener nie wymaga interaktywnego `codex login` ani montowania lokalnych poświadczeń. Bez klucza skan nadal działa, ale API odrzuci ręczne uruchomienie kolejki Codex z czytelnym błędem. Nie publikuj klucza ani adresu topicu ntfy w repozytorium.
+Publiczny obraz dla `linux/amd64` i `linux/arm64` jest dostępny jako `ghcr.io/wozniakmac/corolla-radar:latest`. Przed `docker compose up -d` ustaw `OPENAI_API_KEY` oraz prywatny `NTFY_URL` w pliku `.env` obok `compose.yaml`. Worker przekazuje `OPENAI_API_KEY` bezpośrednio do `codex exec` i używa izolowanego `CODEX_HOME` w zapisywalnym `data/codex-home`, więc kontener nie wymaga interaktywnego `codex login` ani montowania lokalnych poświadczeń. Obraz nie zawiera metadanych `.git`, dlatego kontrolowane wywołania używają `--skip-git-repo-check`, pozostając jednocześnie w sandboxie `read-only`. Bez klucza skan nadal działa, ale API odrzuci ręczne uruchomienie kolejki Codex z czytelnym błędem. Nie publikuj klucza ani adresu topicu ntfy w repozytorium.
 
 Panel nie ma warstwy logowania i jest przeznaczony do uruchamiania wyłącznie w
 prywatnej, zaufanej sieci. Nie wystawiaj portu `4174` bezpośrednio do Internetu.

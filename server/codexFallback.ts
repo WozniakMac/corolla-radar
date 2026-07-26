@@ -45,9 +45,13 @@ export function codexEnvironment(
   };
 }
 
+export function codexRuntimeHome(env: NodeJS.ProcessEnv = process.env) {
+  return resolve(env.CODEX_RUNTIME_HOME || "data/codex-home");
+}
+
 async function runCodex(args: string[], timeoutMs = 90_000, input?: string) {
   const apiKey = requireCodexApiKey();
-  const isolatedCodexHome = resolve(tmpdir(), "corolla-radar-codex");
+  const isolatedCodexHome = codexRuntimeHome();
   await mkdir(isolatedCodexHome, { recursive: true });
   return new Promise<void>((resolve, reject) => {
     const child = spawn("codex", args, {
@@ -87,6 +91,7 @@ export function codexStructuredArgs(
   return [
     "exec",
     "--ephemeral",
+    "--skip-git-repo-check",
     ...imagePaths.flatMap((path) => ["--image", path]),
     "--sandbox",
     "read-only",

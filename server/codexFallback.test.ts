@@ -3,6 +3,7 @@ import {
   codexEnvironment,
   codexApiKeyConfigured,
   codexStructuredArgs,
+  codexRuntimeHome,
   requireCodexApiKey,
 } from "./codexFallback";
 
@@ -32,15 +33,23 @@ describe("uwierzytelnienie Codex przez ENV", () => {
     expect(env).not.toHaveProperty("NTFY_URL");
   });
 
+  it("trzyma runtime Codex poza niezaufanym katalogiem tymczasowym", () => {
+    expect(codexRuntimeHome({})).toMatch(/data[/\\]codex-home$/);
+    expect(codexRuntimeHome({ CODEX_RUNTIME_HOME: "/srv/codex-runtime" })).toBe(
+      "/srv/codex-runtime",
+    );
+  });
+
   it("przekazuje obrazy osobnymi flagami, a długi prompt przez stdin", () => {
     const args = codexStructuredArgs("server/schema.json", "/tmp/output.json", [
       "/tmp/car-1.jpg",
       "/tmp/car-2.png",
     ]);
     expect(args).toContain("-");
-    expect(args.slice(0, 7)).toEqual([
+    expect(args.slice(0, 8)).toEqual([
       "exec",
       "--ephemeral",
+      "--skip-git-repo-check",
       "--image",
       "/tmp/car-1.jpg",
       "--image",
