@@ -2,7 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { copyFile, mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { detectEngineSpec } from "../src/engine";
-import type { ScoreBreakdown } from "../src/types";
+import type { PurchaseAnalysisRecord, ScoreBreakdown } from "../src/types";
 const path = resolve("data/store.json");
 const backupPath = `${path}.bak`;
 const revision = Symbol("storeRevision");
@@ -74,6 +74,7 @@ export type Store = {
   notifiedPriceDropKeys?: string[];
   snapshots?: SnapshotMeta[];
   cepikRuns?: CepikRun[];
+  purchaseAnalyses?: PurchaseAnalysisRecord[];
 };
 
 type VersionedStore = Store & {
@@ -152,6 +153,9 @@ function parseStore(contents: string): Store {
     scanRuns: data.scanRuns || [],
     snapshots: data.snapshots || [],
     cepikRuns: data.cepikRuns || [],
+    purchaseAnalyses: Array.isArray(data.purchaseAnalyses)
+      ? data.purchaseAnalyses
+      : [],
     notifiedPriceDropKeys: data.notifiedPriceDropKeys || [],
   };
 }
@@ -164,7 +168,13 @@ export async function load(): Promise<Store> {
     return store;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT")
-      return { cars: [], jobs: [], snapshots: [], cepikRuns: [] };
+      return {
+        cars: [],
+        jobs: [],
+        snapshots: [],
+        cepikRuns: [],
+        purchaseAnalyses: [],
+      };
     try {
       const contents = await readFile(backupPath, "utf8");
       const store = parseStore(contents) as VersionedStore;

@@ -46,9 +46,11 @@ export default function App() {
     saveFilters,
     resetFilters,
     purchaseAnalysis,
+    purchaseAnalyses,
     purchaseAnalysisError,
     analyzingPurchase,
     analyzePurchase,
+    selectPurchaseAnalysis,
   } = useRadarApi();
   const [filters, setFilters] = useState(defaultFilters);
   const carIdFromPath = () => {
@@ -281,8 +283,10 @@ export default function App() {
             authConfigured={codexAuthConfigured}
             running={analyzingPurchase}
             result={purchaseAnalysis}
+            history={purchaseAnalyses}
             error={purchaseAnalysisError}
             onAnalyze={() => void analyzePurchase(filters)}
+            onSelectHistory={selectPurchaseAnalysis}
             onOpenCar={(id) => {
               const car = cars.find((item) => item.id === id);
               if (car) openCar(car);

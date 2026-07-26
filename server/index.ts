@@ -25,6 +25,10 @@ import {
 } from "./purchaseAnalysis";
 import type { Car } from "../src/types";
 import { preparePurchaseEvidence } from "./purchaseEvidence";
+import {
+  purchaseAnalysisHistory,
+  savePurchaseAnalysis,
+} from "./purchaseHistory";
 
 const config = loadServerConfig();
 const app = express();
@@ -158,6 +162,9 @@ app.post("/api/snapshots/reprocess", async (_req, res) => {
     });
   }
 });
+app.get("/api/purchase-analyses", async (_req, res) =>
+  res.json({ analyses: await purchaseAnalysisHistory() }),
+);
 app.post("/api/purchase-analysis", async (req, res) => {
   if (purchaseAnalysisRunning)
     return res.status(409).json({ error: "Analiza TOP 10 już trwa" });
@@ -205,12 +212,13 @@ app.post("/api/purchase-analysis", async (req, res) => {
       selection.filters,
       evidence.report,
     );
-    res.json({
+    const response = {
       analysis,
       candidates: publicPurchaseCandidates(selection.ranked),
       filters: selection.filters,
       evidence: evidence.summary,
-    });
+    };
+    res.json(await savePurchaseAnalysis(response));
   } catch (error) {
     res.status(500).json({
       error:
@@ -222,7 +230,7 @@ app.post("/api/purchase-analysis", async (req, res) => {
     await evidence
       ?.cleanup()
       .catch((error) =>
-        console.error("Nie udało się usunąć tymczasowych zdjęć:", error),
+        console.error("Nie udało się usunąć tymczasowych materiałów:", error),
       );
     purchaseAnalysisRunning = false;
   }

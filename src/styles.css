@@ -3092,6 +3092,7 @@ details input[type="range"] {
 .advisorCandidate,
 .advisorChecklist,
 .advisorLoading,
+.advisorHistory,
 .advisorWarning,
 .advisorError {
   border: 1px solid #dfe6e1;
@@ -3143,6 +3144,42 @@ details input[type="range"] {
 .advisorHero button:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+.advisorHistory {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+}
+.advisorHistory > svg {
+  width: 20px;
+  color: #2b6d4d;
+}
+.advisorHistory label {
+  display: grid;
+  gap: 5px;
+  color: #425149;
+  font-size: 12px;
+  font-weight: 700;
+}
+.advisorHistory select {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid #ccd8d0;
+  border-radius: 9px;
+  background: white;
+  color: #20372b;
+  padding: 0 10px;
+}
+.advisorHistory > span {
+  border-radius: 999px;
+  background: #e2f1e8;
+  color: #215d40;
+  padding: 5px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 .advisorWarning,
 .advisorError {
@@ -3367,6 +3404,13 @@ details input[type="range"] {
   }
   .advisorHero > button {
     justify-content: center;
+  }
+  .advisorHistory {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .advisorHistory > span {
+    grid-column: 2;
+    justify-self: start;
   }
   .advisorCandidateHead {
     grid-template-columns: auto minmax(0, 1fr);

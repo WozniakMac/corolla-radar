@@ -2,11 +2,12 @@ import {
   Bot,
   CheckCircle2,
   ExternalLink,
+  History,
   Play,
   ShieldAlert,
 } from "lucide-react";
 import { money } from "../format";
-import type { FilterState, PurchaseAnalysisResponse } from "../types";
+import type { FilterState, PurchaseAnalysisRecord } from "../types";
 
 const recommendationLabel = {
   kup: "Kup",
@@ -20,16 +21,20 @@ export function PurchaseAdvisor({
   authConfigured,
   running,
   result,
+  history,
   error,
   onAnalyze,
+  onSelectHistory,
   onOpenCar,
 }: {
   filters: FilterState;
   authConfigured: boolean;
   running: boolean;
-  result: PurchaseAnalysisResponse | null;
+  result: PurchaseAnalysisRecord | null;
+  history: PurchaseAnalysisRecord[];
   error: string | null;
   onAnalyze: () => void;
+  onSelectHistory: (id: string) => void;
   onOpenCar: (id: string) => void;
 }) {
   const candidates = new Map(
@@ -65,6 +70,35 @@ export function PurchaseAdvisor({
               : "Analizuj TOP 10"}
         </button>
       </div>
+
+      {history.length > 0 && (
+        <div className="advisorHistory">
+          <History />
+          <label htmlFor="purchase-analysis-history">
+            Historia analiz
+            <select
+              id="purchase-analysis-history"
+              value={result?.id || ""}
+              onChange={(event) => onSelectHistory(event.target.value)}
+            >
+              {history.map((record) => {
+                const historicalWinner = record.candidates.find(
+                  (candidate) => candidate.id === record.analysis.winnerId,
+                );
+                return (
+                  <option value={record.id} key={record.id}>
+                    {new Date(record.analysis.generatedAt).toLocaleString(
+                      "pl-PL",
+                    )}{" "}
+                    — {historicalWinner?.title || record.analysis.winnerId}
+                  </option>
+                );
+              })}
+            </select>
+          </label>
+          <span>{history.length} zapisanych</span>
+        </div>
+      )}
 
       {!authConfigured && (
         <div className="advisorWarning">

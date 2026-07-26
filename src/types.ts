@@ -261,6 +261,10 @@ export type PurchaseAnalysisResponse = {
   evidence: PurchaseEvidenceSummary;
 };
 
+export type PurchaseAnalysisRecord = PurchaseAnalysisResponse & {
+  id: string;
+};
+
 export type PurchaseEvidenceSummary = {
   inspectedAt: string;
   pagesAttempted: number;

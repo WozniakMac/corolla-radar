@@ -81,6 +81,12 @@ liczbę odświeżonych stron i aut z potwierdzonym kolorem, więc częściowa
 inspekcja nie jest przedstawiana jako pełna. Analiza nie uruchamia się
 automatycznie i wymaga `OPENAI_API_KEY`.
 
+Każda ukończona analiza jest dopisywana do `purchaseAnalyses` w trwałym
+`data/store.json`; nowy wynik nie zastępuje ani nie usuwa poprzednich.
+`GET /api/purchase-analyses` zwraca historię od najnowszej, a selektor
+„Historia analiz” w doradcy pozwala wrócić do zachowanego składu TOP 10,
+filtrów, rekomendacji, kandydatów i informacji o pokryciu danych.
+
 Analiza zakupowa nie udostępnia OpenAI przeglądarki ani narzędzia Computer Use.
 Backend sam zbiera materiały i wysyła jedno żądanie `store: false`: JSON zawiera
 bieżące filtry, pełne dane TOP 10, punktację z uzasadnieniami, historię cen,

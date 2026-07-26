@@ -4,7 +4,7 @@ import type {
   CodexJob,
   FilterState,
   MonitoringStats,
-  PurchaseAnalysisResponse,
+  PurchaseAnalysisRecord,
 } from "../types";
 import { normalizeFilters } from "../filters";
 
@@ -37,7 +37,10 @@ export function useRadarApi() {
   );
   const [codexAuthConfigured, setCodexAuthConfigured] = useState(false);
   const [purchaseAnalysis, setPurchaseAnalysis] =
-    useState<PurchaseAnalysisResponse | null>(null);
+    useState<PurchaseAnalysisRecord | null>(null);
+  const [purchaseAnalyses, setPurchaseAnalyses] = useState<
+    PurchaseAnalysisRecord[]
+  >([]);
   const [purchaseAnalysisError, setPurchaseAnalysisError] = useState<
     string | null
   >(null);
@@ -63,15 +66,19 @@ export function useRadarApi() {
       setMonitoringStats(status.stats);
       setScanning(Boolean(status.stats.activeScan));
       if (full) {
-        const [stored, preferences] = await Promise.all([
+        const [stored, preferences, history] = await Promise.all([
           request("/api/cars"),
           request("/api/preferences/filters"),
+          request("/api/purchase-analyses"),
         ]);
         setCars(stored as Car[]);
         setSavedFilters(
           preferences.filters ? normalizeFilters(preferences.filters) : null,
         );
         setPreferencesLoaded(true);
+        const analyses = history.analyses as PurchaseAnalysisRecord[];
+        setPurchaseAnalyses(analyses);
+        setPurchaseAnalysis((current) => current || analyses[0] || null);
       }
     } catch {
       // Static production preview can work without the API.
@@ -260,7 +267,12 @@ export function useRadarApi() {
       const body = await response.json();
       if (!response.ok)
         throw new Error(body.error || "Nie udało się przeanalizować TOP 10");
-      setPurchaseAnalysis(body as PurchaseAnalysisResponse);
+      const record = body as PurchaseAnalysisRecord;
+      setPurchaseAnalysis(record);
+      setPurchaseAnalyses((current) => [
+        record,
+        ...current.filter((item) => item.id !== record.id),
+      ]);
     } catch (error) {
       setPurchaseAnalysisError(
         error instanceof Error
@@ -270,6 +282,13 @@ export function useRadarApi() {
     } finally {
       setAnalyzingPurchase(false);
     }
+  };
+
+  const selectPurchaseAnalysis = (id: string) => {
+    setPurchaseAnalysis(
+      purchaseAnalyses.find((analysis) => analysis.id === id) || null,
+    );
+    setPurchaseAnalysisError(null);
   };
 
   return {
@@ -293,8 +312,10 @@ export function useRadarApi() {
     saveFilters,
     resetFilters,
     purchaseAnalysis,
+    purchaseAnalyses,
     purchaseAnalysisError,
     analyzingPurchase,
     analyzePurchase,
+    selectPurchaseAnalysis,
   };
 }
