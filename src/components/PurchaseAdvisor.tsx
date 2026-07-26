@@ -88,9 +88,9 @@ export function PurchaseAdvisor({
           <div>
             <strong>OpenAI porównuje dziesięć ofert</strong>
             <small>
-              Najpierw pobieram galerie, potem OpenAI samodzielnie przegląda
-              ogłoszenia w headless Chrome i analizuje tekst oraz zdjęcia. Może
-              to potrwać kilka minut.
+              Najpierw odświeżam dane, potem OpenAI samodzielnie przegląda
+              ogłoszenia i ich galerie w headless Chrome. Może to potrwać kilka
+              minut.
             </small>
           </div>
         </div>
@@ -119,7 +119,7 @@ export function PurchaseAdvisor({
                 {result.evidence.pagesRefreshed}/
                 {result.evidence.pagesAttempted} stron odświeżonych
               </span>
-              <span>{result.evidence.imagesAttached} zdjęć obejrzanych</span>
+              <span>{result.evidence.imagesAttached} zdjęć pobranych</span>
               <span>zdjęcia dla {result.evidence.carsWithImages}/10 aut</span>
             </div>
             {result.evidence.warnings.map((warning) => (

@@ -175,7 +175,6 @@ export async function analyzeTopTenPurchase(
   ranked: RankedPurchaseCandidate[],
   filters: FilterState,
   evidence: PurchaseEvidenceReport,
-  imagePaths: string[],
 ) {
   if (ranked.length !== 10)
     throw new Error("Do analizy potrzeba dokładnie 10 kwalifikujących się aut");
@@ -196,9 +195,9 @@ ZASADY:
 2. Nie dodawaj, nie usuwaj ani nie zamieniaj żadnego carId. rankings musi zawierać każde z 10 carId dokładnie raz i zachować dokładnie kolejność radarRank: element o rank 1 musi mieć radarRank 1, element o rank 2 radarRank 2 itd.
 3. Oddziel potwierdzone fakty od braków danych. Brak potwierdzenia wpisz jako ryzyko lub nextStep, nigdy jako pewną wadę.
 4. Porównaj cenę, przebieg, rocznik, historię, wyposażenie, warunki sprzedaży, odległość, dowody CEPiK i kompletność danych.
-5. Obejrzyj wszystkie dołączone zdjęcia. Lista liveInspection.visualEvidence ma tę samą kolejność co załączniki; attachmentIndex, nazwa pliku i carId jednoznacznie przypisują każde zdjęcie do auta oraz źródłowego ogłoszenia.
-6. Dla każdego auta wypełnij visualAssessment i visualRisks. Oceniaj wyłącznie to, co rzeczywiście widać: stan karoserii i wnętrza, zgodność wyposażenia, kontrolki, ślady zużycia lub napraw. Odbicia, cień i kompresja zdjęcia nie są dowodem uszkodzenia.
-7. Jeśli strony lub zdjęcia nie zostały pobrane, jawnie obniż pewność i wpisz brak materiału jako ryzyko. Nie udawaj wykonanej inspekcji.
+5. Obrazy nie są dołączone do promptu. Użyj narzędzia computer, otwórz każde ogłoszenie i obejrzyj jego galerię bezpośrednio w headless Chrome.
+6. Dla każdego auta wypełnij visualAssessment i visualRisks. Oceniaj wyłącznie to, co rzeczywiście zobaczyłeś w przeglądarce: stan karoserii i wnętrza, zgodność wyposażenia, kontrolki, ślady zużycia lub napraw. Odbicia, cień i kompresja zdjęcia nie są dowodem uszkodzenia.
+7. Lista liveInspection.visualEvidence opisuje zdjęcia wykryte podczas odświeżania stron, ale nie jest dowodem, że je obejrzałeś. Jeśli strona lub galeria jest niedostępna, jawnie obniż pewność i wpisz brak materiału jako ryzyko. Nie udawaj wykonanej inspekcji.
 8. Wybierz jeden winnerId jako niezależną rekomendację zakupową i uzasadnij go konkretnymi danymi. winnerId nie zmienia kolejności listy: rankings zawsze pozostaje w kolejności radarRank, nawet jeśli rekomendujesz auto z dalszej pozycji.
 9. negotiationTarget i maxRecommendedPrice podawaj tylko wtedy, gdy dane dają rozsądną podstawę; inaczej null.
 10. Odpowiadaj po polsku, konkretnie i bez marketingowych ogólników.
@@ -212,7 +211,6 @@ ${JSON.stringify(payload)}`;
     prompt,
     "server/purchase-analysis.schema.json",
     480_000,
-    imagePaths,
     browserListings,
   );
   return {

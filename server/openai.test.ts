@@ -143,7 +143,6 @@ describe("bezpośrednia integracja OpenAI Responses API", () => {
       "Obejrzyj ogłoszenie",
       "server/codex-output.schema.json",
       5_000,
-      [],
       [
         {
           carId: "car-1",
@@ -210,6 +209,9 @@ describe("bezpośrednia integracja OpenAI Responses API", () => {
       store: true,
       tools: [{ type: "computer" }],
     });
+    expect(requests[0].input[0].content).toEqual([
+      { type: "input_text", text: "Obejrzyj ogłoszenie" },
+    ]);
     expect(requests[1].previous_response_id).toBe("resp-browser-1");
     expect(requests[1].input.at(-1)).toMatchObject({
       type: "computer_call_output",

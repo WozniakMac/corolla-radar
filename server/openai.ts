@@ -257,20 +257,18 @@ export async function runOpenAiComputerStructured<T>(
   prompt: string,
   schemaPath: string,
   timeoutMs: number,
-  imagePaths: string[],
   listings: BrowserListing[],
   env: NodeJS.ProcessEnv = process.env,
   fetchImpl: FetchLike = fetch,
   browserFactory: ComputerBrowserFactory = createComputerBrowser,
 ): Promise<T> {
   const apiKey = requireOpenAiApiKey(env);
-  const [schemaText, images] = await Promise.all([
-    readFile(resolve(schemaPath), "utf8"),
-    imageDataUrls(imagePaths),
-  ]);
+  const schemaText = await readFile(resolve(schemaPath), "utf8");
   const schema = JSON.parse(schemaText);
   const base = {
-    ...buildResponsesRequest(prompt, schema, images, env),
+    // Computer Use accepts its own screenshots, but not multiple image inputs.
+    // Listing photos are inspected in the browser instead of being attached.
+    ...buildResponsesRequest(prompt, schema, [], env),
     store: true,
     tools: [{ type: "computer" }],
   };

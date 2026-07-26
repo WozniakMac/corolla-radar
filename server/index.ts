@@ -204,7 +204,6 @@ app.post("/api/purchase-analysis", async (req, res) => {
       selection.ranked,
       selection.filters,
       evidence.report,
-      evidence.imagePaths,
     );
     res.json({
       analysis,
