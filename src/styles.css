@@ -1,6 +1,11 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap");
 :root {
-  font-family: "DM Sans", sans-serif;
+  --font-sans:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  --font-display:
+    "Avenir Next", Inter, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-sans);
   color: #17211c;
   background: #f3f5f2;
   font-synthesis: none;
@@ -47,10 +52,10 @@ aside {
   color: #0e261b;
   display: grid;
   place-items: center;
-  font: 800 21px Manrope;
+  font: 800 21px var(--font-display);
 }
 .brand b {
-  font: 700 16px Manrope;
+  font: 700 16px var(--font-display);
 }
 .brand small,
 .asideFoot small {
@@ -74,7 +79,7 @@ aside button {
   display: flex;
   align-items: center;
   gap: 10px;
-  font: 600 13px DM Sans;
+  font: 600 13px var(--font-sans);
   cursor: pointer;
 }
 aside button svg {
@@ -134,7 +139,7 @@ header {
   margin-bottom: 28px;
 }
 h1 {
-  font: 800 28px Manrope;
+  font: 800 28px var(--font-display);
   margin: 0;
 }
 header p {
@@ -152,7 +157,7 @@ header p {
   display: flex;
   align-items: center;
   gap: 8px;
-  font: 700 12px DM Sans;
+  font: 700 12px var(--font-sans);
   cursor: pointer;
 }
 .comparisonEntry.active {
@@ -212,12 +217,12 @@ header p {
   letter-spacing: 0.08em;
 }
 .summary strong {
-  font: 800 25px Manrope;
+  font: 800 25px var(--font-display);
   display: block;
   margin: 6px 0;
 }
 .summary strong i {
-  font: 500 12px DM Sans;
+  font: 500 12px var(--font-sans);
   color: #87908b;
 }
 .summary em {
@@ -270,7 +275,7 @@ header p {
   align-items: center;
   gap: 6px;
   cursor: pointer;
-  font: 600 11px DM Sans;
+  font: 600 11px var(--font-sans);
 }
 .filterMemory button svg {
   width: 14px;
@@ -294,7 +299,7 @@ header p {
   outline: 0;
   width: 100%;
   padding: 0 9px;
-  font: 13px DM Sans;
+  font: 13px var(--font-sans);
 }
 .filters select,
 .advancedFiltersBody > button,
@@ -308,7 +313,7 @@ header p {
   align-items: center;
   gap: 6px;
   color: #48534d;
-  font: 600 12px DM Sans;
+  font: 600 12px var(--font-sans);
   cursor: pointer;
 }
 .priceFilter {
@@ -332,7 +337,7 @@ header p {
   border-bottom: 1px solid #d7ddd9;
   outline: 0;
   padding: 3px 2px;
-  font: 600 11px DM Sans;
+  font: 600 11px var(--font-sans);
   color: #35413b;
   background: transparent;
 }
@@ -607,7 +612,7 @@ details input[type="range"] {
   display: flex;
   align-items: center;
   gap: 5px;
-  font: 700 10px DM Sans;
+  font: 700 10px var(--font-sans);
   cursor: pointer;
 }
 .comparisonSelected .compareSelect {
@@ -625,7 +630,7 @@ details input[type="range"] {
 .rank {
   text-align: center;
   color: #a2aaa6;
-  font: 700 12px Manrope;
+  font: 700 12px var(--font-display);
 }
 .score {
   border-right: 1px solid #e5e9e6;
@@ -636,7 +641,7 @@ details input[type="range"] {
   color: #18784c;
 }
 .score strong {
-  font: 800 25px Manrope;
+  font: 800 25px var(--font-display);
 }
 .score > div {
   white-space: nowrap;
@@ -710,7 +715,7 @@ details input[type="range"] {
   color: #914f16;
 }
 .carInfo h2 {
-  font: 700 16px Manrope;
+  font: 700 16px var(--font-display);
   margin: 8px 0 5px;
 }
 .carInfo > p {
@@ -746,7 +751,7 @@ details input[type="range"] {
 }
 .price strong {
   display: block;
-  font: 800 20px Manrope;
+  font: 800 20px var(--font-display);
   margin: 5px 0;
 }
 .price span {
@@ -812,7 +817,7 @@ details input[type="range"] {
   font-weight: 700;
 }
 .drawer h2 {
-  font: 800 24px Manrope;
+  font: 800 24px var(--font-display);
   padding-right: 25px;
 }
 .bigScore {
@@ -822,16 +827,16 @@ details input[type="range"] {
   border: 7px solid #55bd7c;
   display: grid;
   place-items: center;
-  font: 800 29px Manrope;
+  font: 800 29px var(--font-display);
   margin: 24px auto;
 }
 .bigScore span {
-  font: 500 9px DM Sans;
+  font: 500 9px var(--font-sans);
   margin-left: -18px;
   margin-top: 34px;
 }
 .drawer h3 {
-  font: 700 13px Manrope;
+  font: 700 13px var(--font-display);
   margin: 28px 0 10px;
 }
 .scoreRow {
@@ -859,7 +864,7 @@ details input[type="range"] {
 }
 .scoreReasonHead b {
   color: #17613f;
-  font: 800 12px Manrope;
+  font: 800 12px var(--font-display);
 }
 .scoreReason p {
   font-size: 10px;
@@ -923,7 +928,7 @@ details input[type="range"] {
   display: block;
   margin-top: 5px;
   color: #183e2b;
-  font: 800 17px Manrope;
+  font: 800 17px var(--font-display);
 }
 .scoreHistoryTimeline {
   display: grid;
@@ -966,7 +971,7 @@ details input[type="range"] {
   align-items: center;
   gap: 5px;
   color: #183e2b;
-  font: 800 13px Manrope;
+  font: 800 13px var(--font-display);
   white-space: nowrap;
 }
 .scoreHistoryEventHead > strong b {
@@ -1132,7 +1137,7 @@ details input[type="range"] {
   white-space: nowrap;
 }
 .priceEventValue strong {
-  font: 800 13px Manrope;
+  font: 800 13px var(--font-display);
 }
 .priceEventValue span {
   margin-top: 3px;
@@ -1169,7 +1174,7 @@ details input[type="range"] {
   border-radius: 14px;
 }
 .modal h2 {
-  font: 800 22px Manrope;
+  font: 800 22px var(--font-display);
 }
 .modal p {
   color: #68746e;
@@ -1219,7 +1224,7 @@ details input[type="range"] {
 }
 .sourcePanel strong {
   display: block;
-  font: 700 13px Manrope;
+  font: 700 13px var(--font-display);
   margin-top: 3px;
 }
 .sourcePanel div > span {
@@ -1493,7 +1498,7 @@ details input[type="range"] {
 .taxProfileBanner strong {
   display: block;
   margin-top: 4px;
-  font: 700 15px Manrope;
+  font: 700 15px var(--font-display);
 }
 .taxProfileBanner p {
   max-width: 800px;
@@ -1536,7 +1541,7 @@ details input[type="range"] {
   display: block;
   margin-top: 3px;
   color: #3f3157;
-  font: 800 14px Manrope;
+  font: 800 14px var(--font-display);
 }
 .leasingAskBanner p {
   margin: 3px 0 0;
@@ -1580,7 +1585,7 @@ details input[type="range"] {
 }
 .leasingSectionHead h2 {
   margin: 0;
-  font: 800 17px Manrope;
+  font: 800 17px var(--font-display);
 }
 .leasingSectionHead p {
   margin: 3px 0 0;
@@ -1619,7 +1624,7 @@ details input[type="range"] {
   background: #fff;
   color: #26342d;
   padding: 0 11px;
-  font: 600 12px DM Sans;
+  font: 600 12px var(--font-sans);
 }
 .leasingForm select:focus,
 .leasingForm input:focus {
@@ -1689,7 +1694,7 @@ details input[type="range"] {
 .leasingResultHero strong {
   display: block;
   margin-top: 6px;
-  font: 800 29px Manrope;
+  font: 800 29px var(--font-display);
 }
 .leasingResultHero span {
   display: block;
@@ -1716,7 +1721,7 @@ details input[type="range"] {
 .leasingMetrics strong {
   display: block;
   margin-top: 5px;
-  font: 800 16px Manrope;
+  font: 800 16px var(--font-display);
 }
 .leasingMetrics span {
   display: block;
@@ -1751,7 +1756,7 @@ details input[type="range"] {
 .leaseVsCash strong {
   display: block;
   margin-top: 4px;
-  font: 800 15px Manrope;
+  font: 800 15px var(--font-display);
 }
 .leaseVsCash span {
   display: block;
@@ -1820,7 +1825,7 @@ details input[type="range"] {
   background: #fbfcfb;
 }
 .leasingChecklist strong {
-  font: 700 12px Manrope;
+  font: 700 12px var(--font-display);
 }
 .leasingChecklist p {
   margin: 6px 0 0;
@@ -2226,7 +2231,7 @@ details input[type="range"] {
   display: block;
 }
 .comparisonBarTitle strong {
-  font: 700 12px Manrope;
+  font: 700 12px var(--font-display);
 }
 .comparisonBarTitle span {
   margin-top: 2px;
@@ -2325,7 +2330,7 @@ details input[type="range"] {
 .comparisonActions > button {
   border-radius: 8px;
   cursor: pointer;
-  font: 700 11px DM Sans;
+  font: 700 11px var(--font-sans);
 }
 .comparisonCancel {
   height: 42px;
@@ -2388,7 +2393,7 @@ details input[type="range"] {
 }
 .comparisonModalHead h2 {
   margin: 5px 0 3px;
-  font: 800 22px Manrope;
+  font: 800 22px var(--font-display);
 }
 .comparisonModalHead p {
   margin: 0;
@@ -2436,7 +2441,7 @@ details input[type="range"] {
 }
 .comparisonLeaseSettings > summary b {
   color: #314039;
-  font: 700 11px Manrope;
+  font: 700 11px var(--font-display);
 }
 .comparisonLeaseSettings > summary small {
   color: #77837d;
@@ -2478,7 +2483,7 @@ details input[type="range"] {
   background: #fff;
   color: #2c3932;
   padding: 0 9px;
-  font: 600 10px DM Sans;
+  font: 600 10px var(--font-sans);
 }
 .comparisonLeaseFields label > span input {
   padding-right: 45px;
@@ -2582,7 +2587,7 @@ details input[type="range"] {
   gap: 6px;
 }
 .comparisonMetric strong {
-  font: 800 12px Manrope;
+  font: 800 12px var(--font-display);
 }
 .comparisonMetric > span {
   width: 100%;
@@ -2638,7 +2643,7 @@ details input[type="range"] {
   min-height: 32px;
   margin-top: 8px;
   color: #1b2b22;
-  font: 700 11px Manrope;
+  font: 700 11px var(--font-display);
 }
 .comparisonOfferHead > span {
   width: fit-content;
@@ -3173,7 +3178,7 @@ details input[type="range"] {
 }
 .advisorVerdict h3 {
   margin: 7px 0;
-  font: 800 24px Manrope;
+  font: 800 24px var(--font-display);
 }
 .advisorVerdict p {
   max-width: 850px;
@@ -3187,6 +3192,40 @@ details input[type="range"] {
 .advisorSummary {
   margin: 0;
   padding: 0 4px;
+}
+.advisorCoverage {
+  border: 1px solid #d6e2da;
+  border-radius: 12px;
+  background: #f6faf7;
+  padding: 14px 16px;
+}
+.advisorCoverage > div {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.advisorCoverage strong {
+  margin-right: 4px;
+}
+.advisorCoverage span {
+  border-radius: 999px;
+  background: #e2f1e8;
+  color: #215d40;
+  padding: 5px 9px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.advisorCoverage p {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #8a4b20;
+  font-size: 12px;
+  margin: 10px 0 0;
+}
+.advisorCoverage p svg {
+  width: 15px;
 }
 .advisorRanking {
   display: grid;
@@ -3221,11 +3260,11 @@ details input[type="range"] {
   height: 46px;
   border-radius: 13px;
   background: #edf3ef;
-  font: 800 17px Manrope;
+  font: 800 17px var(--font-display);
 }
 .advisorCandidateHead h3 {
   margin: 3px 0;
-  font: 700 16px Manrope;
+  font: 700 16px var(--font-display);
 }
 .advisorCandidateHead small,
 .advisorCandidateHead span,
@@ -3239,6 +3278,30 @@ details input[type="range"] {
   text-transform: uppercase;
   font-size: 10px;
   letter-spacing: 0.05em;
+}
+.advisorVisualAssessment {
+  border-left: 3px solid #79a88c;
+  background: #f5f8f6;
+  padding: 11px 13px;
+  margin: 12px 0;
+}
+.advisorVisualAssessment > strong {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #37644d;
+}
+.advisorVisualAssessment p {
+  margin: 5px 0 0;
+  color: #3d4942;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.advisorVisualAssessment ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: #8c481f;
+  font-size: 11px;
 }
 .advisorColumns,
 .advisorChecklist {

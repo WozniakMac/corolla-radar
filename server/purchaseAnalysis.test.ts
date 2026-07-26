@@ -35,6 +35,8 @@ const modelResult = (ids: string[]): Omit<PurchaseAnalysis, "generatedAt"> => ({
     recommendation: index === 0 ? "kup" : "shortlista",
     purchaseScore: 100 - index,
     rationale: "Ocena na podstawie przekazanych danych.",
+    visualAssessment: "Zdjęcia nie pokazują oczywistych problemów.",
+    visualRisks: [],
     strengths: [],
     risks: [],
     nextSteps: [],
@@ -57,6 +59,21 @@ describe("doradca zakupowy TOP 10", () => {
     expect(selection.ranked[0].score.total).toBeGreaterThanOrEqual(
       selection.ranked[9].score.total,
     );
+  });
+
+  it("dobiera kolejne auto po potwierdzeniu niedostępnej oferty", () => {
+    const initial = rankTopTenForPurchase(purchaseCars, {});
+    const excludedId = initial.ranked[0].car.id;
+    const replacement = rankTopTenForPurchase(
+      purchaseCars,
+      {},
+      new Set([excludedId]),
+    );
+    expect(replacement.ranked).toHaveLength(10);
+    expect(replacement.ranked.map(({ car }) => car.id)).not.toContain(
+      excludedId,
+    );
+    expect(replacement.ranked.map(({ car }) => car.id)).toContain("car-11");
   });
 
   it("odrzuca wynik, który pomija lub podmienia auto", () => {

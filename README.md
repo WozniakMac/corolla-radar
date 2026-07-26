@@ -67,11 +67,18 @@ Widok „Doradca TOP 10” uruchamia osobną, ręczną analizę zakupową. Backe
 odtwarza ranking z bieżących filtrów przesłanych przez interfejs i wymaga
 dokładnie dziesięciu kwalifikujących się aut. Codex otrzymuje wyłącznie ten
 zamknięty zestaw wraz z punktacją, dowodami, historią cen, aktywnymi
-publikacjami i dostępnym podsumowaniem CEPiK. Ścisły schemat oraz walidacja po
-odpowiedzi zabraniają pominięcia, podmiany i duplikowania `carId`. Wynik zawiera
-jednego zwycięzcę, pełny ranking zakupowy, ryzyka, plan weryfikacji i — gdy dane
-na to pozwalają — cel negocjacyjny. Analiza nie uruchamia się automatycznie i
-wymaga `OPENAI_API_KEY`.
+publikacjami i dostępnym podsumowaniem CEPiK. Przed uruchomieniem modelu
+aplikacja ponownie pobiera wszystkie aktywne strony wybranych aut oraz do
+czterech zdjęć każdego egzemplarza. Obrazy są przekazywane jako lokalne
+załączniki `codex exec --image`, z jednoznacznym przypisaniem pliku do `carId`;
+tymczasowe pliki są usuwane po analizie. Liczbę zdjęć można ustawić przez
+`PURCHASE_ANALYSIS_IMAGES_PER_CAR` w zakresie 1–6. Ścisły schemat oraz walidacja
+po odpowiedzi zabraniają pominięcia, podmiany i duplikowania `carId`. Wynik
+zawiera jednego zwycięzcę, pełny ranking zakupowy, osobną ocenę zdjęć, ryzyka,
+plan weryfikacji i — gdy dane na to pozwalają — cel negocjacyjny. Interfejs
+pokazuje faktyczną liczbę odświeżonych stron i obejrzanych zdjęć, więc częściowa
+inspekcja nie jest przedstawiana jako pełna. Analiza nie uruchamia się
+automatycznie i wymaga `OPENAI_API_KEY`.
 
 Publiczny obraz dla `linux/amd64` i `linux/arm64` jest dostępny jako `ghcr.io/wozniakmac/corolla-radar:latest`. Przed `docker compose up -d` ustaw `OPENAI_API_KEY` oraz prywatny `NTFY_URL` w pliku `.env` obok `compose.yaml`. Worker przekazuje `OPENAI_API_KEY` bezpośrednio do `codex exec` i używa izolowanego `CODEX_HOME`, więc kontener nie wymaga interaktywnego `codex login` ani montowania lokalnych poświadczeń. Bez klucza skan nadal działa, ale API odrzuci ręczne uruchomienie kolejki Codex z czytelnym błędem. Nie publikuj klucza ani adresu topicu ntfy w repozytorium.
 

@@ -48,8 +48,8 @@ export function PurchaseAdvisor({
             <Bot /> Codex analizuje dokładnie TOP 10
           </h2>
           <p>
-            Analiza korzysta z aktualnych filtrów, pełnych danych ofert,
-            historii cen, punktacji i dostępnych wyników CEPiK.
+            Analiza odświeża strony dokładnie dziesięciu ofert, ogląda ich
+            zdjęcia i łączy je z historią cen, punktacją oraz wynikami CEPiK.
           </p>
         </div>
         <button
@@ -88,8 +88,8 @@ export function PurchaseAdvisor({
           <div>
             <strong>Codex porównuje dziesięć ofert</strong>
             <small>
-              Analiza jest dokładna i może potrwać kilka minut. Możesz
-              przełączyć widok — wynik pozostanie w tej sesji.
+              Najpierw otwieram ogłoszenia i pobieram galerie, potem Codex
+              analizuje tekst oraz zdjęcia. Może to potrwać kilka minut.
             </small>
           </div>
         </div>
@@ -110,6 +110,23 @@ export function PurchaseAdvisor({
           </div>
 
           <p className="advisorSummary">{result.analysis.comparisonSummary}</p>
+
+          <div className="advisorCoverage">
+            <div>
+              <strong>Inspekcja materiałów</strong>
+              <span>
+                {result.evidence.pagesRefreshed}/
+                {result.evidence.pagesAttempted} stron odświeżonych
+              </span>
+              <span>{result.evidence.imagesAttached} zdjęć obejrzanych</span>
+              <span>zdjęcia dla {result.evidence.carsWithImages}/10 aut</span>
+            </div>
+            {result.evidence.warnings.map((warning) => (
+              <p key={warning}>
+                <ShieldAlert /> {warning}
+              </p>
+            ))}
+          </div>
 
           <div className="advisorRanking">
             {result.analysis.rankings.map((item) => {
@@ -135,6 +152,17 @@ export function PurchaseAdvisor({
                     <b>{recommendationLabel[item.recommendation]}</b>
                   </div>
                   <p>{item.rationale}</p>
+                  <div className="advisorVisualAssessment">
+                    <strong>Ocena zdjęć</strong>
+                    <p>{item.visualAssessment}</p>
+                    {item.visualRisks.length > 0 && (
+                      <ul>
+                        {item.visualRisks.map((value) => (
+                          <li key={value}>{value}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                   <div className="advisorColumns">
                     <div>
                       <strong>Mocne strony</strong>

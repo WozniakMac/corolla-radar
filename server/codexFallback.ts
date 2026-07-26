@@ -45,17 +45,18 @@ export function codexEnvironment(
   };
 }
 
-async function runCodex(args: string[], timeoutMs = 90_000) {
+async function runCodex(args: string[], timeoutMs = 90_000, input?: string) {
   const apiKey = requireCodexApiKey();
   const isolatedCodexHome = resolve(tmpdir(), "corolla-radar-codex");
   await mkdir(isolatedCodexHome, { recursive: true });
   return new Promise<void>((resolve, reject) => {
     const child = spawn("codex", args, {
-      stdio: ["ignore", "ignore", "pipe"],
+      stdio: [input === undefined ? "ignore" : "pipe", "ignore", "pipe"],
       env: codexEnvironment(apiKey, isolatedCodexHome),
     });
+    if (input !== undefined) child.stdin?.end(input);
     let stderr = "";
-    child.stderr.on("data", (chunk) => {
+    child.stderr!.on("data", (chunk) => {
       stderr = (stderr + String(chunk)).slice(-20_000);
     });
     const timer = setTimeout(() => {
@@ -78,26 +79,37 @@ async function runCodex(args: string[], timeoutMs = 90_000) {
   });
 }
 
+export function codexStructuredArgs(
+  schemaPath: string,
+  outputPath: string,
+  imagePaths: string[] = [],
+) {
+  return [
+    "exec",
+    "--ephemeral",
+    ...imagePaths.flatMap((path) => ["--image", path]),
+    "--sandbox",
+    "read-only",
+    "--output-schema",
+    resolve(schemaPath),
+    "--output-last-message",
+    outputPath,
+    "-",
+  ];
+}
+
 export async function runCodexStructured<T>(
   prompt: string,
   schemaPath: string,
   timeoutMs = 90_000,
+  imagePaths: string[] = [],
 ): Promise<T> {
   const output = resolve(tmpdir(), `corolla-radar-${randomUUID()}.json`);
   try {
     await runCodex(
-      [
-        "exec",
-        "--ephemeral",
-        "--sandbox",
-        "read-only",
-        "--output-schema",
-        resolve(schemaPath),
-        "--output-last-message",
-        output,
-        prompt,
-      ],
+      codexStructuredArgs(schemaPath, output, imagePaths),
       timeoutMs,
+      prompt,
     );
     return JSON.parse(await readFile(output, "utf8")) as T;
   } finally {

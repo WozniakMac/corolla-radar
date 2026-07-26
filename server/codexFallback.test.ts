@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   codexEnvironment,
   codexApiKeyConfigured,
+  codexStructuredArgs,
   requireCodexApiKey,
 } from "./codexFallback";
 
@@ -29,5 +30,23 @@ describe("uwierzytelnienie Codex przez ENV", () => {
     });
     expect(env).not.toHaveProperty("SOME_OTHER_SECRET");
     expect(env).not.toHaveProperty("NTFY_URL");
+  });
+
+  it("przekazuje obrazy osobnymi flagami, a długi prompt przez stdin", () => {
+    const args = codexStructuredArgs("server/schema.json", "/tmp/output.json", [
+      "/tmp/car-1.jpg",
+      "/tmp/car-2.png",
+    ]);
+    expect(args).toContain("-");
+    expect(args.slice(0, 7)).toEqual([
+      "exec",
+      "--ephemeral",
+      "--image",
+      "/tmp/car-1.jpg",
+      "--image",
+      "/tmp/car-2.png",
+      "--sandbox",
+    ]);
+    expect(args).not.toContain("bardzo długi prompt");
   });
 });

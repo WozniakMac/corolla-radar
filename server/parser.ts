@@ -36,18 +36,20 @@ const mileageFromOfferText = (text: string) => {
   }
   return 0;
 };
-export async function fetchAndParse(url: string) {
+export async function fetchAndParse(
+  url: string,
+  fetchImpl: typeof fetch = fetch,
+) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 15000);
-  const response = await fetch(url, {
+  const response = await fetchImpl(url, {
     redirect: "follow",
     signal: controller.signal,
     headers: {
       "user-agent": "Mozilla/5.0 CorollaRadar/1.0 (private purchase assistant)",
       "accept-language": "pl-PL,pl;q=.9",
     },
-  });
-  clearTimeout(timer);
+  }).finally(() => clearTimeout(timer));
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const finalUrl = response.url;
   const html = await response.text();

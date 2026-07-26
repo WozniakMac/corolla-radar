@@ -24,6 +24,7 @@ import {
   rankTopTenForPurchase,
 } from "./purchaseAnalysis";
 import type { Car } from "../src/types";
+import { preparePurchaseEvidence } from "./purchaseEvidence";
 
 const config = loadServerConfig();
 const app = express();
@@ -164,25 +165,51 @@ app.post("/api/purchase-analysis", async (req, res) => {
       error: "Brak OPENAI_API_KEY. Ustaw klucz jako zmienną ENV kontenera.",
     });
   const store = await load();
-  const selection = rankTopTenForPurchase(
-    store.cars as Car[],
-    req.body?.filters,
-  );
+  let selection = rankTopTenForPurchase(store.cars as Car[], req.body?.filters);
   if (selection.ranked.length !== 10)
     return res.status(422).json({
       error: `Bieżące filtry dają ${selection.available} kwalifikujących się aut; analiza wymaga dokładnie 10.`,
       available: selection.available,
     });
   purchaseAnalysisRunning = true;
+  let evidence: Awaited<ReturnType<typeof preparePurchaseEvidence>> | undefined;
   try {
+    const unavailableCarIds = new Set<string>();
+    for (let attempt = 0; attempt < 5; attempt++) {
+      evidence = await preparePurchaseEvidence(selection.ranked);
+      if (!evidence.unavailableCarIds.length) break;
+      if (attempt === 4) break;
+      for (const carId of evidence.unavailableCarIds)
+        unavailableCarIds.add(carId);
+      await evidence.cleanup();
+      evidence = undefined;
+      selection = rankTopTenForPurchase(
+        store.cars as Car[],
+        req.body?.filters,
+        unavailableCarIds,
+      );
+      if (selection.ranked.length !== 10)
+        throw new Error(
+          `Po odrzuceniu niedostępnych ogłoszeń zostało ${selection.available} kwalifikujących się aut; potrzeba 10.`,
+        );
+    }
+    if (!evidence)
+      throw new Error("Nie udało się przygotować materiałów TOP 10");
+    if (evidence.unavailableCarIds.length)
+      throw new Error(
+        "Zbyt wiele ogłoszeń TOP 10 okazało się niedostępnych. Uruchom skan i spróbuj ponownie.",
+      );
     const analysis = await analyzeTopTenPurchase(
       selection.ranked,
       selection.filters,
+      evidence.report,
+      evidence.imagePaths,
     );
     res.json({
       analysis,
       candidates: publicPurchaseCandidates(selection.ranked),
       filters: selection.filters,
+      evidence: evidence.summary,
     });
   } catch (error) {
     res.status(500).json({
@@ -192,6 +219,11 @@ app.post("/api/purchase-analysis", async (req, res) => {
           : "Nie udało się wykonać analizy",
     });
   } finally {
+    await evidence
+      ?.cleanup()
+      .catch((error) =>
+        console.error("Nie udało się usunąć tymczasowych zdjęć:", error),
+      );
     purchaseAnalysisRunning = false;
   }
 });

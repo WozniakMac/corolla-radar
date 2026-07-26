@@ -225,6 +225,8 @@ export type PurchaseRecommendation = {
   recommendation: "kup" | "shortlista" | "sprawdź" | "odrzuć";
   purchaseScore: number;
   rationale: string;
+  visualAssessment: string;
+  visualRisks: string[];
   strengths: string[];
   risks: string[];
   nextSteps: string[];
@@ -256,4 +258,15 @@ export type PurchaseAnalysisResponse = {
   analysis: PurchaseAnalysis;
   candidates: PurchaseAnalysisCandidate[];
   filters: FilterState;
+  evidence: PurchaseEvidenceSummary;
+};
+
+export type PurchaseEvidenceSummary = {
+  inspectedAt: string;
+  pagesAttempted: number;
+  pagesRefreshed: number;
+  pagesFailed: number;
+  imagesAttached: number;
+  carsWithImages: number;
+  warnings: string[];
 };

@@ -28,6 +28,8 @@
           "recommendation",
           "purchaseScore",
           "rationale",
+          "visualAssessment",
+          "visualRisks",
           "strengths",
           "risks",
           "nextSteps",
@@ -47,6 +49,11 @@
             "maximum": 100
           },
           "rationale": { "type": "string", "minLength": 1 },
+          "visualAssessment": { "type": "string", "minLength": 1 },
+          "visualRisks": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
           "strengths": {
             "type": "array",
             "items": { "type": "string" }

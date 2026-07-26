@@ -17,6 +17,7 @@ import type {
   ScoreBreakdown,
 } from "../src/types";
 import { runCodexStructured } from "./codexFallback";
+import type { PurchaseEvidenceReport } from "./purchaseEvidence";
 
 export type RankedPurchaseCandidate = {
   car: Car;
@@ -29,6 +30,7 @@ type CodexPurchaseResult = Omit<PurchaseAnalysis, "generatedAt">;
 export function rankTopTenForPurchase(
   cars: Car[],
   inputFilters: unknown,
+  excludedCarIds: ReadonlySet<string> = new Set(),
 ): {
   filters: FilterState;
   ranked: RankedPurchaseCandidate[];
@@ -39,6 +41,7 @@ export function rankTopTenForPurchase(
   const all = cars
     .filter(
       (car) =>
+        !excludedCarIds.has(car.id) &&
         car.body === "Touring Sports" &&
         car.price > 0 &&
         car.year > 0 &&
@@ -71,9 +74,11 @@ const activeListings = (car: Car) =>
 function analysisInput(
   ranked: RankedPurchaseCandidate[],
   filters: FilterState,
+  evidence: PurchaseEvidenceReport,
 ) {
   return {
     filters,
+    liveInspection: evidence,
     rules: {
       startingPoint:
         "Kolejność radarRank pochodzi z deterministycznego rankingu, ale końcowa rekomendacja zakupowa ma uwzględnić ryzyko i kompletność dowodów.",
@@ -166,10 +171,12 @@ export function validatePurchaseAnalysis(
 export async function analyzeTopTenPurchase(
   ranked: RankedPurchaseCandidate[],
   filters: FilterState,
+  evidence: PurchaseEvidenceReport,
+  imagePaths: string[],
 ) {
   if (ranked.length !== 10)
     throw new Error("Do analizy potrzeba dokładnie 10 kwalifikujących się aut");
-  const payload = analysisInput(ranked, filters);
+  const payload = analysisInput(ranked, filters, evidence);
   const prompt = `Jesteś niezależnym doradcą zakupowym używanej Toyoty Corolli Touring Sports. Masz przeanalizować DOKŁADNIE 10 aut z JSON-u poniżej i pomóc wybrać jeden egzemplarz do zakupu.
 
 ZASADY:
@@ -177,9 +184,12 @@ ZASADY:
 2. Nie dodawaj, nie usuwaj ani nie zamieniaj żadnego carId. rankings musi zawierać każde z 10 carId dokładnie raz.
 3. Oddziel potwierdzone fakty od braków danych. Brak potwierdzenia wpisz jako ryzyko lub nextStep, nigdy jako pewną wadę.
 4. Porównaj cenę, przebieg, rocznik, historię, wyposażenie, warunki sprzedaży, odległość, dowody CEPiK i kompletność danych.
-5. Wybierz jeden winnerId. Kolejność zakupowa może różnić się od radarRank, ale uzasadnij to konkretnymi danymi.
-6. negotiationTarget i maxRecommendedPrice podawaj tylko wtedy, gdy dane dają rozsądną podstawę; inaczej null.
-7. Odpowiadaj po polsku, konkretnie i bez marketingowych ogólników.
+5. Obejrzyj wszystkie dołączone zdjęcia. Lista liveInspection.visualEvidence ma tę samą kolejność co załączniki; attachmentIndex, nazwa pliku i carId jednoznacznie przypisują każde zdjęcie do auta oraz źródłowego ogłoszenia.
+6. Dla każdego auta wypełnij visualAssessment i visualRisks. Oceniaj wyłącznie to, co rzeczywiście widać: stan karoserii i wnętrza, zgodność wyposażenia, kontrolki, ślady zużycia lub napraw. Odbicia, cień i kompresja zdjęcia nie są dowodem uszkodzenia.
+7. Jeśli strony lub zdjęcia nie zostały pobrane, jawnie obniż pewność i wpisz brak materiału jako ryzyko. Nie udawaj wykonanej inspekcji.
+8. Wybierz jeden winnerId. Kolejność zakupowa może różnić się od radarRank, ale uzasadnij to konkretnymi danymi.
+9. negotiationTarget i maxRecommendedPrice podawaj tylko wtedy, gdy dane dają rozsądną podstawę; inaczej null.
+10. Odpowiadaj po polsku, konkretnie i bez marketingowych ogólników.
 
 DANE WEJŚCIOWE:
 ${JSON.stringify(payload)}`;
@@ -187,6 +197,7 @@ ${JSON.stringify(payload)}`;
     prompt,
     "server/purchase-analysis.schema.json",
     240_000,
+    imagePaths,
   );
   return {
     ...validatePurchaseAnalysis(
