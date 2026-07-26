@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { defaultFilters, engineVersion, matchesFilters } from "./filters";
+import {
+  defaultFilters,
+  engineVersion,
+  matchesFilters,
+  normalizeFilters,
+} from "./filters";
 import type { Car } from "./types";
 
 const car = {
@@ -27,15 +32,50 @@ describe("offer filters", () => {
     expect(
       matchesFilters(car, {
         ...defaultFilters,
-        engine: "2.0 Hybrid 178 KM",
+        engine: ["2.0 Hybrid 178 KM", "1.8 Hybrid 140 KM"],
         maxPrice: 120000,
       }),
     ).toBe(true);
     expect(
       matchesFilters(car, {
         ...defaultFilters,
-        engine: "1.8 Hybrid 140 KM",
+        engine: ["1.8 Hybrid 140 KM"],
       }),
     ).toBe(false);
+  });
+
+  it("accepts any selected value within a filter category", () => {
+    expect(
+      matchesFilters(car, {
+        ...defaultFilters,
+        year: ["2023", "2025"],
+        trim: ["Comfort", "Style"],
+        source: ["OTOMOTO", "Toyota Pewne Auto"],
+      }),
+    ).toBe(true);
+    expect(
+      matchesFilters(car, {
+        ...defaultFilters,
+        year: ["2022", "2023"],
+        trim: ["Comfort", "Style"],
+      }),
+    ).toBe(false);
+  });
+
+  it("migrates legacy single selections and removes all markers", () => {
+    expect(
+      normalizeFilters({
+        ...defaultFilters,
+        year: "2022",
+        engine: "1.8 Hybrid 140 KM",
+        trim: "all",
+        source: ["OTOMOTO", "OTOMOTO", "all"],
+      }),
+    ).toMatchObject({
+      year: ["2022"],
+      engine: ["1.8 Hybrid 140 KM"],
+      trim: [],
+      source: ["OTOMOTO"],
+    });
   });
 });

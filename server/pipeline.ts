@@ -583,9 +583,10 @@ export async function runSources(
         );
       }
     }
-    await notifyNewTopFive().catch((error) =>
-      console.error("Notification failed:", error),
-    );
+    await notifyNewTopFive({
+      trigger,
+      source: sourceId,
+    }).catch((error) => console.error("Notification failed:", error));
     const result = getStatuses();
     const relevant = result.filter(
       (status) => !sourceId || status.id === sourceId,
@@ -658,6 +659,10 @@ export async function reprocessSavedSnapshots() {
       car.listings?.some((listing: any) => listing.active),
     );
     await save(db);
+    await notifyNewTopFive({
+      trigger: "reprocess",
+      source: "snapshots",
+    }).catch((error) => console.error("Notification failed:", error));
     return { snapshots: snapshots.length, processed, accepted, errors };
   } finally {
     activeScan = undefined;

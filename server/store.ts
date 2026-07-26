@@ -1,6 +1,7 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { detectEngineSpec } from "../src/engine";
+import type { ScoreBreakdown } from "../src/types";
 const path = resolve("data/store.json");
 export type Job = {
   id: string;
@@ -54,6 +55,7 @@ export type CepikRun = {
 export type TopFiveSnapshotEntry = {
   id: string;
   score: number;
+  breakdown?: ScoreBreakdown;
 };
 export type Store = {
   cars: unknown[];

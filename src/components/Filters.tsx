@@ -19,6 +19,74 @@ type Props = {
   onReset: () => void;
 };
 
+type MultiSelectFilterProps = {
+  label: string;
+  allLabel: string;
+  values: string[];
+  options: string[];
+  onChange: (values: string[]) => void;
+};
+
+function MultiSelectFilter({
+  label,
+  allLabel,
+  values,
+  options,
+  onChange,
+}: MultiSelectFilterProps) {
+  const availableOptions = [...new Set([...options, ...values])];
+  const selectedValues = availableOptions.filter((option) =>
+    values.includes(option),
+  );
+  const selectedLabel = selectedValues.join(", ");
+  const summary =
+    values.length === 0
+      ? allLabel
+      : values.length === 1
+        ? values[0]
+        : selectedLabel.length <= 20
+          ? selectedLabel
+          : label;
+  const toggle = (option: string) => {
+    const next = new Set(values);
+    if (next.has(option)) next.delete(option);
+    else next.add(option);
+    onChange(availableOptions.filter((value) => next.has(value)));
+  };
+
+  return (
+    <details className="multiSelectFilter">
+      <summary
+        aria-label={`${label}. ${values.length ? `Wybrano: ${selectedLabel}` : allLabel}`}
+        title={values.length ? selectedLabel : allLabel}
+      >
+        <span>{summary}</span>
+        {values.length > 0 && <b>{values.length}</b>}
+      </summary>
+      <div className="multiSelectMenu" role="group" aria-label={label}>
+        <label className="multiSelectAll">
+          <input
+            type="checkbox"
+            checked={values.length === 0}
+            onChange={() => onChange([])}
+          />
+          <span>{allLabel}</span>
+        </label>
+        {availableOptions.map((option) => (
+          <label key={option}>
+            <input
+              type="checkbox"
+              checked={values.includes(option)}
+              onChange={() => toggle(option)}
+            />
+            <span>{option}</span>
+          </label>
+        ))}
+      </div>
+    </details>
+  );
+}
+
 export function Filters({
   value,
   sources,
@@ -44,10 +112,10 @@ export function Filters({
   const allFilterCount =
     advancedCount +
     [
-      value.year !== "all",
-      value.engine !== "all",
-      value.trim !== "all",
-      value.source !== "all",
+      value.year.length > 0,
+      value.engine.length > 0,
+      value.trim.length > 0,
+      value.source.length > 0,
     ].filter(Boolean).length;
   return (
     <section className={`filters ${mobileOpen ? "mobileFiltersOpen" : ""}`}>
@@ -70,51 +138,34 @@ export function Filters({
           {mobileOpen ? "Ukryj filtry" : "Filtry"}
           {allFilterCount > 0 && <b>{allFilterCount}</b>}
         </button>
-        <select
-          value={value.year}
-          onChange={(e) => set("year", e.target.value)}
-        >
-          <option value="all">Wszystkie roczniki</option>
-          {[2021, 2022, 2023, 2024].map((year) => (
-            <option key={year}>{year}</option>
-          ))}
-        </select>
-        <select
-          value={value.engine}
-          onChange={(e) => set("engine", e.target.value)}
-          aria-label="Wersja silnika"
-        >
-          <option value="all">Wszystkie silniki</option>
-          {engines.map((engine) => (
-            <option value={engine} key={engine}>
-              {engine}
-            </option>
-          ))}
-        </select>
-        <select
-          value={value.trim}
-          onChange={(e) => set("trim", e.target.value)}
-          aria-label="Wersja wyposażenia"
-        >
-          <option value="all">Wszystkie wersje</option>
-          {trims.map((trim) => (
-            <option value={trim} key={trim}>
-              {trim}
-            </option>
-          ))}
-        </select>
-        <select
-          value={value.source}
-          onChange={(e) => set("source", e.target.value)}
-          aria-label="Źródło"
-        >
-          <option value="all">Wszystkie źródła</option>
-          {sources.map((source) => (
-            <option value={source} key={source}>
-              {source}
-            </option>
-          ))}
-        </select>
+        <MultiSelectFilter
+          label="Roczniki"
+          allLabel="Wszystkie roczniki"
+          values={value.year}
+          options={["2021", "2022", "2023", "2024"]}
+          onChange={(values) => set("year", values)}
+        />
+        <MultiSelectFilter
+          label="Silniki"
+          allLabel="Wszystkie silniki"
+          values={value.engine}
+          options={engines}
+          onChange={(values) => set("engine", values)}
+        />
+        <MultiSelectFilter
+          label="Wersje"
+          allLabel="Wszystkie wersje"
+          values={value.trim}
+          options={trims}
+          onChange={(values) => set("trim", values)}
+        />
+        <MultiSelectFilter
+          label="Źródła"
+          allLabel="Wszystkie źródła"
+          values={value.source}
+          options={sources}
+          onChange={(values) => set("source", values)}
+        />
       </div>
       <details className="advancedFilters">
         <summary>

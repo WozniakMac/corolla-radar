@@ -10,6 +10,7 @@ import {
 } from "../src/scoring";
 import { matchesFilters } from "../src/filters";
 import { loadSavedFilters } from "./preferences";
+import { notifyNewTopFive } from "./notifications";
 
 let browser: Browser | undefined;
 let busy = false;
@@ -203,6 +204,10 @@ async function tick() {
     });
     db.cepikRuns = db.cepikRuns.slice(-500);
     await save(db);
+    await notifyNewTopFive({
+      trigger: "cepik",
+      source: "Historia Pojazdu",
+    }).catch((error) => console.error("Notification failed:", error));
   } finally {
     busy = false;
     if (manualQueue.length) setTimeout(() => void tick(), 0);

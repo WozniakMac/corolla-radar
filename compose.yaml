@@ -14,6 +14,7 @@ services:
       CEPIK_INTERVAL_SECONDS: 300
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       NTFY_URL: ${NTFY_URL:-}
+      APP_PUBLIC_URL: ${APP_PUBLIC_URL:-http://192.168.2.47:4174}
     volumes:
       - ./data:/app/data
     healthcheck:

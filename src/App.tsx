@@ -160,7 +160,7 @@ export default function App() {
 
   const applyPreset = (preset: "tech2022" | "local" | "vat") => {
     if (preset === "tech2022")
-      setFilters({ ...defaultFilters, year: "2022", tech: true });
+      setFilters({ ...defaultFilters, year: ["2022"], tech: true });
     if (preset === "local") setFilters({ ...defaultFilters, maxDistance: 150 });
     if (preset === "vat") setFilters({ ...defaultFilters, vat: true });
   };

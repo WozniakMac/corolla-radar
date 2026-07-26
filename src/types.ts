@@ -60,6 +60,7 @@ export type Car = {
   price: number;
   cashPrice?: number;
   priceHistory?: CarPriceHistoryEntry[];
+  scoreHistory?: ScoreHistoryEntry[];
   mileage: number;
   location: string;
   distance: number;
@@ -102,14 +103,14 @@ export type Car = {
 };
 export type FilterState = {
   query: string;
-  source: string;
-  trim: string;
-  engine: string;
+  source: string[];
+  trim: string[];
+  engine: string[];
   minPrice: number;
   maxPrice: number;
   maxKm: number;
   maxDistance: number;
-  year: string;
+  year: string[];
   tech: boolean;
   vat: boolean;
 };
@@ -134,6 +135,33 @@ export type ScoreBreakdown = {
   terms: number;
   total: number;
   confidence: number;
+};
+export type ScoreCategoryKey =
+  "deal" | "history" | "equipment" | "location" | "terms";
+export type ScoreExplanationSnapshot = {
+  key: ScoreCategoryKey;
+  label: string;
+  points: number;
+  max: number;
+  detail: string;
+  deductions: string[];
+};
+export type ScoreCategoryChange = {
+  key: ScoreCategoryKey;
+  label: string;
+  previousPoints: number;
+  points: number;
+  delta: number;
+  reasons: string[];
+};
+export type ScoreHistoryEntry = {
+  capturedAt: string;
+  trigger?: "manual" | "automatic" | "cli" | "cepik" | "codex" | "reprocess";
+  source?: string;
+  previousTotal?: number;
+  score: ScoreBreakdown;
+  explanations: ScoreExplanationSnapshot[];
+  changes: ScoreCategoryChange[];
 };
 export type CodexJob = {
   id: string;

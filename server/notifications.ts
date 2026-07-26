@@ -1,8 +1,21 @@
 import { buildMarketBenchmarks, isEligible, scoreCar } from "../src/scoring";
-import type { Car } from "../src/types";
+import type { Car, ScoreBreakdown, ScoreHistoryEntry } from "../src/types";
 import { matchesFilters } from "../src/filters";
 import { load, save, type TopFiveSnapshotEntry } from "./store";
 import { loadSavedFilters } from "./preferences";
+import {
+  captureAllScoreHistories,
+  type ScoreCaptureContext,
+} from "./scoreHistory";
+
+const DEFAULT_APP_PUBLIC_URL = "http://192.168.2.47:4174";
+const scoreKeys = [
+  "deal",
+  "history",
+  "equipment",
+  "location",
+  "terms",
+] as const;
 
 const normalizeIdentity = (value: string) =>
   value.toLowerCase().replace(/[^a-z0-9]+/g, "");
@@ -112,8 +125,17 @@ async function sendNotification(
 
 type RankedCar = {
   car: Car;
-  score: number;
+  score: ScoreBreakdown;
+  scoreChange?: ScoreHistoryEntry;
 };
+
+function breakdownChanged(
+  previous: ScoreBreakdown | undefined,
+  current: ScoreBreakdown | undefined,
+) {
+  if (!previous || !current) return false;
+  return scoreKeys.some((key) => previous[key] !== current[key]);
+}
 
 export function hasTopFiveChanged(
   previous: TopFiveSnapshotEntry[],
@@ -124,7 +146,8 @@ export function hasTopFiveChanged(
     current.some(
       (entry, index) =>
         previous[index]?.id !== entry.id ||
-        previous[index]?.score !== entry.score,
+        previous[index]?.score !== entry.score ||
+        breakdownChanged(previous[index]?.breakdown, entry.breakdown),
     )
   );
 }
@@ -142,35 +165,85 @@ export function positionChangeLabel(
   return "→";
 }
 
-export function topFiveMessage(top: RankedCar[], previousIds: string[]) {
+const signedPoints = (value: number) => `${value > 0 ? "+" : ""}${value}`;
+
+export function scoreChangeMessage(change: ScoreHistoryEntry | undefined) {
+  if (!change) return "Punkty: bez zmian.";
+  if (change.previousTotal === undefined)
+    return "Punkty: pierwszy zapis historii.";
+  const totalDelta = change.score.total - change.previousTotal;
+  const headline =
+    totalDelta === 0
+      ? "Punkty: wynik łączny bez zmian, zmieniły się składowe."
+      : `Punkty: ${change.previousTotal} → ${change.score.total} (${signedPoints(totalDelta)}).`;
+  const reasons = change.changes
+    .map((item) => {
+      const directReasons = item.reasons.filter(
+        (reason) =>
+          reason.startsWith("Przestało obowiązywać:") ||
+          reason.startsWith("Zaczęło obowiązywać:"),
+      );
+      const reason =
+        directReasons.join("; ") ||
+        item.reasons.find((value) => value.startsWith("Aktualnie:")) ||
+        item.reasons[0];
+      return `${item.label} ${signedPoints(item.delta)} (${item.previousPoints}→${item.points})${reason ? `: ${reason}` : ""}`;
+    })
+    .join(" | ");
+  return reasons ? `${headline}\nDlaczego: ${reasons}` : headline;
+}
+
+export function localCarUrl(
+  carId: string,
+  appPublicUrl = process.env.APP_PUBLIC_URL || DEFAULT_APP_PUBLIC_URL,
+) {
+  return `${appPublicUrl.replace(/\/+$/, "")}/cars/${encodeURIComponent(carId)}`;
+}
+
+export function topFiveMessage(
+  top: RankedCar[],
+  previousIds: string[],
+  appPublicUrl?: string,
+) {
   if (!top.length) return "Brak aut spełniających warunki TOP 5.";
   return top
-    .map(({ car, score }, index) => {
+    .map(({ car, score, scoreChange }, index) => {
       const listing = car.listings
         .filter(
           ({ active, url }) => active !== false && /^https?:\/\//i.test(url),
         )
         .sort((a, b) => (a.cashPrice || a.price) - (b.cashPrice || b.price))[0];
-      const line = `${index + 1}. ${positionChangeLabel(previousIds, car.id, index)} • ${score} pkt — ${car.title}`;
-      return listing?.url ? `${line}\n${listing.url}` : line;
+      return [
+        `${index + 1}. ${positionChangeLabel(previousIds, car.id, index)} • ${score.total} pkt — ${car.title}`,
+        scoreChangeMessage(scoreChange),
+        ...(listing?.url ? [`Oferta: ${listing.url}`] : []),
+        `Aplikacja: ${localCarUrl(car.id, appPublicUrl)}`,
+      ].join("\n");
     })
-    .join("\n");
+    .join("\n\n");
 }
 
-export async function notifyNewTopFive() {
+export async function notifyNewTopFive(context: ScoreCaptureContext = {}) {
   const store = await load();
   const savedFilters = await loadSavedFilters();
-  const market = buildMarketBenchmarks(store.cars as Car[]);
-  const top = (store.cars as Car[])
+  const cars = store.cars as Car[];
+  const market = buildMarketBenchmarks(cars);
+  const scoreChanges = captureAllScoreHistories(cars, market, context);
+  const top = cars
     .filter(isEligible)
     .filter((car) => !savedFilters || matchesFilters(car, savedFilters))
-    .map((car) => ({ car, score: scoreCar(car, market).total }))
-    .sort((a, b) => b.score - a.score)
+    .map((car) => ({
+      car,
+      score: scoreCar(car, market),
+      scoreChange: scoreChanges.get(car.id),
+    }))
+    .sort((a, b) => b.score.total - a.score.total)
     .slice(0, 5);
   const currentIds = top.map(({ car }) => car.id);
   const currentSnapshot = top.map(({ car, score }) => ({
     id: car.id,
-    score,
+    score: score.total,
+    breakdown: score,
   }));
   const previousSnapshot = store.top5Snapshot;
   const previousIds =

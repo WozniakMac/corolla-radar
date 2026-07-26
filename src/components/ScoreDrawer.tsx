@@ -21,6 +21,7 @@ export function ScoreDrawer({
 }) {
   const score = scoreCar(car, market);
   const explanation = explainScore(car, market);
+  const scoreHistory = [...(car.scoreHistory || [])].reverse();
   const priceEvents = car.listings
     .flatMap((listing) =>
       (listing.priceHistory || []).map((entry, index, history) => {
@@ -124,6 +125,102 @@ export function ScoreDrawer({
               )}
             </div>
           ))}
+        </div>
+        <h3>Historia punktów</h3>
+        <div className="scoreHistorySummary">
+          <div>
+            <small>AKTUALNY WYNIK</small>
+            <strong>{score.total}/100</strong>
+          </div>
+          <div>
+            <small>ZAPISANE ZMIANY</small>
+            <strong>
+              {
+                scoreHistory.filter(
+                  (entry) => entry.previousTotal !== undefined,
+                ).length
+              }
+            </strong>
+          </div>
+        </div>
+        <div className="scoreHistoryTimeline">
+          {scoreHistory.length ? (
+            scoreHistory.map((entry) => {
+              const delta =
+                entry.previousTotal === undefined
+                  ? 0
+                  : entry.score.total - entry.previousTotal;
+              return (
+                <article
+                  className={`scoreHistoryEvent ${delta > 0 ? "rise" : delta < 0 ? "drop" : "initial"}`}
+                  key={`${entry.capturedAt}-${entry.score.total}`}
+                >
+                  <div className="scoreHistoryEventHead">
+                    <div>
+                      <time>
+                        {new Date(entry.capturedAt).toLocaleString("pl-PL")}
+                      </time>
+                      <small>
+                        {entry.trigger === "automatic"
+                          ? "skan automatyczny"
+                          : entry.trigger === "manual"
+                            ? "skan ręczny"
+                            : entry.trigger === "cli"
+                              ? "skan CLI"
+                              : entry.trigger === "cepik"
+                                ? "Historia Pojazdu / CEPiK"
+                                : entry.trigger === "codex"
+                                  ? "uzupełnienie Codex"
+                                  : entry.trigger === "reprocess"
+                                    ? "ponowne przeliczenie danych"
+                                    : "zapis punktacji"}
+                        {entry.source ? ` • ${entry.source}` : ""}
+                      </small>
+                    </div>
+                    <strong>
+                      {entry.previousTotal === undefined
+                        ? `${entry.score.total}/100`
+                        : `${entry.previousTotal} → ${entry.score.total}`}
+                      {entry.previousTotal !== undefined && (
+                        <b>
+                          {delta > 0 ? "+" : ""}
+                          {delta}
+                        </b>
+                      )}
+                    </strong>
+                  </div>
+                  {entry.changes.length ? (
+                    <div className="scoreHistoryReasons">
+                      {entry.changes.map((change) => (
+                        <details open key={change.key}>
+                          <summary>
+                            <span>{change.label}</span>
+                            <b>
+                              {change.previousPoints} → {change.points} (
+                              {change.delta > 0 ? "+" : ""}
+                              {change.delta})
+                            </b>
+                          </summary>
+                          <ul>
+                            {change.reasons.map((reason) => (
+                              <li key={reason}>{reason}</li>
+                            ))}
+                          </ul>
+                        </details>
+                      ))}
+                    </div>
+                  ) : (
+                    <p>Pierwszy zapis punktacji — punkt odniesienia.</p>
+                  )}
+                </article>
+              );
+            })
+          ) : (
+            <div className="noScoreHistory">
+              Historia zostanie utworzona po następnym skanie lub przeliczeniu
+              danych.
+            </div>
+          )}
         </div>
         <div
           className={car.parkingSensors ? "sensorConfirmed" : "sensorMissing"}

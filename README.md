@@ -75,6 +75,7 @@ docker run -d \
   -e ENABLE_SCHEDULED_SCAN=true \
   -e SCAN_INTERVAL_MINUTES=240 \
   -e NTFY_URL=https://ntfy.sh/twoj-prywatny-topic \
+  -e APP_PUBLIC_URL=http://192.168.2.47:4174 \
   ghcr.io/wozniakmac/corolla-radar:latest
 ```
 
@@ -92,7 +93,9 @@ docker compose up -d --build
 
 Panel będzie dostępny na porcie `4174`. Katalog `./data` jest montowany jako trwały wolumen i przechowuje bazę, snapshoty pełnych stron oraz poprzedni skład TOP 5. Kontener wykonuje pierwszy skan po uruchomieniu, a następne co 240 minut.
 
-Po każdym skanie aplikacja porównuje aktualne TOP 5 z poprzednim. Zmiana składu, kolejności lub punktacji generuje jedno zbiorcze powiadomienie ntfy z listą pięciu aut, aktualnymi punktami, zmianą pozycji (`↑`, `↓`, `→` lub `NOWE`) oraz bezpośrednim linkiem do każdego ogłoszenia. Dla auta występującego na kilku portalach wybierana jest najtańsza aktywna publikacja. Pierwszy skan tylko ustala punkt odniesienia. Zapisane filtry ograniczają ranking używany w powiadomieniu; adres tematu konfiguruje `NTFY_URL` w `compose.yaml`.
+Po każdym skanie aplikacja porównuje aktualne TOP 5 z poprzednim. Zmiana składu, kolejności, łącznej punktacji lub którejkolwiek składowej oceny generuje jedno zbiorcze powiadomienie ntfy. Zawiera ono listę pięciu aut, aktualne punkty, zmianę pozycji (`↑`, `↓`, `→` lub `NOWE`), przyczynę zmiany punktów, bezpośredni link do ogłoszenia oraz link do szczegółów auta w aplikacji. Dla auta występującego na kilku portalach wybierana jest najtańsza aktywna publikacja. Pierwszy skan tylko ustala punkt odniesienia. Zapisane filtry ograniczają ranking używany w powiadomieniu. Adres tematu konfiguruje `NTFY_URL`, a bazowy adres aplikacji dla linków — `APP_PUBLIC_URL` (domyślnie `http://192.168.2.47:4174`).
+
+Każde auto z kompletnymi danymi podstawowymi przechowuje ostatnie 100 zmian punktacji. Historia w szczegółach auta pokazuje poprzedni i nowy wynik każdej składowej oraz konkretne przesłanki, które pojawiły się, zniknęły albo zmieniły wartość. Zapis powstaje po skanie, ponownym przetworzeniu snapshotów oraz po uzupełnieniu danych przez CEPiK lub Codex; identyczny wynik nie tworzy duplikatu.
 
 Deduplication scala publikacje tylko po identycznym VIN lub identycznym znormalizowanym URL-u. Podobna cena, przebieg i rocznik nie wystarczają do scalenia.
 

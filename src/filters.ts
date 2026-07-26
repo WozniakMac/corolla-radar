@@ -5,14 +5,14 @@ import { detectEngineSpec } from "./engine";
 
 export const defaultFilters: FilterState = {
   query: "",
-  source: "all",
-  trim: "all",
-  engine: "all",
+  source: [],
+  trim: [],
+  engine: [],
   minPrice: 0,
   maxPrice: 150000,
   maxKm: 200000,
   maxDistance: 0,
-  year: "all",
+  year: [],
   tech: false,
   vat: false,
 };
@@ -40,29 +40,40 @@ export function matchesFilters(car: Car, filters: FilterState) {
     (filters.maxPrice === 0 || effectivePrice(car) <= filters.maxPrice) &&
     car.mileage <= filters.maxKm &&
     (filters.maxDistance === 0 || car.distance <= filters.maxDistance) &&
-    (filters.year === "all" || car.year === Number(filters.year)) &&
-    (filters.trim === "all" || trimVariant(car) === filters.trim) &&
-    (filters.engine === "all" || engineVersion(car) === filters.engine) &&
-    (filters.source === "all" ||
+    (!filters.year.length || filters.year.includes(String(car.year))) &&
+    (!filters.trim.length || filters.trim.includes(trimVariant(car))) &&
+    (!filters.engine.length || filters.engine.includes(engineVersion(car))) &&
+    (!filters.source.length ||
       car.listings.some(
-        (listing) => listing.active && listing.source === filters.source,
+        (listing) => listing.active && filters.source.includes(listing.source),
       )) &&
     (!filters.tech || car.tech) &&
     (!filters.vat || car.vat23)
   );
 }
 
+function normalizeSelection(value: unknown) {
+  const items = Array.isArray(value) ? value : [value];
+  return [
+    ...new Set(
+      items
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => item.trim())
+        .filter((item) => item && item !== "all"),
+    ),
+  ];
+}
+
 export function normalizeFilters(value: unknown): FilterState {
   if (!value || typeof value !== "object") return defaultFilters;
-  const input = value as Partial<FilterState>;
+  const input = value as Record<string, unknown>;
   return {
     ...defaultFilters,
-    ...input,
     query: typeof input.query === "string" ? input.query : "",
-    source: typeof input.source === "string" ? input.source : "all",
-    trim: typeof input.trim === "string" ? input.trim : "all",
-    engine: typeof input.engine === "string" ? input.engine : "all",
-    year: typeof input.year === "string" ? input.year : "all",
+    source: normalizeSelection(input.source),
+    trim: normalizeSelection(input.trim),
+    engine: normalizeSelection(input.engine),
+    year: normalizeSelection(input.year),
     minPrice: Number(input.minPrice) || 0,
     maxPrice: Number.isFinite(Number(input.maxPrice))
       ? Number(input.maxPrice)

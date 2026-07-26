@@ -1,11 +1,28 @@
 import { describe, expect, it } from "vitest";
 import { testCars } from "../src/data";
+import type { ScoreBreakdown, ScoreHistoryEntry } from "../src/types";
 import {
   hasTopFiveChanged,
+  localCarUrl,
   notificationKeys,
   positionChangeLabel,
+  scoreChangeMessage,
   topFiveMessage,
 } from "./notifications";
+
+const breakdown = (
+  total: number,
+  overrides: Partial<ScoreBreakdown> = {},
+): ScoreBreakdown => ({
+  deal: total - 50,
+  history: 20,
+  equipment: 10,
+  location: 10,
+  terms: 10,
+  total,
+  confidence: 90,
+  ...overrides,
+});
 
 describe("notification identity", () => {
   it("recognizes the same car by VIN across different portals", () => {
@@ -77,6 +94,21 @@ describe("TOP 5 notification summary", () => {
     ).toBe(true);
   });
 
+  it("detects a changed component even when the total stays the same", () => {
+    expect(
+      hasTopFiveChanged(
+        [{ id: "a", score: 90, breakdown: breakdown(90) }],
+        [
+          {
+            id: "a",
+            score: 90,
+            breakdown: breakdown(90, { deal: 39, history: 21 }),
+          },
+        ],
+      ),
+    ).toBe(true);
+  });
+
   it("describes moves and new cars relative to the previous ranking", () => {
     const previousIds = ["a", "b", "c", "d", "e"];
     expect(positionChangeLabel(previousIds, "c", 0)).toBe("↑2");
@@ -92,16 +124,22 @@ describe("TOP 5 notification summary", () => {
     expect(
       topFiveMessage(
         [
-          { car: first, score: 92 },
-          { car: second, score: 89 },
+          { car: first, score: breakdown(92) },
+          { car: second, score: breakdown(89) },
         ],
         ["a", "b", "c"],
+        "http://192.168.2.47:4174",
       ),
     ).toBe(
       `1. ↑2 • 92 pkt — Corolla C
-${first.listings[0].url}
+Punkty: bez zmian.
+Oferta: ${first.listings[0].url}
+Aplikacja: http://192.168.2.47:4174/cars/c
+
 2. NOWE • 89 pkt — Corolla Nowa
-${second.listings[0].url}`,
+Punkty: bez zmian.
+Oferta: ${second.listings[0].url}
+Aplikacja: http://192.168.2.47:4174/cars/new`,
     );
   });
 
@@ -126,11 +164,45 @@ ${second.listings[0].url}`,
       ],
     };
 
-    expect(topFiveMessage([{ car, score: 90 }], [])).toContain(
+    expect(topFiveMessage([{ car, score: breakdown(90) }], [])).toContain(
       "https://example.test/najtansza",
     );
-    expect(topFiveMessage([{ car, score: 90 }], [])).not.toContain(
+    expect(topFiveMessage([{ car, score: breakdown(90) }], [])).not.toContain(
       "https://example.test/nieaktywna",
+    );
+  });
+
+  it("links to the car route and safely encodes its id", () => {
+    expect(localCarUrl("VIN/ABC 123", "http://192.168.2.47:4174/")).toBe(
+      "http://192.168.2.47:4174/cars/VIN%2FABC%20123",
+    );
+  });
+
+  it("summarizes the point delta and its direct cause", () => {
+    const change: ScoreHistoryEntry = {
+      capturedAt: "2026-07-26T10:00:00.000Z",
+      previousTotal: 84,
+      score: breakdown(89),
+      explanations: [],
+      changes: [
+        {
+          key: "history",
+          label: "Historia i stan",
+          previousPoints: 13,
+          points: 18,
+          delta: 5,
+          reasons: [
+            "Przestało obowiązywać: Brak potwierdzonego serwisowania lub historii ASO: −5 pkt",
+            "Poprzednio: salon Polska",
+            "Aktualnie: ASO • salon Polska",
+          ],
+        },
+      ],
+    };
+
+    expect(scoreChangeMessage(change)).toContain("Punkty: 84 → 89 (+5).");
+    expect(scoreChangeMessage(change)).toContain(
+      "Historia i stan +5 (13→18): Przestało obowiązywać: Brak potwierdzonego serwisowania",
     );
   });
 });

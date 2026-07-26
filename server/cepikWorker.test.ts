@@ -39,7 +39,7 @@ describe("CEPiK candidate rankings", () => {
     }));
     const ids = await cepikTopIds(cars, {
       ...defaultFilters,
-      source: "Filtrowane",
+      source: ["Filtrowane"],
     });
     expect(ids.size).toBe(15);
     expect(ids.has("car-0")).toBe(true);
