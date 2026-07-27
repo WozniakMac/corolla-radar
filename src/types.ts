@@ -2,10 +2,14 @@ export type Listing = {
   source: string;
   url: string;
   price: number;
+  title?: string;
   year?: number;
   mileage?: number;
   power?: number;
   engineVersion?: string;
+  location?: string;
+  trim?: string;
+  seller?: string;
   cashPrice?: number;
   priceHistory?: PriceHistoryEntry[];
   active: boolean;

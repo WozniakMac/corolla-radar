@@ -95,6 +95,29 @@ const statuses: Map<SourceId, SourceStatus> = new Map(
     } satisfies SourceStatus,
   ]),
 );
+
+const sourcePriority = (source: string) =>
+  source === "Toyota Pewne Auto" ? 0 : source === "OTOMOTO" ? 1 : 2;
+
+const prioritizedListings = (listings: any[]) =>
+  [...listings].sort(
+    (a, b) =>
+      sourcePriority(a.source) - sourcePriority(b.source) ||
+      String(b.checkedAt).localeCompare(String(a.checkedAt)),
+  );
+
+const preferredListingValue = (
+  listings: any[],
+  key: string,
+  fallback?: unknown,
+) =>
+  prioritizedListings(listings).find(
+    (listing) =>
+      listing[key] !== undefined &&
+      listing[key] !== null &&
+      listing[key] !== "",
+  )?.[key] ?? fallback;
+
 export type ActiveScan = {
   trigger: "manual" | "automatic" | "cli";
   source?: string;
@@ -197,10 +220,14 @@ function toCar(
         source,
         url: p.finalUrl,
         price: p.price,
+        title: p.title,
         year: p.year,
         mileage: p.mileage,
         power: p.power,
         engineVersion: p.engineVersion,
+        location: p.location,
+        trim: p.trim,
+        seller: p.seller,
         cashPrice: p.cashPrice,
         priceHistory: [
           {
@@ -285,10 +312,14 @@ export function upsertParsedCar(
     source,
     url: p.finalUrl,
     price: p.price,
+    title: p.title,
     year: p.year,
     mileage: p.mileage,
     power: p.power,
     engineVersion: p.engineVersion,
+    location: p.location,
+    trim: p.trim,
+    seller: p.seller,
     cashPrice: p.cashPrice,
     active: true,
     checkedAt,
@@ -368,31 +399,62 @@ export function upsertParsedCar(
     });
   }
   duplicate.verifiedAt = listing.checkedAt;
-  duplicate.title = p.title || duplicate.title;
-  if (p.trim) duplicate.trim = p.trim;
-  if (p.location) {
-    duplicate.location = p.location;
-    duplicate.distance = distanceFromPoznan(p.location);
-  }
-  if (p.seller) duplicate.seller = p.seller;
-  duplicate.vin ||= p.vin;
-  duplicate.registrationNumber ||= p.registrationNumber;
-  duplicate.firstRegistrationDate ||= p.firstRegistrationDate;
   const activeListings = duplicate.listings.filter((item: any) => item.active);
-  duplicate.year = Math.max(
-    ...activeListings.map((item: any) => item.year || 0),
+  duplicate.title = preferredListingValue(
+    activeListings,
+    "title",
+    duplicate.title,
   );
-  duplicate.mileage = Math.max(
-    ...activeListings.map((item: any) => item.mileage || 0),
+  duplicate.trim = preferredListingValue(
+    activeListings,
+    "trim",
+    duplicate.trim,
   );
-  const engineListings = activeListings
-    .filter((item: any) => item.engineVersion)
-    .sort((a: any, b: any) =>
-      String(b.checkedAt).localeCompare(String(a.checkedAt)),
-    );
-  const selectedEngine = engineListings[0];
-  duplicate.power = selectedEngine?.power || p.power || 0;
-  duplicate.engineVersion = selectedEngine?.engineVersion || p.engineVersion;
+  const preferredLocation = preferredListingValue(
+    activeListings,
+    "location",
+    duplicate.location,
+  );
+  if (preferredLocation) {
+    duplicate.location = preferredLocation;
+    duplicate.distance = distanceFromPoznan(preferredLocation);
+  }
+  duplicate.seller = preferredListingValue(
+    activeListings,
+    "seller",
+    duplicate.seller,
+  );
+  duplicate.year = preferredListingValue(
+    activeListings,
+    "year",
+    duplicate.year,
+  );
+  duplicate.mileage = preferredListingValue(
+    activeListings,
+    "mileage",
+    duplicate.mileage,
+  );
+  duplicate.power = preferredListingValue(
+    activeListings,
+    "power",
+    p.power || duplicate.power || 0,
+  );
+  duplicate.engineVersion = preferredListingValue(
+    activeListings,
+    "engineVersion",
+    p.engineVersion || duplicate.engineVersion,
+  );
+  duplicate.vin ||= p.vin;
+  duplicate.registrationNumber = preferredListingValue(
+    activeListings,
+    "registrationNumber",
+    duplicate.registrationNumber || p.registrationNumber,
+  );
+  duplicate.firstRegistrationDate = preferredListingValue(
+    activeListings,
+    "firstRegistrationDate",
+    duplicate.firstRegistrationDate || p.firstRegistrationDate,
+  );
   duplicate.camera = activeListings.some((item: any) => item.camera === true);
   duplicate.parkingSensors = activeListings.some(
     (item: any) => item.parkingSensors === true,
@@ -419,9 +481,16 @@ export function upsertParsedCar(
   duplicate.reserved = activeListings.some(
     (item: any) => item.reserved === true,
   );
-  duplicate.description = p.description || duplicate.description;
+  duplicate.description = preferredListingValue(
+    activeListings,
+    "description",
+    duplicate.description,
+  );
+  const preferredImages = prioritizedListings(activeListings).flatMap(
+    (item: any) => item.images || [],
+  );
   duplicate.images = [
-    ...new Set([...(duplicate.images || []), ...p.images]),
+    ...new Set([...preferredImages, ...(duplicate.images || [])]),
   ].slice(0, 20);
   duplicate.notes = (duplicate.notes || []).filter(
     (note: string) =>

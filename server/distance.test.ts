@@ -26,6 +26,16 @@ describe("polska baza miejscowości", () => {
     ).toBe("Bielsko-Biała");
   });
 
+  it("nie uznaje regulaminowego słowa Stronie za lokalizację", () => {
+    expect(
+      resolvePolishCity(
+        undefined,
+        undefined,
+        "Diler Toyota Gdańsk. Aktualizowane listy adresowe oraz dane kontaktowe są na stronie internetowej.",
+      )?.name,
+    ).toBe("Gdańsk");
+  });
+
   it("oblicza przybliżoną odległość od Poznania", () => {
     expect(distanceFromPoznan("Poznań")).toBe(0);
     expect(distanceFromPoznan("Września")).toBeGreaterThan(40);

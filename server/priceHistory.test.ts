@@ -168,4 +168,52 @@ describe("historia cen", () => {
 
     expect(db.cars).toHaveLength(2);
   });
+
+  it("zachowuje dane Toyota Pewne Auto po późniejszym skanie OTOMOTO", () => {
+    const vin = "SB1ZB3AE10E080929";
+    const db: Store = { cars: [], jobs: [] };
+    const parsed = (source: "pewneauto" | "otomoto") =>
+      ({
+        finalUrl:
+          source === "pewneauto"
+            ? "https://pewneauto.pl/oferta/toyota-corolla/412955"
+            : "https://www.otomoto.pl/osobowe/oferta/toyota-corolla-ID6TEST.html",
+        title:
+          source === "pewneauto"
+            ? "Toyota Corolla 1.8 Hybrid Comfort Tech"
+            : "Używany Toyota Corolla",
+        year: 2023,
+        power: 140,
+        engineVersion: "1.8 Hybrid 140 KM",
+        price: 89_900,
+        cashPrice: 91_900,
+        mileage: 62_797,
+        location: source === "pewneauto" ? "Gdańsk" : "Stronie",
+        trim: source === "pewneauto" ? "Comfort + Tech" : undefined,
+        seller:
+          source === "pewneauto"
+            ? "Toyota Carter Chodzeń Gdańsk-Kowale"
+            : "Inny sprzedawca",
+        vin,
+        text: "Toyota Corolla Touring Sports Hybrid automat",
+        description:
+          source === "pewneauto"
+            ? "Opis Toyota Pewne Auto"
+            : "Opis OTOMOTO",
+        images: [],
+        active: true,
+        eligibleBody: true,
+      }) as any;
+
+    upsertParsedCar(db, parsed("pewneauto"), "Toyota Pewne Auto");
+    upsertParsedCar(db, parsed("otomoto"), "OTOMOTO");
+
+    expect(db.cars[0]).toMatchObject({
+      title: "Toyota Corolla 1.8 Hybrid Comfort Tech",
+      location: "Gdańsk",
+      trim: "Comfort + Tech",
+      seller: "Toyota Carter Chodzeń Gdańsk-Kowale",
+      description: "Opis Toyota Pewne Auto",
+    });
+  });
 });

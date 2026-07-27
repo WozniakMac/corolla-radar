@@ -76,6 +76,24 @@ describe("listing parser", () => {
     expect(parsed.toyotaWarranty).toBe(true);
   });
 
+  it("prefers the Pewne Auto dealer city over footer boilerplate", () => {
+    const parsed = parseListingHtml(`
+      <html><head>
+        <title>Toyota Corolla 1.8 Hybryda 2023</title>
+        <meta property="og:description" content="2023 | 62 797 km | Toyota Carter Chodzeń Gdańsk-Kowale - Gdańsk Kowale">
+      </head><body>
+        <h1>Toyota Corolla</h1>
+        <div class="vdp-header__info">
+          <span>Diler <strong>Toyota Carter Chodzeń Gdańsk-Kowale</strong></span>
+        </div>
+        <p>Aktualizowane listy adresowe oraz dane kontaktowe są na stronie internetowej.</p>
+      </body></html>
+    `);
+
+    expect(parsed.location).toBe("Gdańsk");
+    expect(parsed.seller).toBe("Toyota Carter Chodzeń Gdańsk-Kowale");
+  });
+
   it("recognizes the Pewne Auto warranty badge", () => {
     const parsed = parseListingHtml(`
       <html><head><title>Toyota Corolla Kombi 2023 95 000 zł</title></head><body>

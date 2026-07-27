@@ -295,7 +295,8 @@ export function parseListingHtml(
       /(?:lokalizacja|miasto|adres)[^A-ZĄĆĘŁŃÓŚŹŻ]{0,12}([A-ZĄĆĘŁŃÓŚŹŻ][\p{L}-]+(?:\s+[A-ZĄĆĘŁŃÓŚŹŻ][\p{L}-]+)?)/u,
     )?.[1];
   const location =
-    resolvePolishCity(rawLocation, title, text)?.name || rawLocation;
+    resolvePolishCity(rawLocation, ogDescription || title, text)?.name ||
+    rawLocation;
   const trim =
     text.match(
       /(?:wersja wyposażenia|wersja)[^A-ZĄĆĘŁŃÓŚŹŻ0-9]{0,12}((?:Comfort|Active|Style|Executive|GR Sport)(?:\s*\+?\s*(?:Tech|Business))?)/i,
@@ -307,11 +308,21 @@ export function parseListingHtml(
       ?.slice(1, 3)
       .filter(Boolean)
       .join(" + ");
-  const seller = text
-    .match(
-      /(?:sprzedawca|dealer|diler)[^A-ZĄĆĘŁŃÓŚŹŻ0-9]{0,15}([A-ZĄĆĘŁŃÓŚŹŻ][^|•]{2,60})/i,
-    )?.[1]
-    ?.trim();
+  const seller =
+    $(".vdp-header__info span")
+      .filter((_, element) =>
+        /^\s*(?:dealer|diler)\b/i.test($(element).text()),
+      )
+      .find("strong")
+      .first()
+      .text()
+      .trim() ||
+    $(".vdp-dealer address strong").first().text().trim() ||
+    text
+      .match(
+        /(?:^|[|•])\s*(?:sprzedawca|dealer|diler)\s*:?\s*([A-ZĄĆĘŁŃÓŚŹŻ][^|•]{2,60})/i,
+      )?.[1]
+      ?.trim();
   const labeledColor = $("body *")
     .filter((_, element) =>
       /^(?:kolor|kolor nadwozia|lakier|barwa)$/i.test(

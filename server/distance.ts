@@ -55,7 +55,7 @@ function candidates(text: string, broad: boolean) {
       const place = matches[0];
       const before = words.slice(Math.max(0, start - 12), start).join(" ");
       const context =
-        /lokalizac|sprzedaw|dealer|salon|adres|mapie|zapraszam|miasto/.test(
+        /\b(?:lokalizac\w*|sprzedawc\w*|sprzedawca|dealer|dealera|diler|dilera|salon|adres|mapie|zapraszam|miasto)\b/.test(
           before,
         );
       if (broad && length === 1 && !context && place.population < 5000)
@@ -66,7 +66,6 @@ function candidates(text: string, broad: boolean) {
           length * 1000 +
           (context ? 800 : 0) +
           Math.log10(place.population + 10) * 20 +
-          (start / Math.max(words.length, 1)) * 100 +
           phrase.length,
       });
     }
