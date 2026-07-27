@@ -310,9 +310,7 @@ export function parseListingHtml(
       .join(" + ");
   const seller =
     $(".vdp-header__info span")
-      .filter((_, element) =>
-        /^\s*(?:dealer|diler)\b/i.test($(element).text()),
-      )
+      .filter((_, element) => /^\s*(?:dealer|diler)\b/i.test($(element).text()))
       .find("strong")
       .first()
       .text()

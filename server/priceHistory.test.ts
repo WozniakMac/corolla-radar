@@ -197,9 +197,7 @@ describe("historia cen", () => {
         vin,
         text: "Toyota Corolla Touring Sports Hybrid automat",
         description:
-          source === "pewneauto"
-            ? "Opis Toyota Pewne Auto"
-            : "Opis OTOMOTO",
+          source === "pewneauto" ? "Opis Toyota Pewne Auto" : "Opis OTOMOTO",
         images: [],
         active: true,
         eligibleBody: true,
