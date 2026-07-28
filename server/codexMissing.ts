@@ -18,8 +18,7 @@ const DECISION_REASONS: Record<string, string> = {
   cena: "Nie udało się wiarygodnie odczytać ceny samochodu.",
   przebieg: "Nie udało się wiarygodnie odczytać przebiegu.",
   rocznik: "Nie udało się potwierdzić rocznika.",
-  nadwozie:
-    "Nie udało się potwierdzić, że to Corolla Touring Sports / kombi.",
+  nadwozie: "Nie udało się potwierdzić, że to Corolla Touring Sports / kombi.",
   Hybrid: "Nie udało się potwierdzić napędu hybrydowego.",
   "e-CVT": "Nie udało się potwierdzić automatycznej skrzyni e-CVT.",
   kamera: "Nie udało się potwierdzić kamery cofania wymaganej do rankingu.",
