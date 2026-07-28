@@ -1,5 +1,5 @@
 import { trimVariant } from "./corollaEquipment";
-import { effectivePrice } from "./scoring";
+import { effectivePrice, hasTechEquivalent } from "./scoring";
 import type { Car, FilterState } from "./types";
 import { detectEngineSpec } from "./engine";
 
@@ -47,7 +47,7 @@ export function matchesFilters(car: Car, filters: FilterState) {
       car.listings.some(
         (listing) => listing.active && filters.source.includes(listing.source),
       )) &&
-    (!filters.tech || car.tech) &&
+    (!filters.tech || hasTechEquivalent(car)) &&
     (!filters.vat || car.vat23)
   );
 }

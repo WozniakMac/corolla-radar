@@ -4,7 +4,11 @@ import {
   requireOpenAiApiKey,
 } from "./openai";
 import { calculateCodexPotential } from "./codexPotential";
-import { isDecisionMissing, missingListingFields } from "./codexMissing";
+import {
+  codexVerificationReasons,
+  isDecisionMissing,
+  missingListingFields,
+} from "./codexMissing";
 import { fetchAndParse } from "./parser";
 import { upsertParsedCar } from "./pipeline";
 import { load, save, type Job, type Store } from "./store";
@@ -28,7 +32,22 @@ export const publicJobs = async (providedStore?: Store) => {
     );
   const order = { processing: 0, pending: 1, failed: 2, processed: 3 };
   return jobs
-    .map((job) => ({ ...job, ...calculateCodexPotential(job) }))
+    .map((job) => {
+      const verificationReasons = codexVerificationReasons(
+        job.missing,
+        job.input,
+      );
+      return {
+        ...job,
+        ...calculateCodexPotential(job),
+        verificationReasons:
+          verificationReasons.length || job.status !== "processed"
+            ? verificationReasons
+            : [
+                "Weryfikacja została zakończona; wcześniejsze braki decyzyjne zostały uzupełnione przez OpenAI.",
+              ],
+      };
+    })
     .sort(
       (a, b) =>
         order[a.status] - order[b.status] ||

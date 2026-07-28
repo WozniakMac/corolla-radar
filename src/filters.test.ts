@@ -78,4 +78,19 @@ describe("offer filters", () => {
       source: ["OTOMOTO"],
     });
   });
+
+  it("includes likely Tech predictions in the Tech filter", () => {
+    expect(
+      matchesFilters(
+        {
+          ...car,
+          trim: "Comfort",
+          tech: false,
+          parkingSensors: true,
+          heatedSeats: true,
+        },
+        { ...defaultFilters, tech: true },
+      ),
+    ).toBe(true);
+  });
 });

@@ -10,7 +10,12 @@ import {
 import { distance, money } from "../format";
 import { effectivePrice, hasTechEquivalent } from "../scoring";
 import type { Car, CodexJob, ScoreBreakdown } from "../types";
-import { trimVariant } from "../corollaEquipment";
+import {
+  equipmentLabel,
+  hasLikelyTech,
+  likelyTechEvidence,
+  trimVariant,
+} from "../corollaEquipment";
 
 export function CarCard({
   car,
@@ -149,8 +154,19 @@ export function CarCard({
           <span className="trimBg">{trimVariant(car)}</span>
           <span>{car.year}</span>
           <span>{car.power} KM</span>
-          {hasTechEquivalent(car) && (
-            <span className="blue">{car.tech ? "TECH" : "TECH EQ."}</span>
+          {hasLikelyTech(car) ? (
+            <span
+              className="likelyTechBg"
+              title={`Predykcja na podstawie: ${likelyTechEvidence(car)
+                .map((key) => equipmentLabel[key])
+                .join(", ")}`}
+            >
+              Może Tech?
+            </span>
+          ) : (
+            hasTechEquivalent(car) && (
+              <span className="blue">{car.tech ? "TECH" : "TECH EQ."}</span>
+            )
           )}
           {car.parkingSensors ? (
             <span className="greenBg">CZUJNIKI</span>

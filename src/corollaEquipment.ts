@@ -48,7 +48,7 @@ export function trimVariant(car: Pick<Car, "trim" | "year">): TrimVariant {
 // Korekta wartości używanego auta względem najczęstszej wersji Comfort.
 // To celowo tylko część różnicy ceny katalogowej: wyposażenie traci wartość,
 // ale bogatszej wersji nie można porównywać cenowo jak gołego Comforta.
-export function trimMarketPremium(car: Pick<Car, "trim" | "year">) {
+export function trimMarketPremium(car: Car) {
   const postFacelift = car.year >= 2023;
   const premiums: Record<TrimVariant, number> = {
     Active: -2000,
@@ -60,7 +60,13 @@ export function trimMarketPremium(car: Pick<Car, "trim" | "year">) {
     Executive: postFacelift ? 20000 : 14000,
     Nieustalona: 0,
   };
-  return premiums[trimVariant(car)];
+  const variant = trimVariant(car);
+  const scoredVariant =
+    (car.tech || hasLikelyTech(car as Car)) &&
+    ["Comfort", "Nieustalona"].includes(variant)
+      ? "Comfort + Tech"
+      : variant;
+  return premiums[scoredVariant];
 }
 
 export const equipmentLabel: Record<TechComponent, string> = {
@@ -87,6 +93,41 @@ function techNamedComponents(car: Car): TechComponent[] {
   return [...TECH_COMPONENTS];
 }
 
+const LIKELY_TECH_WEIGHTS: Partial<Record<TechComponent, number>> = {
+  parkingSensors: 2,
+  heatedSeats: 3,
+  heatedSteeringWheel: 3,
+  wirelessCharging: 3,
+  lumbarAdjustment: 3,
+  keyless: 2,
+  autoDimmingMirror: 2,
+  heatedWiperArea: 2,
+  foldingMirrors: 1,
+  rainSensor: 1,
+  ics: 2,
+};
+
+/**
+ * Pakiet Tech jest często pomijany w nazwie używanego auta, choć sprzedawca
+ * wymienia jego elementy. Co najmniej dwa charakterystyczne składniki i 5 pkt
+ * dowodów dają ostrożną predykcję. Przykład: czujniki (2) + grzane fotele (3).
+ *
+ * Predykcja dotyczy Comforta lub auta z nieustaloną wersją. Style, GR Sport
+ * i Executive są obsługiwane osobno jako katalogowe odpowiedniki Tech.
+ */
+export function likelyTechEvidence(car: Car): TechComponent[] {
+  if (car.tech || catalogInferredComponents(car).length) return [];
+  if (!["Comfort", "Nieustalona"].includes(trimVariant(car))) return [];
+  const evidence = TECH_COMPONENTS.filter((key) => car[key] === true);
+  const weight = evidence.reduce(
+    (sum, key) => sum + (LIKELY_TECH_WEIGHTS[key] || 0),
+    0,
+  );
+  return evidence.length >= 2 && weight >= 5 ? evidence : [];
+}
+
+export const hasLikelyTech = (car: Car) => likelyTechEvidence(car).length > 0;
+
 // Po liftingu MY2023 katalog Toyoty potwierdza podstawowe elementy pakietu Tech
 // jako standard w Style/Executive. W starszych autach nazwa "Style" bywa nazwą
 // pakietu do Comfort, więc nie wolno na jej podstawie zakładać pełnego Tech.
@@ -103,19 +144,23 @@ export const hasCatalogBlindSpot = (car: Car) =>
 
 export function confirmedTechComponents(car: Car): TechComponent[] {
   const inferred = new Set(catalogInferredComponents(car));
-  const namedTech = new Set(car.tech ? techNamedComponents(car) : []);
+  const namedTech = new Set(
+    car.tech || hasLikelyTech(car) ? techNamedComponents(car) : [],
+  );
   return TECH_COMPONENTS.filter(
     (key) => car[key] === true || inferred.has(key) || namedTech.has(key),
   );
 }
 
 export const hasTechEquivalent = (car: Car) =>
-  car.tech || confirmedTechComponents(car).length >= 8;
+  car.tech || hasLikelyTech(car) || confirmedTechComponents(car).length >= 8;
 
 export function equipmentSource(car: Car, key: TechComponent) {
   if (car[key] === true) return "potwierdzone w ogłoszeniu";
   if (car.tech && techNamedComponents(car).includes(key))
     return `wynika z pakietu Tech MY${car.year}`;
+  if (hasLikelyTech(car) && techNamedComponents(car).includes(key))
+    return `przewidywane z wyposażenia „Może Tech?” MY${car.year}`;
   if (catalogInferredComponents(car).includes(key))
     return `wynika z katalogu dla ${car.trim}, MY${car.year}`;
   return undefined;

@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   catalogInferredComponents,
   hasCatalogBlindSpot,
+  hasLikelyTech,
+  likelyTechEvidence,
   trimMarketPremium,
   trimVariant,
 } from "./corollaEquipment";
@@ -36,5 +38,43 @@ describe("wersje wyposażenia Corolli", () => {
   it("rozpoznaje BSM katalogowo tylko tam, gdzie jest potwierdzony", () => {
     expect(hasCatalogBlindSpot(car(2024, "Executive"))).toBe(true);
     expect(hasCatalogBlindSpot(car(2024, "Style"))).toBe(false);
+  });
+
+  it("przewiduje Tech po charakterystycznej kombinacji wyposażenia", () => {
+    const likely = {
+      ...car(2024, "Comfort"),
+      tech: false,
+      parkingSensors: true,
+      heatedSeats: true,
+    };
+    expect(hasLikelyTech(likely)).toBe(true);
+    expect(likelyTechEvidence(likely)).toEqual([
+      "parkingSensors",
+      "heatedSeats",
+    ]);
+  });
+
+  it("nie przewiduje Tech na podstawie jednego słabego sygnału", () => {
+    expect(
+      hasLikelyTech({
+        ...car(2024, "Comfort"),
+        tech: false,
+        parkingSensors: true,
+        heatedSeats: false,
+        rainSensor: true,
+      }),
+    ).toBe(false);
+  });
+
+  it("wycenia przewidywany Tech tak samo jak nazwany pakiet Tech", () => {
+    const likely = {
+      ...car(2024, "Comfort"),
+      tech: false,
+      parkingSensors: true,
+      heatedSeats: true,
+    };
+    expect(trimMarketPremium(likely)).toBe(
+      trimMarketPremium({ ...likely, trim: "Comfort + Tech", tech: true }),
+    );
   });
 });

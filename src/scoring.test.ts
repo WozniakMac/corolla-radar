@@ -74,6 +74,7 @@ describe("skalibrowany ranking", () => {
       power: 196,
       trim: "Comfort",
       tech: false,
+      heatedSeats: false,
     }).deal;
     expect(style).toBeGreaterThan(comfort);
     expect(
@@ -199,5 +200,27 @@ describe("skalibrowany ranking", () => {
     }).find((item) => item.key === "equipment")!;
     expect(equipment.detail).toContain("pakietu Tech MY2022");
     expect(equipment.detail).not.toContain("podgrzewana kierownica +1");
+  });
+
+  it("scores a likely Tech prediction like a full Tech package", () => {
+    const base = {
+      ...qualified(),
+      year: 2024,
+      trim: "Comfort",
+      tech: false,
+      heatedSeats: true,
+      parkingSensors: true,
+    };
+    const likely = scoreCar(base);
+    const explicit = scoreCar({
+      ...base,
+      trim: "Comfort + Tech",
+      tech: true,
+    });
+    expect(likely.equipment).toBe(explicit.equipment);
+    expect(likely.deal).toBe(explicit.deal);
+    expect(
+      explainScore(base).find((item) => item.key === "equipment")?.detail,
+    ).toContain("Może Tech?");
   });
 });

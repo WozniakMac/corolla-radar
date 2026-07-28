@@ -30,34 +30,61 @@ export function Sidebar({
       </div>
       <nav aria-label="Główna nawigacja">
         <button
+          aria-label="Ranking"
           className={view === "ranking" ? "active" : ""}
           onClick={() => onView("ranking")}
         >
-          <CarFront /> Ranking <span>{rankedCount}</span>
+          <CarFront />
+          <span className="navLabel navLabelDesktop">Ranking</span>
+          <span className="navLabel navLabelMobile" aria-hidden="true">
+            Ranking
+          </span>
+          <span className="navCount">{rankedCount}</span>
         </button>
         <button
+          aria-label="Leasing"
           className={view === "leasing" ? "active" : ""}
           onClick={() => onView("leasing")}
         >
-          <Calculator /> Leasing
+          <Calculator />
+          <span className="navLabel navLabelDesktop">Leasing</span>
+          <span className="navLabel navLabelMobile" aria-hidden="true">
+            Leasing
+          </span>
         </button>
         <button
+          aria-label="Doradca TOP 10"
           className={view === "advisor" ? "active" : ""}
           onClick={() => onView("advisor")}
         >
-          <ListChecks /> Doradca TOP 10
+          <ListChecks />
+          <span className="navLabel navLabelDesktop">Doradca TOP 10</span>
+          <span className="navLabel navLabelMobile" aria-hidden="true">
+            Doradca
+          </span>
         </button>
         <button
+          aria-label="Statystyki"
           className={view === "stats" ? "active" : ""}
           onClick={() => onView("stats")}
         >
-          <BarChart3 /> Statystyki
+          <BarChart3 />
+          <span className="navLabel navLabelDesktop">Statystyki</span>
+          <span className="navLabel navLabelMobile" aria-hidden="true">
+            Statystyki
+          </span>
         </button>
         <button
+          aria-label="Weryfikacja OpenAI"
           className={view === "codex" ? "active" : ""}
           onClick={() => onView("codex")}
         >
-          <Bot /> Weryfikacja OpenAI <span>{codexPending}</span>
+          <Bot />
+          <span className="navLabel navLabelDesktop">Weryfikacja OpenAI</span>
+          <span className="navLabel navLabelMobile" aria-hidden="true">
+            OpenAI
+          </span>
+          <span className="navCount">{codexPending}</span>
         </button>
       </nav>
       <div className="saved">

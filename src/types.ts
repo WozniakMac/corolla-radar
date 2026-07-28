@@ -183,6 +183,7 @@ export type CodexJob = {
   qualityScore: number;
   informationValue: number;
   potentialReasons: string[];
+  verificationReasons: string[];
 };
 export type ScanRun = {
   id: string;

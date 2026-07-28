@@ -1,4 +1,4 @@
-import { Bot, Play, RefreshCw } from "lucide-react";
+import { Bot, CircleAlert, Play, RefreshCw } from "lucide-react";
 import type { CodexJob } from "../types";
 
 const labels = {
@@ -70,13 +70,21 @@ export function CodexQueue({
                 <a href={job.url} target="_blank" rel="noreferrer">
                   {job.title || job.url}
                 </a>
-                <small>
-                  {job.source} · Braki:{" "}
-                  {job.missing.join(", ") || "uzupełniono"}
-                </small>
+                <small>{job.source}</small>
+                <div className="verificationReason">
+                  <strong>
+                    <CircleAlert /> Dlaczego jest na tej liście?
+                  </strong>
+                  <ul>
+                    {job.verificationReasons.map((reason) => (
+                      <li key={reason}>{reason}</li>
+                    ))}
+                  </ul>
+                </div>
                 <small className="potentialReasons">
+                  <b>Dlaczego warto sprawdzić:</b>{" "}
                   {job.potentialReasons.join(" · ") ||
-                    "Za mało danych do mocnej oceny"}
+                    "za mało danych do mocnej oceny"}
                 </small>
                 {job.error && <small className="jobError">{job.error}</small>}
               </div>
