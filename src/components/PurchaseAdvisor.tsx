@@ -43,6 +43,9 @@ export function PurchaseAdvisor({
   const winner = result ? candidates.get(result.analysis.winnerId) : undefined;
   const filtersChanged =
     result && JSON.stringify(result.filters) !== JSON.stringify(filters);
+  const independentAnalysis =
+    !result ||
+    result.analysis.rankings.every((item) => Boolean(item.scoreBreakdown));
 
   return (
     <section className="purchaseAdvisor">
@@ -50,11 +53,12 @@ export function PurchaseAdvisor({
         <div>
           <small>DECYZJA ZAKUPOWA</small>
           <h2>
-            <Bot /> OpenAI analizuje dokładnie TOP 10
+            <Bot /> Niezależna ocena zakupowa TOP 10
           </h2>
           <p>
             Analiza odświeża strony dokładnie dziesięciu ofert i łączy ich
-            opisy, kolory oraz parametry z historią cen, punktacją i CEPiK.
+            opisy, kolory oraz parametry z historią cen i CEPiK. OpenAI nie zna
+            pozycji ani punktów radaru.
           </p>
         </div>
         <button
@@ -116,6 +120,13 @@ export function PurchaseAdvisor({
           odświeżyć skład TOP 10.
         </div>
       )}
+      {result && !independentAnalysis && (
+        <div className="advisorWarning">
+          <ShieldAlert />
+          To archiwalna analiza wykonana metodą kopiującą kolejność radaru.
+          Uruchom przeliczenie, aby otrzymać niezależny ranking zakupowy.
+        </div>
+      )}
       {running && (
         <div className="advisorLoading" aria-live="polite">
           <span className="loadingPulse" />
@@ -167,6 +178,7 @@ export function PurchaseAdvisor({
           <div className="advisorRanking">
             {result.analysis.rankings.map((item) => {
               const candidate = candidates.get(item.carId);
+              const rankDelta = candidate ? candidate.radarRank - item.rank : 0;
               return (
                 <article
                   className={`advisorCandidate ${item.recommendation}`}
@@ -176,8 +188,20 @@ export function PurchaseAdvisor({
                     <span className="advisorRank">#{item.rank}</span>
                     <div>
                       <small>
-                        KOLEJNOŚĆ RADARU • {candidate?.radarScore ?? "?"} PKT •
-                        NIEZALEŻNA OCENA OPENAI
+                        {independentAnalysis ? (
+                          <>
+                            RADAR #{candidate?.radarRank ?? "?"} (
+                            {candidate?.radarScore ?? "?"} PKT) → DORADCA #
+                            {item.rank}
+                            {rankDelta !== 0 &&
+                              ` (${rankDelta > 0 ? "↑" : "↓"}${Math.abs(rankDelta)})`}
+                          </>
+                        ) : (
+                          <>
+                            ARCHIWALNA KOLEJNOŚĆ RADARU •{" "}
+                            {candidate?.radarScore ?? "?"} PKT
+                          </>
+                        )}
                       </small>
                       <h3>{candidate?.title || item.carId}</h3>
                       <span>
@@ -188,8 +212,30 @@ export function PurchaseAdvisor({
                     <b>{recommendationLabel[item.recommendation]}</b>
                   </div>
                   <p>{item.rationale}</p>
+                  {item.scoreBreakdown && (
+                    <div className="advisorScoreBreakdown">
+                      <span>
+                        Wartość <b>{item.scoreBreakdown.value}/30</b>
+                      </span>
+                      <span>
+                        Historia <b>{item.scoreBreakdown.history}/25</b>
+                      </span>
+                      <span>
+                        Wyposażenie <b>{item.scoreBreakdown.equipment}/15</b>
+                      </span>
+                      <span>
+                        Wygoda <b>{item.scoreBreakdown.convenience}/10</b>
+                      </span>
+                      <span>
+                        Dowody <b>{item.scoreBreakdown.evidence}/20</b>
+                      </span>
+                      <span className="risk">
+                        Ryzyko <b>−{item.scoreBreakdown.riskPenalty}</b>
+                      </span>
+                    </div>
+                  )}
                   <div className="advisorVisualAssessment">
-                    <strong>Ocena zdjęć</strong>
+                    <strong>Stan wizualny do sprawdzenia</strong>
                     <p>{item.visualAssessment}</p>
                     {item.visualRisks.length > 0 && (
                       <ul>

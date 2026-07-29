@@ -66,17 +66,23 @@ Niepełne oferty trafiają do trwałej kolejki widocznej w aplikacji. OpenAI nig
 Widok „Doradca TOP 10” uruchamia osobną, ręczną analizę zakupową. Backend
 odtwarza ranking z bieżących filtrów przesłanych przez interfejs i wymaga
 dokładnie dziesięciu kwalifikujących się aut. OpenAI otrzymuje wyłącznie ten
-zamknięty zestaw wraz z punktacją, dowodami, historią cen, aktywnymi
-publikacjami i dostępnym podsumowaniem CEPiK. Przed uruchomieniem modelu
+zamknięty zestaw wraz z danymi ofert, historią cen, aktywnymi publikacjami
+i dostępnym podsumowaniem CEPiK. Pozycja, łączna punktacja i uzasadnienia
+radaru są celowo ukrywane, a kandydaci trafiają do modelu w neutralnej
+kolejności, aby wynik nie kopiował mechanicznie rankingu wejściowego.
+Przed uruchomieniem modelu
 aplikacja ponownie pobiera wszystkie aktywne strony wybranych aut. Z każdej
 strony przekazuje modelowi status pobrania, końcowy URL, tytuł, ceny, rocznik,
 przebieg, moc, wykryty kolor, opis oraz do 20 000 znaków oczyszczonego tekstu.
 Kolor jest wydzielonym polem i trafia również na początek opisu. Zdjęcia są
 celowo ignorowane i nie są pobierane ani wysyłane do OpenAI. Ścisły schemat oraz
 walidacja po odpowiedzi zabraniają pominięcia, podmiany i duplikowania `carId`.
-Wynik zawiera jednego niezależnie rekomendowanego zwycięzcę oraz ocenę każdego
-auta bez zmiany składu ani kolejności TOP 10 radaru, ryzyka, plan weryfikacji
-i — gdy dane na to pozwalają — cel negocjacyjny. Interfejs pokazuje faktyczną
+Wynik zawiera niezależny ranking zakupowy, który może różnić się od kolejności
+radaru. Jawna ocena składa się z wartości, historii, wyposażenia, wygody
+i jakości dowodów pomniejszonych o karę za konkretne ryzyko. Backend sprawdza
+rachunek, sortowanie i zgodność zwycięzcy z pierwszym miejscem. Interfejs
+pokazuje przejście `radar → doradca`, bilans punktów, ryzyka, plan weryfikacji
+i — gdy dane na to pozwalają — cel negocjacyjny, a także faktyczną
 liczbę odświeżonych stron i aut z potwierdzonym kolorem, więc częściowa
 inspekcja nie jest przedstawiana jako pełna. Analiza nie uruchamia się
 automatycznie i wymaga `OPENAI_API_KEY`.
@@ -89,7 +95,7 @@ filtrów, rekomendacji, kandydatów i informacji o pokryciu danych.
 
 Analiza zakupowa nie udostępnia OpenAI przeglądarki ani narzędzia Computer Use.
 Backend sam zbiera materiały i wysyła jedno żądanie `store: false`: JSON zawiera
-bieżące filtry, pełne dane TOP 10, punktację z uzasadnieniami, historię cen,
+bieżące filtry, pełne dane TOP 10 bez pozycji i punktów radaru, historię cen,
 CEPiK, odświeżone opisy i teksty stron, wykryty kolor oraz status każdego
 pobrania. Model nie musi otwierać żadnego linku.
 

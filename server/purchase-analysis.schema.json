@@ -27,6 +27,7 @@
           "carId",
           "recommendation",
           "purchaseScore",
+          "scoreBreakdown",
           "rationale",
           "visualAssessment",
           "visualRisks",
@@ -44,9 +45,37 @@
             "enum": ["kup", "shortlista", "sprawdź", "odrzuć"]
           },
           "purchaseScore": {
-            "type": "number",
+            "type": "integer",
             "minimum": 0,
             "maximum": 100
+          },
+          "scoreBreakdown": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "value",
+              "history",
+              "equipment",
+              "convenience",
+              "evidence",
+              "riskPenalty"
+            ],
+            "properties": {
+              "value": { "type": "integer", "minimum": 0, "maximum": 30 },
+              "history": { "type": "integer", "minimum": 0, "maximum": 25 },
+              "equipment": { "type": "integer", "minimum": 0, "maximum": 15 },
+              "convenience": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10
+              },
+              "evidence": { "type": "integer", "minimum": 0, "maximum": 20 },
+              "riskPenalty": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 40
+              }
+            }
           },
           "rationale": { "type": "string", "minLength": 1 },
           "visualAssessment": { "type": "string", "minLength": 1 },

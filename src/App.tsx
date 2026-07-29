@@ -250,7 +250,7 @@ export default function App() {
                 : view === "leasing"
                   ? "Realny koszt dla JDG na ryczałcie 12% i usług B2B dla firmy z Anglii."
                   : view === "advisor"
-                    ? "Pogłębione porównanie dokładnie dziesięciu najlepszych ofert z bieżących filtrów."
+                    ? "Niezależny ranking zakupowy dziesięciu najlepszych ofert z bieżących filtrów."
                     : view === "codex"
                       ? "Ręczna kolejka uzupełniania brakujących danych w ofertach."
                       : "Historia skanów ręcznych i automatycznego monitoringu ofert."}

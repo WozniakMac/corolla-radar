@@ -237,6 +237,8 @@ export type PurchaseRecommendation = {
   carId: string;
   recommendation: "kup" | "shortlista" | "sprawdź" | "odrzuć";
   purchaseScore: number;
+  /** Brak w archiwalnych analizach wykonanych przed niezależnym rankingiem. */
+  scoreBreakdown?: PurchaseScoreBreakdown;
   rationale: string;
   visualAssessment: string;
   visualRisks: string[];
@@ -245,6 +247,15 @@ export type PurchaseRecommendation = {
   nextSteps: string[];
   negotiationTarget: number | null;
   maxRecommendedPrice: number | null;
+};
+
+export type PurchaseScoreBreakdown = {
+  value: number;
+  history: number;
+  equipment: number;
+  convenience: number;
+  evidence: number;
+  riskPenalty: number;
 };
 
 export type PurchaseAnalysis = {

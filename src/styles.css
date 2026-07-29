@@ -3433,6 +3433,31 @@ details input[type="range"] {
   font-size: 10px;
   letter-spacing: 0.05em;
 }
+.advisorScoreBreakdown {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 12px;
+}
+.advisorScoreBreakdown span {
+  display: grid;
+  gap: 3px;
+  padding: 8px 9px;
+  border-radius: 8px;
+  background: #f1f5f2;
+  color: #68766e;
+  font-size: 10px;
+}
+.advisorScoreBreakdown b {
+  color: #254c38;
+  font-size: 12px;
+}
+.advisorScoreBreakdown .risk {
+  background: #fff1ed;
+}
+.advisorScoreBreakdown .risk b {
+  color: #a44934;
+}
 .advisorVisualAssessment {
   border-left: 3px solid #79a88c;
   background: #f5f8f6;
@@ -3539,6 +3564,9 @@ details input[type="range"] {
   .advisorColumns,
   .advisorChecklist {
     grid-template-columns: 1fr;
+  }
+  .advisorScoreBreakdown {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .advisorCandidateFoot button {
     margin-left: 0;
