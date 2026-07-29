@@ -13,6 +13,7 @@ import type { Car, CodexJob, ScoreBreakdown } from "../types";
 import {
   equipmentLabel,
   hasLikelyTech,
+  likelyTechConfidence,
   likelyTechEvidence,
   trimVariant,
 } from "../corollaEquipment";
@@ -161,7 +162,7 @@ export function CarCard({
                 .map((key) => equipmentLabel[key])
                 .join(", ")}`}
             >
-              Może Tech?
+              Tech{likelyTechConfidence(car)}%
             </span>
           ) : (
             hasTechEquivalent(car) && (

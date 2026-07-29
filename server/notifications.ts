@@ -168,29 +168,9 @@ export function positionChangeLabel(
 const signedPoints = (value: number) => `${value > 0 ? "+" : ""}${value}`;
 
 export function scoreChangeMessage(change: ScoreHistoryEntry | undefined) {
-  if (!change) return "Punkty: bez zmian.";
-  if (change.previousTotal === undefined)
-    return "Punkty: pierwszy zapis historii.";
+  if (!change || change.previousTotal === undefined) return "";
   const totalDelta = change.score.total - change.previousTotal;
-  const headline =
-    totalDelta === 0
-      ? "Punkty: wynik łączny bez zmian, zmieniły się składowe."
-      : `Punkty: ${change.previousTotal} → ${change.score.total} (${signedPoints(totalDelta)}).`;
-  const reasons = change.changes
-    .map((item) => {
-      const directReasons = item.reasons.filter(
-        (reason) =>
-          reason.startsWith("Przestało obowiązywać:") ||
-          reason.startsWith("Zaczęło obowiązywać:"),
-      );
-      const reason =
-        directReasons.join("; ") ||
-        item.reasons.find((value) => value.startsWith("Aktualnie:")) ||
-        item.reasons[0];
-      return `${item.label} ${signedPoints(item.delta)} (${item.previousPoints}→${item.points})${reason ? `: ${reason}` : ""}`;
-    })
-    .join(" | ");
-  return reasons ? `${headline}\nDlaczego: ${reasons}` : headline;
+  return totalDelta === 0 ? "Δ skł." : signedPoints(totalDelta);
 }
 
 export function localCarUrl(
@@ -208,16 +188,10 @@ export function topTenMessage(
   if (!top.length) return "Brak aut spełniających warunki TOP 10.";
   return top
     .map(({ car, score, scoreChange }, index) => {
-      const listing = car.listings
-        .filter(
-          ({ active, url }) => active !== false && /^https?:\/\//i.test(url),
-        )
-        .sort((a, b) => (a.cashPrice || a.price) - (b.cashPrice || b.price))[0];
+      const scoreChangeLabel = scoreChangeMessage(scoreChange);
       return [
-        `${index + 1}. ${positionChangeLabel(previousIds, car.id, index)} • ${score.total} pkt — ${car.title}`,
-        scoreChangeMessage(scoreChange),
-        ...(listing?.url ? [`Oferta: ${listing.url}`] : []),
-        `Aplikacja: ${localCarUrl(car.id, appPublicUrl)}`,
+        `${index + 1} ${positionChangeLabel(previousIds, car.id, index)} ${score.total}p${scoreChangeLabel ? ` ${scoreChangeLabel}` : ""}`,
+        localCarUrl(car.id, appPublicUrl),
       ].join("\n");
     })
     .join("\n\n");
@@ -270,7 +244,7 @@ export async function notifyNewTopTen(context: ScoreCaptureContext = {}) {
   if (!ntfyUrl) return;
   await sendNotification(
     ntfyUrl,
-    savedFilters ? "Zmiana w filtrowanym TOP 10" : "Zmiana w TOP 10",
+    "TOP 10",
     topTenMessage(top, previousIds),
     undefined,
     "car,bar_chart",

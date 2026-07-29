@@ -61,9 +61,16 @@ export function trimMarketPremium(car: Car) {
     Nieustalona: 0,
   };
   const variant = trimVariant(car);
+  if (
+    !car.tech &&
+    ["Comfort", "Nieustalona"].includes(variant) &&
+    hasLikelyTech(car)
+  )
+    return Math.round(
+      premiums["Comfort + Tech"] * (likelyTechConfidence(car)! / 100),
+    );
   const scoredVariant =
-    (car.tech || hasLikelyTech(car as Car)) &&
-    ["Comfort", "Nieustalona"].includes(variant)
+    car.tech && ["Comfort", "Nieustalona"].includes(variant)
       ? "Comfort + Tech"
       : variant;
   return premiums[scoredVariant];
@@ -126,7 +133,18 @@ export function likelyTechEvidence(car: Car): TechComponent[] {
   return evidence.length >= 2 && weight >= 5 ? evidence : [];
 }
 
-export const hasLikelyTech = (car: Car) => likelyTechEvidence(car).length > 0;
+export function likelyTechConfidence(car: Car): number | undefined {
+  const evidence = likelyTechEvidence(car);
+  if (!evidence.length) return undefined;
+  const weight = evidence.reduce(
+    (sum, key) => sum + (LIKELY_TECH_WEIGHTS[key] || 0),
+    0,
+  );
+  return Math.min(90, 50 + (weight - 5) * 10);
+}
+
+export const hasLikelyTech = (car: Car) =>
+  likelyTechConfidence(car) !== undefined;
 
 // Po liftingu MY2023 katalog Toyoty potwierdza podstawowe elementy pakietu Tech
 // jako standard w Style/Executive. W starszych autach nazwa "Style" bywa nazwą
@@ -160,7 +178,7 @@ export function equipmentSource(car: Car, key: TechComponent) {
   if (car.tech && techNamedComponents(car).includes(key))
     return `wynika z pakietu Tech MY${car.year}`;
   if (hasLikelyTech(car) && techNamedComponents(car).includes(key))
-    return `przewidywane z wyposażenia „Może Tech?” MY${car.year}`;
+    return `przewidywane z wyposażenia „Tech${likelyTechConfidence(car)}%” MY${car.year}`;
   if (catalogInferredComponents(car).includes(key))
     return `wynika z katalogu dla ${car.trim}, MY${car.year}`;
   return undefined;

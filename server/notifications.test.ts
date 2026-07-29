@@ -131,19 +131,15 @@ describe("TOP 10 notification summary", () => {
         "http://192.168.2.47:4174",
       ),
     ).toBe(
-      `1. ↑2 • 92 pkt — Corolla C
-Punkty: bez zmian.
-Oferta: ${first.listings[0].url}
-Aplikacja: http://192.168.2.47:4174/cars/c
+      `1 ↑2 92p
+http://192.168.2.47:4174/cars/c
 
-2. NOWE • 89 pkt — Corolla Nowa
-Punkty: bez zmian.
-Oferta: ${second.listings[0].url}
-Aplikacja: http://192.168.2.47:4174/cars/new`,
+2 NOWE 89p
+http://192.168.2.47:4174/cars/new`,
     );
   });
 
-  it("links to the cheapest active listing for a merged car", () => {
+  it("omits offer links and car names", () => {
     const car = {
       ...testCars[0],
       id: "merged",
@@ -164,12 +160,10 @@ Aplikacja: http://192.168.2.47:4174/cars/new`,
       ],
     };
 
-    expect(topTenMessage([{ car, score: breakdown(90) }], [])).toContain(
-      "https://example.test/najtansza",
-    );
-    expect(topTenMessage([{ car, score: breakdown(90) }], [])).not.toContain(
-      "https://example.test/nieaktywna",
-    );
+    const message = topTenMessage([{ car, score: breakdown(90) }], []);
+    expect(message).not.toContain("https://example.test/");
+    expect(message).not.toContain("Corolla scalona");
+    expect(message).toContain("/cars/merged");
   });
 
   it("links to the car route and safely encodes its id", () => {
@@ -178,7 +172,7 @@ Aplikacja: http://192.168.2.47:4174/cars/new`,
     );
   });
 
-  it("summarizes the point delta and its direct cause", () => {
+  it("summarizes the point delta", () => {
     const change: ScoreHistoryEntry = {
       capturedAt: "2026-07-26T10:00:00.000Z",
       previousTotal: 84,
@@ -200,9 +194,6 @@ Aplikacja: http://192.168.2.47:4174/cars/new`,
       ],
     };
 
-    expect(scoreChangeMessage(change)).toContain("Punkty: 84 → 89 (+5).");
-    expect(scoreChangeMessage(change)).toContain(
-      "Historia i stan +5 (13→18): Przestało obowiązywać: Brak potwierdzonego serwisowania",
-    );
+    expect(scoreChangeMessage(change)).toBe("+5");
   });
 });

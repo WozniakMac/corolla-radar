@@ -202,7 +202,7 @@ describe("skalibrowany ranking", () => {
     expect(equipment.detail).not.toContain("podgrzewana kierownica +1");
   });
 
-  it("scores a likely Tech prediction like a full Tech package", () => {
+  it("reduces likely Tech points according to prediction confidence", () => {
     const base = {
       ...qualified(),
       year: 2024,
@@ -217,10 +217,14 @@ describe("skalibrowany ranking", () => {
       trim: "Comfort + Tech",
       tech: true,
     });
-    expect(likely.equipment).toBe(explicit.equipment);
-    expect(likely.deal).toBe(explicit.deal);
+    expect(likely.equipment).toBe(4);
+    expect(explicit.equipment).toBe(9);
+    expect(likely.total).toBeLessThan(explicit.total);
     expect(
       explainScore(base).find((item) => item.key === "equipment")?.detail,
-    ).toContain("Może Tech?");
+    ).toContain("Tech50%");
+    expect(
+      explainScore(base).find((item) => item.key === "equipment")?.deductions,
+    ).toContain("Tech50%: −5 pkt za niepewną predykcję");
   });
 });

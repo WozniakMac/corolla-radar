@@ -3,6 +3,7 @@ import {
   catalogInferredComponents,
   hasCatalogBlindSpot,
   hasLikelyTech,
+  likelyTechConfidence,
   likelyTechEvidence,
   trimMarketPremium,
   trimVariant,
@@ -52,6 +53,33 @@ describe("wersje wyposażenia Corolli", () => {
       "parkingSensors",
       "heatedSeats",
     ]);
+    expect(likelyTechConfidence(likely)).toBe(50);
+  });
+
+  it("podnosi pewność Tech od 50% do maksymalnie 90%", () => {
+    const base = {
+      ...car(2024, "Comfort"),
+      tech: false,
+      parkingSensors: true,
+      heatedSeats: true,
+    };
+    expect(likelyTechConfidence(base)).toBe(50);
+    expect(likelyTechConfidence({ ...base, rainSensor: true })).toBe(60);
+    expect(
+      likelyTechConfidence({
+        ...base,
+        rainSensor: true,
+        foldingMirrors: true,
+      }),
+    ).toBe(70);
+    expect(likelyTechConfidence({ ...base, wirelessCharging: true })).toBe(80);
+    expect(
+      likelyTechConfidence({
+        ...base,
+        wirelessCharging: true,
+        rainSensor: true,
+      }),
+    ).toBe(90);
   });
 
   it("nie przewiduje Tech na podstawie jednego słabego sygnału", () => {
@@ -66,15 +94,16 @@ describe("wersje wyposażenia Corolli", () => {
     ).toBe(false);
   });
 
-  it("wycenia przewidywany Tech tak samo jak nazwany pakiet Tech", () => {
+  it("skaluje wartość przewidywanego Tech według pewności", () => {
     const likely = {
       ...car(2024, "Comfort"),
       tech: false,
       parkingSensors: true,
       heatedSeats: true,
     };
-    expect(trimMarketPremium(likely)).toBe(
+    expect(trimMarketPremium(likely)).toBe(2500);
+    expect(
       trimMarketPremium({ ...likely, trim: "Comfort + Tech", tech: true }),
-    );
+    ).toBe(5000);
   });
 });

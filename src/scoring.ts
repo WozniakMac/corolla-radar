@@ -5,6 +5,7 @@ import {
   equipmentSource,
   hasCatalogBlindSpot,
   hasTechEquivalent,
+  likelyTechConfidence,
   trimMarketPremium,
   trimVariant,
   type TechComponent,
@@ -232,10 +233,16 @@ export function scoreCar(car: Car, market?: MarketBenchmarks): ScoreBreakdown {
   const hasBlindSpot =
     hasCatalogBlindSpot(car) ||
     /martwe.{0,15}pole|blind spot/i.test(car.description || "");
+  const techConfidence = likelyTechConfidence(car);
+  const techPoints = techComponents.filter(
+    (key) => key !== "parkingSensors" && key !== "ics",
+  ).length;
   const equipment = Math.min(
     10,
-    techComponents.filter((key) => key !== "parkingSensors" && key !== "ics")
-      .length + (hasBlindSpot ? 1 : 0),
+    (techConfidence === undefined
+      ? techPoints
+      : Math.floor(techPoints * (techConfidence / 100))) +
+      (hasBlindSpot ? 1 : 0),
   );
   const location =
     car.distance <= 50
@@ -311,6 +318,12 @@ export function explainScore(
   const scoredComponents = components.filter(
     (key) => key !== "parkingSensors" && key !== "ics",
   );
+  const techConfidence = likelyTechConfidence(car);
+  const techProbabilityPenalty =
+    techConfidence === undefined
+      ? 0
+      : scoredComponents.length -
+        Math.floor(scoredComponents.length * (techConfidence / 100));
   const missingComponents = (
     [
       "heatedSeats",
@@ -414,6 +427,8 @@ export function explainScore(
           .filter(Boolean)
           .join(" • ") || "Brak dodatkowych premii wyposażenia.",
       deductions: [
+        techProbabilityPenalty > 0 &&
+          `Tech${techConfidence}%: −${techProbabilityPenalty} pkt za niepewną predykcję`,
         ...missingComponents.map(
           (key) =>
             `Brak potwierdzenia: ${equipmentLabel[key]} (−1 pkt potencjału wyposażenia)`,
