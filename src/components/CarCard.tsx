@@ -13,6 +13,7 @@ import type { Car, CodexJob, ScoreBreakdown } from "../types";
 import {
   equipmentLabel,
   hasLikelyTech,
+  isTechConfirmed,
   likelyTechConfidence,
   likelyTechEvidence,
   trimVariant,
@@ -166,7 +167,9 @@ export function CarCard({
             </span>
           ) : (
             hasTechEquivalent(car) && (
-              <span className="blue">{car.tech ? "TECH" : "TECH EQ."}</span>
+              <span className="blue">
+                {isTechConfirmed(car) ? "TECH" : "TECH EQ."}
+              </span>
             )
           )}
           {car.parkingSensors ? (

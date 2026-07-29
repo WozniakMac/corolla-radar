@@ -14,10 +14,14 @@ export function ScoreDrawer({
   car,
   market,
   onClose,
+  techOverrideSaving,
+  onTechOverride,
 }: {
   car: Car;
   market: MarketBenchmarks;
   onClose: () => void;
+  techOverrideSaving: boolean;
+  onTechOverride: (override: Car["techOverride"] | null) => Promise<void>;
 }) {
   const score = scoreCar(car, market);
   const explanation = explainScore(car, market);
@@ -170,15 +174,17 @@ export function ScoreDrawer({
                           ? "skan automatyczny"
                           : entry.trigger === "manual"
                             ? "skan ręczny"
-                            : entry.trigger === "cli"
-                              ? "skan CLI"
-                              : entry.trigger === "cepik"
-                                ? "Historia Pojazdu / CEPiK"
-                                : entry.trigger === "codex"
-                                  ? "uzupełnienie OpenAI"
-                                  : entry.trigger === "reprocess"
-                                    ? "ponowne przeliczenie danych"
-                                    : "zapis punktacji"}
+                            : entry.trigger === "manual-edit"
+                              ? "ręczna korekta Tech"
+                              : entry.trigger === "cli"
+                                ? "skan CLI"
+                                : entry.trigger === "cepik"
+                                  ? "Historia Pojazdu / CEPiK"
+                                  : entry.trigger === "codex"
+                                    ? "uzupełnienie OpenAI"
+                                    : entry.trigger === "reprocess"
+                                      ? "ponowne przeliczenie danych"
+                                      : "zapis punktacji"}
                         {entry.source ? ` • ${entry.source}` : ""}
                       </small>
                     </div>
@@ -356,6 +362,52 @@ export function ScoreDrawer({
         <p className="listingDescription">
           {car.description || "Portal nie udostępnił opisu w pobranym HTML."}
         </p>
+        <section className="manualTechControl">
+          <small>RĘCZNA DECYZJA TECH</small>
+          <strong>
+            {car.techOverride === "confirmed"
+              ? "Tech potwierdzony"
+              : car.techOverride === "excluded"
+                ? "Tech wykluczony"
+                : "Automatyczne wykrywanie"}
+          </strong>
+          <p>
+            Decyzja ręczna zastępuje nazwę i predykcję Tech oraz od razu zmienia
+            punktację.
+          </p>
+          <div>
+            <button
+              type="button"
+              className={
+                car.techOverride === "confirmed" ? "active confirm" : "confirm"
+              }
+              disabled={techOverrideSaving}
+              onClick={() => void onTechOverride("confirmed")}
+            >
+              Potwierdź Tech 100%
+            </button>
+            <button
+              type="button"
+              className={
+                car.techOverride === "excluded" ? "active exclude" : "exclude"
+              }
+              disabled={techOverrideSaving}
+              onClick={() => void onTechOverride("excluded")}
+            >
+              Wyklucz Tech
+            </button>
+          </div>
+          {car.techOverride && (
+            <button
+              type="button"
+              className="resetTechOverride"
+              disabled={techOverrideSaving}
+              onClick={() => void onTechOverride(null)}
+            >
+              Cofnij decyzję
+            </button>
+          )}
+        </section>
       </div>
     </div>
   );

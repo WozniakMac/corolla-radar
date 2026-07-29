@@ -29,7 +29,15 @@ export const TRIM_VARIANTS = [
 
 export type TrimVariant = (typeof TRIM_VARIANTS)[number];
 
-export function trimVariant(car: Pick<Car, "trim" | "year">): TrimVariant {
+export const isTechExcluded = (car: Car) => car.techOverride === "excluded";
+
+export const isTechConfirmed = (car: Car) =>
+  car.techOverride === "confirmed" ||
+  (car.techOverride !== "excluded" && car.tech);
+
+export function trimVariant(
+  car: Pick<Car, "trim" | "year" | "techOverride">,
+): TrimVariant {
   const trim = car.trim || "";
   if (/executive/i.test(trim)) return "Executive";
   if (/gr[ -]?sport/i.test(trim)) return "GR Sport";
@@ -39,7 +47,8 @@ export function trimVariant(car: Pick<Car, "trim" | "year">): TrimVariant {
   // samodzielna wersja, którą Toyota wprowadziła w gamie MY2023.
   if (/style/i.test(trim))
     return car.year <= 2022 ? "Comfort + Style" : "Style";
-  if (/tech/i.test(trim)) return "Comfort + Tech";
+  if (/tech/i.test(trim))
+    return car.techOverride === "excluded" ? "Comfort" : "Comfort + Tech";
   if (/comfort/i.test(trim)) return "Comfort";
   if (/active/i.test(trim)) return "Active";
   return "Nieustalona";
@@ -62,7 +71,7 @@ export function trimMarketPremium(car: Car) {
   };
   const variant = trimVariant(car);
   if (
-    !car.tech &&
+    !isTechConfirmed(car) &&
     ["Comfort", "Nieustalona"].includes(variant) &&
     hasLikelyTech(car)
   )
@@ -70,7 +79,7 @@ export function trimMarketPremium(car: Car) {
       premiums["Comfort + Tech"] * (likelyTechConfidence(car)! / 100),
     );
   const scoredVariant =
-    car.tech && ["Comfort", "Nieustalona"].includes(variant)
+    isTechConfirmed(car) && ["Comfort", "Nieustalona"].includes(variant)
       ? "Comfort + Tech"
       : variant;
   return premiums[scoredVariant];
@@ -90,7 +99,7 @@ export const equipmentLabel: Record<TechComponent, string> = {
   ics: "ICS – wykrywanie przeszkód",
 };
 
-export const hasExplicitTechName = (car: Car) => car.tech;
+export const hasExplicitTechName = (car: Car) => isTechConfirmed(car);
 
 function techNamedComponents(car: Car): TechComponent[] {
   // Oficjalny opis TS Kombi MY2022 potwierdzał krótszy Tech niż po liftingu:
@@ -123,7 +132,8 @@ const LIKELY_TECH_WEIGHTS: Partial<Record<TechComponent, number>> = {
  * i Executive są obsługiwane osobno jako katalogowe odpowiedniki Tech.
  */
 export function likelyTechEvidence(car: Car): TechComponent[] {
-  if (car.tech || catalogInferredComponents(car).length) return [];
+  if (isTechConfirmed(car) || isTechExcluded(car)) return [];
+  if (catalogInferredComponents(car).length) return [];
   if (!["Comfort", "Nieustalona"].includes(trimVariant(car))) return [];
   const evidence = TECH_COMPONENTS.filter((key) => car[key] === true);
   const weight = evidence.reduce(
@@ -150,6 +160,7 @@ export const hasLikelyTech = (car: Car) =>
 // jako standard w Style/Executive. W starszych autach nazwa "Style" bywa nazwą
 // pakietu do Comfort, więc nie wolno na jej podstawie zakładać pełnego Tech.
 export function catalogInferredComponents(car: Car): TechComponent[] {
+  if (isTechExcluded(car)) return [];
   const variant = trimVariant(car);
   if (car.year < 2023) return [];
   if (["Style", "GR Sport", "Executive"].includes(variant))
@@ -163,7 +174,7 @@ export const hasCatalogBlindSpot = (car: Car) =>
 export function confirmedTechComponents(car: Car): TechComponent[] {
   const inferred = new Set(catalogInferredComponents(car));
   const namedTech = new Set(
-    car.tech || hasLikelyTech(car) ? techNamedComponents(car) : [],
+    isTechConfirmed(car) || hasLikelyTech(car) ? techNamedComponents(car) : [],
   );
   return TECH_COMPONENTS.filter(
     (key) => car[key] === true || inferred.has(key) || namedTech.has(key),
@@ -171,11 +182,19 @@ export function confirmedTechComponents(car: Car): TechComponent[] {
 }
 
 export const hasTechEquivalent = (car: Car) =>
-  car.tech || hasLikelyTech(car) || confirmedTechComponents(car).length >= 8;
+  !isTechExcluded(car) &&
+  (isTechConfirmed(car) ||
+    hasLikelyTech(car) ||
+    confirmedTechComponents(car).length >= 8);
 
 export function equipmentSource(car: Car, key: TechComponent) {
   if (car[key] === true) return "potwierdzone w ogłoszeniu";
-  if (car.tech && techNamedComponents(car).includes(key))
+  if (
+    car.techOverride === "confirmed" &&
+    techNamedComponents(car).includes(key)
+  )
+    return `wynika z ręcznie potwierdzonego Tech MY${car.year}`;
+  if (isTechConfirmed(car) && techNamedComponents(car).includes(key))
     return `wynika z pakietu Tech MY${car.year}`;
   if (hasLikelyTech(car) && techNamedComponents(car).includes(key))
     return `przewidywane z wyposażenia „Tech${likelyTechConfidence(car)}%” MY${car.year}`;

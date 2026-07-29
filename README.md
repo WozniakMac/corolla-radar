@@ -158,6 +158,8 @@ Po każdym skanie aplikacja porównuje aktualne TOP 10 z poprzednim. Zmiana skł
 
 Każde auto z kompletnymi danymi podstawowymi przechowuje ostatnie 100 zmian punktacji. Historia w szczegółach auta pokazuje poprzedni i nowy wynik każdej składowej oraz konkretne przesłanki, które pojawiły się, zniknęły albo zmieniły wartość. Zapis powstaje po skanie, ponownym przetworzeniu snapshotów oraz po uzupełnieniu danych przez CEPiK lub OpenAI; identyczny wynik nie tworzy duplikatu.
 
+Na dole szczegółów auta można ręcznie potwierdzić albo wykluczyć pakiet Tech. Ręczna decyzja jest trwale zapisywana, ma pierwszeństwo przed nazwą wersji i predykcją procentową oraz natychmiast wpływa na punktację. Można ją cofnąć, aby wrócić do automatycznego wykrywania.
+
 Deduplication scala publikacje tylko po identycznym VIN lub identycznym znormalizowanym URL-u. Podobna cena, przebieg i rocznik nie wystarczają do scalenia.
 
 ## Ważne

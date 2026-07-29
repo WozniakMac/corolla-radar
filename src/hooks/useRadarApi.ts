@@ -45,6 +45,9 @@ export function useRadarApi() {
     string | null
   >(null);
   const [analyzingPurchase, setAnalyzingPurchase] = useState(false);
+  const [techOverrideSaving, setTechOverrideSaving] = useState<string | null>(
+    null,
+  );
   const [monitoringStats, setMonitoringStats] = useState<MonitoringStats>({
     scheduled: false,
     intervalMinutes: 240,
@@ -240,6 +243,46 @@ export function useRadarApi() {
     }
   };
 
+  const updateTechOverride = async (
+    id: string,
+    override: Car["techOverride"] | null,
+  ) => {
+    setTechOverrideSaving(id);
+    try {
+      const response = await fetch(`/api/cars/${encodeURIComponent(id)}/tech`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ override }),
+      });
+      const body = await response.json();
+      if (!response.ok)
+        throw new Error(body.error || "Nie udało się zapisać decyzji Tech");
+      const updated = body.car as Car;
+      setCars((current) =>
+        current.map((car) => (car.id === updated.id ? updated : car)),
+      );
+      setNotice({
+        type: "success",
+        text:
+          override === "confirmed"
+            ? "Tech potwierdzony."
+            : override === "excluded"
+              ? "Tech wykluczony."
+              : "Przywrócono automatyczne wykrywanie Tech.",
+      });
+    } catch (error) {
+      setNotice({
+        type: "error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Nie udało się zapisać decyzji Tech.",
+      });
+    } finally {
+      setTechOverrideSaving(null);
+    }
+  };
+
   const reprocessSnapshots = async () => {
     setReprocessing(true);
     try {
@@ -304,6 +347,8 @@ export function useRadarApi() {
     processCodex,
     processAllCodex,
     processCepik,
+    techOverrideSaving,
+    updateTechOverride,
     monitoringStats,
     reprocessing,
     reprocessSnapshots,

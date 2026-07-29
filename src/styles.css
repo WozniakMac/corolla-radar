@@ -1179,6 +1179,67 @@ details input[type="range"] {
   font-size: 12px;
   margin: 7px 0;
 }
+.manualTechControl {
+  margin-top: 28px;
+  padding: 14px;
+  border: 1px solid #dce2de;
+  border-radius: 10px;
+  background: #fff;
+}
+.manualTechControl > small {
+  display: block;
+  color: #738079;
+  font-size: 9px;
+  font-weight: 800;
+}
+.manualTechControl > strong {
+  display: block;
+  margin-top: 4px;
+  font: 800 14px var(--font-display);
+}
+.manualTechControl > p {
+  margin: 7px 0 12px;
+  color: #69756f;
+  font-size: 10px;
+  line-height: 1.45;
+}
+.manualTechControl > div {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+.manualTechControl button {
+  border: 1px solid #cfd8d3;
+  border-radius: 7px;
+  background: #f7f9f8;
+  padding: 10px 8px;
+  color: #37443d;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.manualTechControl button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+.manualTechControl .confirm.active {
+  border-color: #238653;
+  background: #e6f5ec;
+  color: #17613f;
+}
+.manualTechControl .exclude.active {
+  border-color: #bb4d4d;
+  background: #fff0f0;
+  color: #913535;
+}
+.manualTechControl .resetTechOverride {
+  width: 100%;
+  margin-top: 7px;
+  border: 0;
+  background: transparent;
+  color: #66736c;
+  padding: 7px;
+}
 .modal {
   position: relative;
   background: white;

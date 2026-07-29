@@ -38,6 +38,8 @@ export default function App() {
     processCodex,
     processAllCodex,
     processCepik,
+    techOverrideSaving,
+    updateTechOverride,
     monitoringStats,
     reprocessing,
     reprocessSnapshots,
@@ -480,7 +482,15 @@ export default function App() {
         )}
       </main>
       {selected && (
-        <ScoreDrawer car={selected} market={market} onClose={closeCar} />
+        <ScoreDrawer
+          car={selected}
+          market={market}
+          onClose={closeCar}
+          techOverrideSaving={techOverrideSaving === selected.id}
+          onTechOverride={(override) =>
+            updateTechOverride(selected.id, override)
+          }
+        />
       )}
       {comparisonMode && view === "ranking" && (
         <ComparisonBar

@@ -19,6 +19,16 @@ describe("wersje wyposażenia Corolli", () => {
     expect(trimVariant(car(2023, "STYLE"))).toBe("Style");
   });
 
+  it("ręcznie wykluczony Tech pokazuje i wycenia jako Comfort", () => {
+    const excluded = {
+      ...car(2024, "Comfort + Tech"),
+      tech: true,
+      techOverride: "excluded" as const,
+    };
+    expect(trimVariant(excluded)).toBe("Comfort");
+    expect(trimMarketPremium(excluded)).toBe(0);
+  });
+
   it("uwzględnia rosnącą wartość wersji ponad Comfort", () => {
     const trims = [
       "Comfort",

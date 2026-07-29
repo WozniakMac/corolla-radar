@@ -5,6 +5,7 @@ import {
   equipmentSource,
   hasCatalogBlindSpot,
   hasTechEquivalent,
+  isTechConfirmed,
   likelyTechConfidence,
   trimMarketPremium,
   trimVariant,
@@ -487,6 +488,10 @@ export function worthTrip(
     car.distance <= 300 ||
     ratio <= 0.95 ||
     score.total >= 85 ||
-    (car.tech && car.aso && car.polishSalon && car.oneOwner && car.vat23)
+    (isTechConfirmed(car) &&
+      car.aso &&
+      car.polishSalon &&
+      car.oneOwner &&
+      car.vat23)
   );
 }

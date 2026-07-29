@@ -70,6 +70,7 @@ export type Car = {
   distance: number;
   trim: string;
   tech: boolean;
+  techOverride?: "confirmed" | "excluded";
   heatedSeats: boolean;
   heatedWiperArea?: boolean;
   rainSensor?: boolean;
@@ -160,7 +161,14 @@ export type ScoreCategoryChange = {
 };
 export type ScoreHistoryEntry = {
   capturedAt: string;
-  trigger?: "manual" | "automatic" | "cli" | "cepik" | "codex" | "reprocess";
+  trigger?:
+    | "manual"
+    | "automatic"
+    | "cli"
+    | "cepik"
+    | "codex"
+    | "reprocess"
+    | "manual-edit";
   source?: string;
   previousTotal?: number;
   score: ScoreBreakdown;

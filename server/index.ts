@@ -6,7 +6,7 @@ import {
   reprocessSavedSnapshots,
   runSources,
 } from "./pipeline";
-import { load } from "./store";
+import { load, save } from "./store";
 import { loadSavedFilters, resetFilters, saveFilters } from "./preferences";
 import {
   publicJobs,
@@ -29,6 +29,7 @@ import {
   purchaseAnalysisHistory,
   savePurchaseAnalysis,
 } from "./purchaseHistory";
+import { applyTechOverride, type TechOverride } from "./techOverride";
 
 const config = loadServerConfig();
 const app = express();
@@ -139,6 +140,25 @@ app.post("/api/cars/:id/cepik", async (req, res) => {
   } catch (error) {
     res.status(409).json({
       error: error instanceof Error ? error.message : "Błąd kolejki CEPiK",
+    });
+  }
+});
+app.patch("/api/cars/:id/tech", async (req, res) => {
+  const override = req.body?.override as TechOverride;
+  if (override !== null && override !== "confirmed" && override !== "excluded")
+    return res.status(400).json({ error: "Nieprawidłowa decyzja Tech" });
+  try {
+    const store = await load();
+    const car = applyTechOverride(store, req.params.id, override);
+    if (!car) return res.status(404).json({ error: "Nie znaleziono auta" });
+    await save(store);
+    res.json({ car });
+  } catch (error) {
+    res.status(409).json({
+      error:
+        error instanceof Error
+          ? error.message
+          : "Nie udało się zapisać decyzji Tech",
     });
   }
 });
