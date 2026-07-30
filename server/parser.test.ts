@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { parseListingHtml } from "./parser";
+import { describe, expect, it, vi } from "vitest";
+import { parseListingHtml, verifyListingAvailability } from "./parser";
 
 const validOffer = `<!doctype html><html><head><title>Toyota Corolla Touring Sports 2023</title>
 <script type="application/ld+json">{"@type":"Product","description":"Zadbana Corolla z pełną historią serwisową.","image":["https://cdn.example/car-1.jpg","https://cdn.example/car-2.jpg"],"offers":{"price":"101900"}}</script></head><body>
@@ -9,6 +9,62 @@ Salon Polska, pełna historia ASO, 1 właściciel, bezwypadkowy, FV 23%.
 VIN SB1ZB3AE20E040424.</p></body></html>`;
 
 describe("listing parser", () => {
+  it("classifies HTTP 404 and 410 as unavailable listings", async () => {
+    const response = (status: number) =>
+      vi.fn().mockResolvedValue(
+        new Response("", {
+          status,
+        }),
+      ) as unknown as typeof fetch;
+
+    await expect(
+      verifyListingAvailability("https://example.com/offer", response(404)),
+    ).resolves.toBe("unavailable");
+    await expect(
+      verifyListingAvailability("https://example.com/offer", response(410)),
+    ).resolves.toBe("unavailable");
+  });
+
+  it("keeps technical URL verification failures inconclusive", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response("", {
+        status: 503,
+      }),
+    ) as unknown as typeof fetch;
+
+    await expect(
+      verifyListingAvailability("https://example.com/offer", fetchImpl),
+    ).resolves.toBe("unknown");
+  });
+
+  it("recognizes an unavailable message returned with HTTP 200", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response("<body>To ogłoszenie nie jest aktualne</body>", {
+        status: 200,
+      }),
+    ) as unknown as typeof fetch;
+
+    await expect(
+      verifyListingAvailability("https://example.com/offer", fetchImpl),
+    ).resolves.toBe("unavailable");
+  });
+
+  it("recognizes a redirect from an offer URL to a generic page", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      url: "https://www.otomoto.pl/osobowe",
+      text: async () => "<body>Znajdź swój samochód</body>",
+    }) as unknown as typeof fetch;
+
+    await expect(
+      verifyListingAvailability(
+        "https://www.otomoto.pl/osobowe/oferta/toyota-corolla-ID6ABC.html",
+        fetchImpl,
+      ),
+    ).resolves.toBe("unavailable");
+  });
+
   it("extracts color from structured data and a visible listing field", () => {
     const structured = parseListingHtml(`
       <script type="application/ld+json">

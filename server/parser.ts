@@ -36,6 +36,14 @@ const mileageFromOfferText = (text: string) => {
   }
   return 0;
 };
+
+export class ListingHttpError extends Error {
+  constructor(public readonly status: number) {
+    super(`HTTP ${status}`);
+    this.name = "ListingHttpError";
+  }
+}
+
 export async function fetchAndParse(
   url: string,
   fetchImpl: typeof fetch = fetch,
@@ -50,10 +58,36 @@ export async function fetchAndParse(
       "accept-language": "pl-PL,pl;q=.9",
     },
   }).finally(() => clearTimeout(timer));
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  if (!response.ok) throw new ListingHttpError(response.status);
   const finalUrl = response.url;
   const html = await response.text();
   return { ...parseListingHtml(html, finalUrl), rawHtml: html };
+}
+
+export type ListingAvailability = "available" | "unavailable" | "unknown";
+
+export async function verifyListingAvailability(
+  url: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<ListingAvailability> {
+  try {
+    const listing = await fetchAndParse(url, fetchImpl);
+    const listingPath = /\/(?:d\/)?oferta\//i;
+    if (
+      listing.finalUrl &&
+      listingPath.test(new URL(url).pathname) &&
+      !listingPath.test(new URL(listing.finalUrl).pathname)
+    )
+      return "unavailable";
+    return listing.active ? "available" : "unavailable";
+  } catch (error) {
+    if (
+      error instanceof ListingHttpError &&
+      (error.status === 404 || error.status === 410)
+    )
+      return "unavailable";
+    return "unknown";
+  }
 }
 
 export function parseListingHtml(
@@ -279,7 +313,7 @@ export function parseListingHtml(
     !explicitlyPetrol &&
     textMatch(modelText, /(hybryd|hybrid|\bhev\b|\bhsd\b)/);
   const active =
-    !/(ogłoszenie (?:nie jest|jest już) aktualne|oferta (?:nieaktualna|wygasła|zakończona)|strona nie istnieje|404 not found)/i.test(
+    !/(?:to\s+)?ogłoszenie (?:nie jest(?: już)? (?:aktualne|dostępne)|jest już nieaktualne|(?:wygasło|zostało zakończone)|(?:nieaktualne|wygasłe|zakończone))|oferta (?:nie jest(?: już)? dostępna|jest już nieaktualna|nieaktualna|niedostępna|wygasła|zakończona)|strona nie istnieje|404 not found/i.test(
       text,
     );
   const reserved =

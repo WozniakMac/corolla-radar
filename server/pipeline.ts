@@ -1,7 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { adapters } from "./adapters";
 import type { SourceId, SourceStatus } from "./adapters/types";
-import { fetchAndParse, parseListingHtml } from "./parser";
+import {
+  fetchAndParse,
+  parseListingHtml,
+  verifyListingAvailability,
+  type ListingAvailability,
+} from "./parser";
 import { load, save } from "./store";
 import { distanceFromPoznan } from "./distance";
 import { notifyNewTopTen } from "./notifications";
@@ -134,13 +139,19 @@ export function reconcileSourcePresence(
   candidateUrls: Set<string>,
   complete: boolean,
   missingThreshold = 3,
+  unavailableUrls = new Set<string>(),
 ) {
   const now = new Date().toISOString();
   const listings = (db.cars as any[]).flatMap((car) => car.listings || []);
   for (const listing of listings) {
     if (listing.source !== source) continue;
-    const found = candidateUrls.has(normalize(listing.url));
-    if (found) {
+    const normalizedUrl = normalize(listing.url);
+    const found = candidateUrls.has(normalizedUrl);
+    if (unavailableUrls.has(normalizedUrl)) {
+      listing.missedScans = missingThreshold;
+      listing.active = false;
+      listing.inactiveAt ||= now;
+    } else if (found) {
       listing.missedScans = 0;
       listing.active = true;
       delete listing.inactiveAt;
@@ -167,6 +178,36 @@ export function reconcileSourcePresence(
     );
     if (listing) snapshot.active = listing.active;
   }
+}
+
+export async function verifyMissingSourceListings(
+  db: Store,
+  source: string,
+  candidateUrls: Set<string>,
+  verify: (
+    url: string,
+  ) => Promise<ListingAvailability> = verifyListingAvailability,
+) {
+  const missingUrls = [
+    ...new Set(
+      (db.cars as any[])
+        .flatMap((car) => car.listings || [])
+        .filter(
+          (listing) =>
+            listing.source === source &&
+            listing.active !== false &&
+            !candidateUrls.has(normalize(listing.url)),
+        )
+        .map((listing) => listing.url as string),
+    ),
+  ];
+  const unavailableUrls = new Set<string>();
+  for (const url of missingUrls) {
+    const availability = await verify(url);
+    if (availability === "unavailable") unavailableUrls.add(normalize(url));
+    else candidateUrls.add(normalize(url));
+  }
+  return unavailableUrls;
 }
 
 function toCar(
@@ -552,11 +593,20 @@ export async function runSources(
         const complete =
           adapter.discoveryComplete === true &&
           candidates.length <= candidateLimit;
+        const unavailableUrls = complete
+          ? await verifyMissingSourceListings(
+              db,
+              adapter.name,
+              activeCandidateUrls,
+            )
+          : new Set<string>();
         reconcileSourcePresence(
           db,
           adapter.name,
           activeCandidateUrls,
           complete,
+          3,
+          unavailableUrls,
         );
         for (const candidate of candidates.slice(0, candidateLimit)) {
           try {
