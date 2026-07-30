@@ -37,9 +37,13 @@ describe("listing parser", () => {
     ).resolves.toBe("unknown");
   });
 
-  it("recognizes an unavailable message returned with HTTP 200", async () => {
+  it.each([
+    "Oferta wygasła",
+    "To ogłoszenie nie jest już dostępne",
+    "To ogłoszenie nie jest aktualne",
+  ])('recognizes the HTTP 200 unavailable message "%s"', async (message) => {
     const fetchImpl = vi.fn().mockResolvedValue(
-      new Response("<body>To ogłoszenie nie jest aktualne</body>", {
+      new Response(`<body>${message}</body>`, {
         status: 200,
       }),
     ) as unknown as typeof fetch;
