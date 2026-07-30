@@ -83,12 +83,14 @@ Odpowiedź zawiera `carId` oraz obiekt `communication`. Auto bez zapisanej
 komunikacji ma status `not_contacted`, pustą tablicę `contacts` i brak
 `aiReport`.
 
-### Zapis historii, statusu i raportu AI
+### Zapis historii, statusu, uwagi i raportu AI
 
 Aktualizacja jest częściowa: pominięte pola pozostają bez zmian. Przesłanie
 `contacts` zastępuje całą dotychczasową historię kontaktów, co ułatwia
 idempotentną synchronizację z systemem źródłowym. `aiReport: null` usuwa raport.
-Serwer sam ustawia `updatedAt` i — przy zmianie statusu — `statusUpdatedAt`.
+Pole `note` przechowuje ręczną uwagę widoczną na liście i w szczegółach auta;
+pusty tekst albo `null` usuwa uwagę. Serwer sam ustawia `updatedAt` i — przy
+zmianie statusu — `statusUpdatedAt`.
 
 ```bash
 curl -X PATCH \
@@ -96,6 +98,7 @@ curl -X PATCH \
   -H "Content-Type: application/json" \
   -d '{
     "status": "awaiting_reply",
+    "note": "Przed decyzją poprosić o raport HHC.",
     "contacts": [
       {
         "id": "mail-2026-07-30-001",
@@ -154,7 +157,8 @@ Dozwolone statusy:
 
 - `not_contacted` — brak kontaktu;
 - `contact_planned` — kontakt zaplanowany;
-- `contacted` — skontaktowano się;
+- `contacted` — skontaktowane;
+- `appraiser_scheduled` — umówiony rzeczoznawca;
 - `awaiting_reply` — oczekiwanie na odpowiedź;
 - `seller_replied` — sprzedający odpowiedział;
 - `negotiating` — trwają negocjacje;

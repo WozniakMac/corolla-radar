@@ -194,11 +194,12 @@ export function applyCommunicationUpdate(
     );
   if (
     input.status === undefined &&
+    input.note === undefined &&
     input.contacts === undefined &&
     input.aiReport === undefined
   )
     throw new CommunicationValidationError(
-      "Podaj co najmniej jedno z pól: status, contacts, aiReport",
+      "Podaj co najmniej jedno z pól: status, note, contacts, aiReport",
     );
 
   const current = car.communication || {
@@ -218,6 +219,20 @@ export function applyCommunicationUpdate(
       );
     status = input.status as CommunicationStatus;
     statusUpdatedAt = now;
+  }
+
+  let note = current.note;
+  if (input.note !== undefined) {
+    if (input.note !== null && typeof input.note !== "string")
+      throw new CommunicationValidationError(
+        "Pole note musi być tekstem lub wartością null",
+      );
+    const normalized = typeof input.note === "string" ? input.note.trim() : "";
+    if (normalized.length > 4_000)
+      throw new CommunicationValidationError(
+        "Pole note jest dłuższe niż 4000 znaków",
+      );
+    note = normalized || undefined;
   }
 
   let contacts = current.contacts;
@@ -245,6 +260,7 @@ export function applyCommunicationUpdate(
     status,
     statusUpdatedAt,
     updatedAt: now,
+    ...(note ? { note } : {}),
     contacts,
     ...(aiReport ? { aiReport } : {}),
   };

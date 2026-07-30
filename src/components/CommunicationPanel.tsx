@@ -1,11 +1,13 @@
-import { MessageCircle, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import { MessageCircle, Save, Sparkles } from "lucide-react";
 import {
   communicationChannelLabels,
   communicationDirectionLabels,
   communicationStatusLabels,
   communicationStatusTone,
+  manualCommunicationStatuses,
 } from "../communication";
-import type { Car, CommunicationAiReport } from "../types";
+import type { Car, CommunicationAiReport, CommunicationStatus } from "../types";
 
 const sentimentLabels: Record<
   NonNullable<CommunicationAiReport["sentiment"]>,
@@ -29,14 +31,34 @@ const ReportList = ({ title, items }: { title: string; items?: string[] }) =>
     </div>
   ) : null;
 
-export function CommunicationPanel({ car }: { car: Car }) {
+export function CommunicationPanel({
+  car,
+  saving,
+  onUpdate,
+}: {
+  car: Car;
+  saving: boolean;
+  onUpdate: (update: {
+    status?: CommunicationStatus;
+    note?: string;
+  }) => Promise<void>;
+}) {
   const communication = car.communication;
   const status = communication?.status || "not_contacted";
+  const [editedStatus, setEditedStatus] = useState<CommunicationStatus>(status);
+  const [note, setNote] = useState(communication?.note || "");
   const contacts = [...(communication?.contacts || [])].sort((a, b) =>
     b.occurredAt.localeCompare(a.occurredAt),
   );
   const report = communication?.aiReport;
   const lastContact = contacts[0]?.occurredAt;
+  const changed =
+    editedStatus !== status || note.trim() !== (communication?.note || "");
+
+  useEffect(() => {
+    setEditedStatus(status);
+    setNote(communication?.note || "");
+  }, [car.id, status, communication?.note]);
 
   return (
     <section className="communicationPanel">
@@ -66,6 +88,55 @@ export function CommunicationPanel({ car }: { car: Car }) {
           <strong>{contacts.length}</strong>
         </div>
       </div>
+
+      <form
+        className="manualCommunicationForm"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void onUpdate({ status: editedStatus, note });
+        }}
+      >
+        <div>
+          <label htmlFor={`communication-status-${car.id}`}>
+            RĘCZNY STATUS AUTA
+          </label>
+          <select
+            id={`communication-status-${car.id}`}
+            value={editedStatus}
+            onChange={(event) =>
+              setEditedStatus(event.target.value as CommunicationStatus)
+            }
+            disabled={saving}
+          >
+            {!manualCommunicationStatuses.includes(editedStatus) && (
+              <option value={editedStatus}>
+                {communicationStatusLabels[editedStatus]}
+              </option>
+            )}
+            {manualCommunicationStatuses.map((option) => (
+              <option value={option} key={option}>
+                {communicationStatusLabels[option]}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor={`communication-note-${car.id}`}>UWAGI</label>
+          <textarea
+            id={`communication-note-${car.id}`}
+            value={note}
+            maxLength={4000}
+            rows={4}
+            placeholder="Np. powód odrzucenia, termin rzeczoznawcy lub ustalenia ze sprzedającym…"
+            onChange={(event) => setNote(event.target.value)}
+            disabled={saving}
+          />
+        </div>
+        <button type="submit" disabled={saving || !changed}>
+          <Save />
+          {saving ? "Zapisywanie…" : "Zapisz status i uwagi"}
+        </button>
+      </form>
 
       <h3>Historia komunikacji</h3>
       {contacts.length ? (

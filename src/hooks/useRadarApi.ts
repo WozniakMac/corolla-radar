@@ -48,6 +48,9 @@ export function useRadarApi() {
   const [techOverrideSaving, setTechOverrideSaving] = useState<string | null>(
     null,
   );
+  const [communicationSaving, setCommunicationSaving] = useState<string | null>(
+    null,
+  );
   const [monitoringStats, setMonitoringStats] = useState<MonitoringStats>({
     scheduled: false,
     intervalMinutes: 240,
@@ -283,6 +286,48 @@ export function useRadarApi() {
     }
   };
 
+  const updateCommunication = async (
+    id: string,
+    update: {
+      status?: NonNullable<Car["communication"]>["status"];
+      note?: string;
+    },
+  ) => {
+    setCommunicationSaving(id);
+    try {
+      const response = await fetch(
+        `/api/cars/${encodeURIComponent(id)}/communication`,
+        {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(update),
+        },
+      );
+      const body = await response.json();
+      if (!response.ok)
+        throw new Error(body.error || "Nie udało się zapisać statusu i uwag");
+      setCars((current) =>
+        current.map((car) =>
+          car.id === id ? { ...car, communication: body.communication } : car,
+        ),
+      );
+      setNotice({
+        type: "success",
+        text: "Status i uwagi zostały zapisane.",
+      });
+    } catch (error) {
+      setNotice({
+        type: "error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Nie udało się zapisać statusu i uwag.",
+      });
+    } finally {
+      setCommunicationSaving(null);
+    }
+  };
+
   const reprocessSnapshots = async () => {
     setReprocessing(true);
     try {
@@ -347,6 +392,8 @@ export function useRadarApi() {
     processCodex,
     processAllCodex,
     processCepik,
+    communicationSaving,
+    updateCommunication,
     techOverrideSaving,
     updateTechOverride,
     monitoringStats,

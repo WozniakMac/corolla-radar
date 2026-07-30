@@ -38,6 +38,8 @@ export default function App() {
     processCodex,
     processAllCodex,
     processCepik,
+    communicationSaving,
+    updateCommunication,
     techOverrideSaving,
     updateTechOverride,
     monitoringStats,
@@ -403,6 +405,8 @@ export default function App() {
                     setLeaseCarId(car.id);
                     setView("leasing");
                   }}
+                  communicationSaving={communicationSaving === car.id}
+                  onUpdateCommunication={updateCommunication}
                 />
               ))}
             </section>
@@ -463,6 +467,8 @@ export default function App() {
                           setLeaseCarId(car.id);
                           setView("leasing");
                         }}
+                        communicationSaving={communicationSaving === car.id}
+                        onUpdateCommunication={updateCommunication}
                       />
                     ))}
                 </section>
@@ -489,6 +495,10 @@ export default function App() {
           techOverrideSaving={techOverrideSaving === selected.id}
           onTechOverride={(override) =>
             updateTechOverride(selected.id, override)
+          }
+          communicationSaving={communicationSaving === selected.id}
+          onUpdateCommunication={(update) =>
+            updateCommunication(selected.id, update)
           }
         />
       )}

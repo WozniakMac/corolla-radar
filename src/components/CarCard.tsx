@@ -7,14 +7,21 @@ import {
   MessageCircle,
   Plus,
   ShieldCheck,
+  StickyNote,
 } from "lucide-react";
 import {
   communicationStatusLabels,
   communicationStatusTone,
+  manualCommunicationStatuses,
 } from "../communication";
 import { distance, money } from "../format";
 import { effectivePrice, hasTechEquivalent } from "../scoring";
-import type { Car, CodexJob, ScoreBreakdown } from "../types";
+import type {
+  Car,
+  CodexJob,
+  CommunicationStatus,
+  ScoreBreakdown,
+} from "../types";
 import {
   equipmentLabel,
   hasLikelyTech,
@@ -37,6 +44,8 @@ export function CarCard({
   comparisonDisabled = false,
   onToggleComparison,
   onCalculateLease,
+  communicationSaving = false,
+  onUpdateCommunication,
 }: {
   car: Car;
   score: ScoreBreakdown;
@@ -50,6 +59,11 @@ export function CarCard({
   comparisonDisabled?: boolean;
   onToggleComparison?: () => void;
   onCalculateLease?: () => void;
+  communicationSaving?: boolean;
+  onUpdateCommunication: (
+    id: string,
+    update: { status?: CommunicationStatus; note?: string },
+  ) => Promise<void>;
 }) {
   const canRunCepik = Boolean(
     car.vin && car.registrationNumber && car.firstRegistrationDate,
@@ -147,15 +161,36 @@ export function CarCard({
       </div>
       <div className="carInfo">
         <div className="badges">
-          <span
+          <label
             className={`communicationBadge ${communicationStatusTone(
               communicationStatus,
             )}`}
             title="Aktualny status komunikacji ze sprzedającym"
+            onClick={(event) => event.stopPropagation()}
           >
             <MessageCircle />
-            {communicationStatusLabels[communicationStatus]}
-          </span>
+            <select
+              aria-label={`Status auta ${car.title}`}
+              value={communicationStatus}
+              disabled={communicationSaving}
+              onChange={(event) =>
+                void onUpdateCommunication(car.id, {
+                  status: event.target.value as CommunicationStatus,
+                })
+              }
+            >
+              {!manualCommunicationStatuses.includes(communicationStatus) && (
+                <option value={communicationStatus}>
+                  {communicationStatusLabels[communicationStatus]}
+                </option>
+              )}
+              {manualCommunicationStatuses.map((status) => (
+                <option value={status} key={status}>
+                  {communicationStatusLabels[status]}
+                </option>
+              ))}
+            </select>
+          </label>
           {car.reserved && <span className="reservedBg">ZAREZERWOWANE</span>}
           {car.cepik && (
             <span
@@ -204,6 +239,12 @@ export function CarCard({
           <MapPin />
           {car.location} · {distance(car.distance)} <b>•</b> {car.seller}
         </p>
+        {car.communication?.note && (
+          <div className="cardCommunicationNote" title={car.communication.note}>
+            <StickyNote />
+            <span>{car.communication.note}</span>
+          </div>
+        )}
         <div className="facts">
           <div>
             <small>PRZEBIEG</small>

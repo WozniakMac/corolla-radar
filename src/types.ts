@@ -111,6 +111,7 @@ export type CommunicationStatus =
   | "not_contacted"
   | "contact_planned"
   | "contacted"
+  | "appraiser_scheduled"
   | "awaiting_reply"
   | "seller_replied"
   | "negotiating"
@@ -144,6 +145,7 @@ export type SellerCommunication = {
   status: CommunicationStatus;
   statusUpdatedAt?: string;
   updatedAt?: string;
+  note?: string;
   contacts: SellerContactEntry[];
   aiReport?: CommunicationAiReport;
 };

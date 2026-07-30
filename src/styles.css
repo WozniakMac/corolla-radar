@@ -685,10 +685,31 @@ details input[type="range"] {
   align-items: center;
   gap: 3px;
   border: 1px solid transparent;
+  padding: 2px 4px 2px 6px;
+  border-radius: 4px;
+  background: #eef1ef;
+  color: #4e5953;
+  font-size: 9px;
+  font-weight: 700;
 }
 .badges .communicationBadge svg {
   width: 11px;
   height: 11px;
+  flex: 0 0 auto;
+}
+.badges .communicationBadge select {
+  max-width: 150px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: inherit;
+  padding: 1px 14px 1px 1px;
+  font: 700 9px var(--font-sans);
+  cursor: pointer;
+}
+.badges .communicationBadge select:disabled {
+  cursor: wait;
+  opacity: 0.6;
 }
 .badges .communicationBadge.waiting {
   border-color: #e4bd64;
@@ -776,6 +797,32 @@ details input[type="range"] {
 .carInfo p b {
   color: #bbc1bd;
   margin: 0 4px;
+}
+.cardCommunicationNote {
+  max-width: 680px;
+  margin-top: 7px;
+  padding: 6px 8px;
+  border-left: 3px solid #d5aa48;
+  border-radius: 0 6px 6px 0;
+  background: #fff9e9;
+  color: #765615;
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  font-size: 10px;
+  line-height: 1.4;
+}
+.cardCommunicationNote svg {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+.cardCommunicationNote span {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 .facts {
   display: grid;
@@ -997,6 +1044,67 @@ details input[type="range"] {
 .communicationSummary strong {
   margin-top: 3px;
   font-size: 10px;
+}
+.manualCommunicationForm {
+  display: grid;
+  gap: 9px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #d7e0db;
+  border-radius: 9px;
+  background: #f7faf8;
+}
+.manualCommunicationForm > div {
+  display: grid;
+  gap: 5px;
+}
+.manualCommunicationForm label {
+  color: #65736b;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+}
+.manualCommunicationForm select,
+.manualCommunicationForm textarea {
+  width: 100%;
+  border: 1px solid #cbd7d0;
+  border-radius: 7px;
+  background: #fff;
+  color: #27352e;
+  padding: 9px 10px;
+  font: 600 11px var(--font-sans);
+}
+.manualCommunicationForm textarea {
+  resize: vertical;
+  min-height: 78px;
+  line-height: 1.45;
+  font-weight: 500;
+}
+.manualCommunicationForm select:focus,
+.manualCommunicationForm textarea:focus {
+  outline: 2px solid #55bd7c45;
+  border-color: #55a975;
+}
+.manualCommunicationForm button {
+  width: fit-content;
+  border: 0;
+  border-radius: 7px;
+  background: #17613f;
+  color: #fff;
+  padding: 9px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 800 10px var(--font-sans);
+  cursor: pointer;
+}
+.manualCommunicationForm button:disabled {
+  cursor: default;
+  opacity: 0.48;
+}
+.manualCommunicationForm button svg {
+  width: 14px;
+  height: 14px;
 }
 .communicationPanel h3 {
   margin-top: 18px;

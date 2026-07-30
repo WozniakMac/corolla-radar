@@ -8,6 +8,7 @@ export const communicationStatuses: CommunicationStatus[] = [
   "not_contacted",
   "contact_planned",
   "contacted",
+  "appraiser_scheduled",
   "awaiting_reply",
   "seller_replied",
   "negotiating",
@@ -19,14 +20,22 @@ export const communicationStatuses: CommunicationStatus[] = [
 export const communicationStatusLabels: Record<CommunicationStatus, string> = {
   not_contacted: "Brak kontaktu",
   contact_planned: "Kontakt zaplanowany",
-  contacted: "Skontaktowano się",
+  contacted: "Skontaktowane",
+  appraiser_scheduled: "Umówiony rzeczoznawca",
   awaiting_reply: "Oczekiwanie na odpowiedź",
   seller_replied: "Sprzedający odpowiedział",
   negotiating: "Negocjacje",
   visit_scheduled: "Wizyta umówiona",
   closed_won: "Zakończona — wybrano",
-  closed_lost: "Zakończona — odrzucono",
+  closed_lost: "Odrzucone",
 };
+
+export const manualCommunicationStatuses: CommunicationStatus[] = [
+  "not_contacted",
+  "contacted",
+  "appraiser_scheduled",
+  "closed_lost",
+];
 
 export const communicationStatusTone = (
   status: CommunicationStatus,

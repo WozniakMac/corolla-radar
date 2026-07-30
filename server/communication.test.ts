@@ -78,6 +78,30 @@ describe("komunikacja ze sprzedającym", () => {
     );
   });
 
+  it("zapisuje ręczny status rzeczoznawcy i pozwala wyczyścić uwagę", () => {
+    const store = storeWithCar();
+    const id = (store.cars[0] as Car).id;
+    const scheduled = applyCommunicationUpdate(
+      store,
+      id,
+      {
+        status: "appraiser_scheduled",
+        note: "Rzeczoznawca umówiony na piątek, 10:00.",
+      },
+      "2026-07-30T12:00:00Z",
+    )!;
+
+    expect(scheduled.communication).toMatchObject({
+      status: "appraiser_scheduled",
+      note: "Rzeczoznawca umówiony na piątek, 10:00.",
+      updatedAt: "2026-07-30T12:00:00Z",
+    });
+
+    const cleared = applyCommunicationUpdate(store, id, { note: "   " })!;
+    expect(cleared.communication?.note).toBeUndefined();
+    expect(cleared.communication?.status).toBe("appraiser_scheduled");
+  });
+
   it("odrzuca nieprawidłowy status i raport", () => {
     const store = storeWithCar();
     const id = (store.cars[0] as Car).id;

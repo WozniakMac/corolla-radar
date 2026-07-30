@@ -13,7 +13,7 @@ import {
 } from "../communication";
 import { money } from "../format";
 import { explainScore, scoreCar, type MarketBenchmarks } from "../scoring";
-import type { Car } from "../types";
+import type { Car, CommunicationStatus } from "../types";
 import { CommunicationPanel } from "./CommunicationPanel";
 
 export function ScoreDrawer({
@@ -22,12 +22,19 @@ export function ScoreDrawer({
   onClose,
   techOverrideSaving,
   onTechOverride,
+  communicationSaving,
+  onUpdateCommunication,
 }: {
   car: Car;
   market: MarketBenchmarks;
   onClose: () => void;
   techOverrideSaving: boolean;
   onTechOverride: (override: Car["techOverride"] | null) => Promise<void>;
+  communicationSaving: boolean;
+  onUpdateCommunication: (update: {
+    status?: CommunicationStatus;
+    note?: string;
+  }) => Promise<void>;
 }) {
   const score = scoreCar(car, market);
   const communicationStatus = car.communication?.status || "not_contacted";
@@ -127,7 +134,11 @@ export function ScoreDrawer({
         <div className="confidenceScore">
           Pewność danych: <strong>{score.confidence}%</strong>
         </div>
-        <CommunicationPanel car={car} />
+        <CommunicationPanel
+          car={car}
+          saving={communicationSaving}
+          onUpdate={onUpdateCommunication}
+        />
         <h3>Dlaczego ten wynik?</h3>
         <div className="scoreExplanation">
           {explanation.map((item) => (
