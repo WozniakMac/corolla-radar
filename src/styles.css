@@ -680,6 +680,36 @@ details input[type="range"] {
   font-size: 9px;
   font-weight: 700;
 }
+.badges .communicationBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border: 1px solid transparent;
+}
+.badges .communicationBadge svg {
+  width: 11px;
+  height: 11px;
+}
+.badges .communicationBadge.waiting {
+  border-color: #e4bd64;
+  background: #fff7df;
+  color: #895c05;
+}
+.badges .communicationBadge.active {
+  border-color: #93b8dc;
+  background: #edf6ff;
+  color: #235f96;
+}
+.badges .communicationBadge.success {
+  border-color: #8fc8a8;
+  background: #e6f5ec;
+  color: #1f7047;
+}
+.badges .communicationBadge.closed {
+  border-color: #d8aaa3;
+  background: #fff0ed;
+  color: #93463b;
+}
 .badges .blue {
   background: #e8f0fb;
   color: #2b66a4;
@@ -834,6 +864,34 @@ details input[type="range"] {
   font: 800 24px var(--font-display);
   padding-right: 25px;
 }
+.drawerCommunicationStatus {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  border: 1px solid #d9e2dd;
+  border-radius: 9px;
+  background: #fff;
+}
+.drawerCommunicationStatus > svg {
+  width: 17px;
+  color: #28734d;
+}
+.drawerCommunicationStatus small,
+.drawerCommunicationStatus strong {
+  display: block;
+}
+.drawerCommunicationStatus small {
+  color: #7b8780;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.drawerCommunicationStatus strong {
+  margin-top: 2px;
+  font: 800 11px var(--font-display);
+}
 .bigScore {
   width: 92px;
   height: 92px;
@@ -852,6 +910,187 @@ details input[type="range"] {
 .drawer h3 {
   font: 700 13px var(--font-display);
   margin: 28px 0 10px;
+}
+.communicationPanel {
+  margin-top: 24px;
+  padding: 15px;
+  border: 1px solid #d7e0db;
+  border-radius: 11px;
+  background: #fff;
+}
+.communicationHeading {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+}
+.communicationHeading > span {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: #e8f4ed;
+  color: #28734d;
+}
+.communicationHeading svg {
+  width: 17px;
+}
+.communicationHeading small,
+.communicationHeading strong {
+  display: block;
+}
+.communicationHeading small {
+  color: #7b8780;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+.communicationHeading strong {
+  margin-top: 3px;
+  font: 800 13px var(--font-display);
+}
+.communicationStatus {
+  padding: 5px 7px;
+  border-radius: 6px;
+  background: #eef1ef;
+  color: #56615b;
+  font-size: 9px;
+  white-space: nowrap;
+}
+.communicationStatus.waiting {
+  background: #fff4d6;
+  color: #895c05;
+}
+.communicationStatus.active {
+  background: #e8f2fc;
+  color: #235f96;
+}
+.communicationStatus.success {
+  background: #e6f5ec;
+  color: #1f7047;
+}
+.communicationStatus.closed {
+  background: #fff0ed;
+  color: #93463b;
+}
+.communicationSummary {
+  display: grid;
+  grid-template-columns: 1fr 90px;
+  gap: 7px;
+  margin-top: 12px;
+}
+.communicationSummary > div {
+  padding: 9px 10px;
+  border-radius: 8px;
+  background: #f5f7f5;
+}
+.communicationSummary small,
+.communicationSummary strong {
+  display: block;
+}
+.communicationSummary small {
+  color: #7a857f;
+  font-size: 8px;
+  font-weight: 800;
+}
+.communicationSummary strong {
+  margin-top: 3px;
+  font-size: 10px;
+}
+.communicationPanel h3 {
+  margin-top: 18px;
+}
+.communicationTimeline {
+  display: grid;
+  gap: 7px;
+}
+.communicationTimeline article {
+  padding: 10px 11px;
+  border-left: 3px solid #81b99a;
+  border-radius: 0 8px 8px 0;
+  background: #f6f8f6;
+}
+.communicationTimeline article > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.communicationTimeline strong {
+  font-size: 11px;
+}
+.communicationTimeline time,
+.communicationTimeline small {
+  color: #78847d;
+  font-size: 9px;
+}
+.communicationTimeline time {
+  white-space: nowrap;
+}
+.communicationTimeline article > small {
+  display: block;
+  margin-top: 3px;
+}
+.communicationTimeline p {
+  margin: 7px 0 0;
+  color: #4d5b53;
+  font-size: 10px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+.communicationReportHeading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.communicationReportHeading svg {
+  width: 15px;
+  color: #7159a6;
+}
+.communicationReport {
+  padding: 12px;
+  border: 1px solid #dfd7ef;
+  border-radius: 9px;
+  background: #faf8ff;
+}
+.communicationReportMeta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: #756c83;
+  font-size: 8px;
+}
+.communicationReportMeta b {
+  color: #5d477e;
+}
+.communicationReport > p {
+  margin: 9px 0;
+  color: #40394b;
+  font-size: 11px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+.communicationReportList {
+  margin-top: 10px;
+}
+.communicationReportList > strong {
+  font-size: 10px;
+}
+.communicationReportList ul {
+  margin: 5px 0 0;
+  padding-left: 17px;
+}
+.communicationReportList li {
+  color: #51495d;
+  font-size: 10px;
+}
+.communicationEmpty {
+  padding: 13px;
+  border: 1px dashed #ccd5d0;
+  border-radius: 8px;
+  color: #74817a;
+  font-size: 10px;
+  text-align: center;
 }
 .scoreRow {
   display: flex;

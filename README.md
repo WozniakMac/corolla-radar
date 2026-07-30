@@ -35,6 +35,152 @@ Frontend działa pod `http://127.0.0.1:5173`, a API Express pod `http://127.0.0.
 Formatowanie całego projektu: `npm run format`. Kontrola bez zmian: `npm run format:check`.
 Pełna kontrola typów frontendu i backendu: `npm run typecheck`.
 
+## API komunikacji ze sprzedającym
+
+Komunikacja nie jest generowana przez tę aplikację. Zewnętrzny automat lub
+model AI pobiera wiadomości z wybranego kanału, przygotowuje raport, a następnie
+przesyła do Corolli Radar status, ujednoliconą historię kontaktów i gotowy raport
+AI. Dane są trwale przechowywane przy aucie w `data/store.json`. Lista ofert
+zawsze pokazuje aktualny status komunikacji, a panel szczegółów dodatkowo
+pokazuje oś kontaktów i raport.
+
+API nie wymaga klucza ani innego uwierzytelnienia. Z tego powodu aplikacja nadal
+powinna działać wyłącznie w prywatnej, zaufanej sieci. We wszystkich przykładach
+poniżej `RADAR_URL` oznacza adres backendu, np.
+`http://192.168.2.47:4174`.
+
+### Znalezienie wewnętrznego ID po URL-u
+
+Zewnętrzna integracja zwykle zna URL ogłoszenia, ale nie zna `carId`. Można je
+odnaleźć przez:
+
+```bash
+curl --get "$RADAR_URL/api/cars/resolve" \
+  --data-urlencode "url=https://www.otomoto.pl/osobowe/oferta/toyota-corolla-ID6Example.html?utm_source=mail"
+```
+
+Przykładowa odpowiedź:
+
+```json
+{
+  "carId": "SB1ZB3AE20E040424",
+  "matchedUrl": "https://www.otomoto.pl/osobowe/oferta/toyota-corolla-ID6Example.html",
+  "source": "OTOMOTO"
+}
+```
+
+Porównanie ignoruje fragment (`#...`), query string (w tym parametry
+śledzące) i końcowy ukośnik. Zwracane są statusy `400`, gdy URL jest
+nieprawidłowy, oraz `404`, gdy żadna publikacja nie pasuje.
+
+### Odczyt komunikacji
+
+```bash
+curl "$RADAR_URL/api/cars/SB1ZB3AE20E040424/communication"
+```
+
+Odpowiedź zawiera `carId` oraz obiekt `communication`. Auto bez zapisanej
+komunikacji ma status `not_contacted`, pustą tablicę `contacts` i brak
+`aiReport`.
+
+### Zapis historii, statusu i raportu AI
+
+Aktualizacja jest częściowa: pominięte pola pozostają bez zmian. Przesłanie
+`contacts` zastępuje całą dotychczasową historię kontaktów, co ułatwia
+idempotentną synchronizację z systemem źródłowym. `aiReport: null` usuwa raport.
+Serwer sam ustawia `updatedAt` i — przy zmianie statusu — `statusUpdatedAt`.
+
+```bash
+curl -X PATCH \
+  "$RADAR_URL/api/cars/SB1ZB3AE20E040424/communication" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "status": "awaiting_reply",
+    "contacts": [
+      {
+        "id": "mail-2026-07-30-001",
+        "occurredAt": "2026-07-30T08:30:00Z",
+        "direction": "outbound",
+        "channel": "email",
+        "summary": "Pytania o historię serwisową i stan baterii",
+        "details": "Poproszono o skan książki serwisowej, HHC i informację o naprawach lakierniczych.",
+        "contactPerson": "Jan Kowalski"
+      },
+      {
+        "id": "phone-2026-07-30-002",
+        "occurredAt": "2026-07-30T10:15:00Z",
+        "direction": "inbound",
+        "channel": "phone",
+        "summary": "Sprzedający potwierdził dostępność auta",
+        "details": "Dokumenty mają zostać dosłane po południu."
+      }
+    ],
+    "aiReport": {
+      "generatedAt": "2026-07-30T10:20:00Z",
+      "model": "zewnetrzny-model-v1",
+      "summary": "Sprzedający odpowiada konkretnie, ale nie dostarczył jeszcze dokumentów potwierdzających historię.",
+      "sentiment": "positive",
+      "confidence": 0.91,
+      "keyFindings": [
+        "Auto jest nadal dostępne",
+        "Sprzedający deklaruje pełną historię ASO"
+      ],
+      "risks": [
+        "Brak przesłanego raportu HHC",
+        "Brak pisemnego potwierdzenia historii lakierniczej"
+      ],
+      "unansweredQuestions": [
+        "Kiedy wykonano ostatni serwis hybrydy?"
+      ],
+      "recommendedNextSteps": [
+        "Poczekać na dokumenty",
+        "Po ich weryfikacji umówić oględziny"
+      ]
+    }
+  }'
+```
+
+Prawidłowa odpowiedź zawiera zapisany obiekt `communication`. Jeśli integracja
+ma ręcznie zmienić tylko status, wystarczy:
+
+```bash
+curl -X PATCH \
+  "$RADAR_URL/api/cars/SB1ZB3AE20E040424/communication" \
+  -H "Content-Type: application/json" \
+  -d '{"status":"visit_scheduled"}'
+```
+
+Dozwolone statusy:
+
+- `not_contacted` — brak kontaktu;
+- `contact_planned` — kontakt zaplanowany;
+- `contacted` — skontaktowano się;
+- `awaiting_reply` — oczekiwanie na odpowiedź;
+- `seller_replied` — sprzedający odpowiedział;
+- `negotiating` — trwają negocjacje;
+- `visit_scheduled` — wizyta umówiona;
+- `closed_won` — kontakt zakończony wyborem auta;
+- `closed_lost` — kontakt zakończony odrzuceniem auta.
+
+Każdy wpis `contacts` może mieć kierunek `inbound`, `outbound` albo
+`internal_note` oraz kanał `phone`, `email`, `sms`, `whatsapp`, `portal`,
+`in_person` lub `other`. `id` wpisu jest opcjonalne — jeśli go zabraknie, serwer
+nada UUID — ale stabilne ID po stronie integracji jest zalecane. `occurredAt`
+i `aiReport.generatedAt` są opcjonalne i domyślnie otrzymują czas zapisu;
+jeżeli są podane, muszą być poprawnymi datami ISO 8601. `confidence` ma zakres
+od `0` do `1`. Jeden request może zawierać maksymalnie 200 kontaktów, a całe
+body JSON ma limit 256 KiB.
+
+Minimalny przepływ zewnętrznego AI wygląda więc następująco:
+
+1. Wywołaj `GET /api/cars/resolve?url=...` i zapamiętaj zwrócone `carId`.
+2. Zbierz lub znormalizuj wiadomości dotyczące tej publikacji.
+3. Wygeneruj raport AI w opisanej strukturze.
+4. Wyślij historię, raport i bieżący status przez
+   `PATCH /api/cars/:carId/communication`.
+5. Przy kolejnych zmianach można wysyłać pełny zsynchronizowany `contacts` albo
+   aktualizować wyłącznie `status`/`aiReport`.
+
 ## Pobieranie ofert
 
 Jednorazowy skan wszystkich źródeł: `npm run scan`. Pojedyncze źródło, np. `npm run scan -- otomoto` albo `npm run scan -- pewneauto`.

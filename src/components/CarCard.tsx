@@ -4,9 +4,14 @@ import {
   Check,
   ChevronRight,
   MapPin,
+  MessageCircle,
   Plus,
   ShieldCheck,
 } from "lucide-react";
+import {
+  communicationStatusLabels,
+  communicationStatusTone,
+} from "../communication";
 import { distance, money } from "../format";
 import { effectivePrice, hasTechEquivalent } from "../scoring";
 import type { Car, CodexJob, ScoreBreakdown } from "../types";
@@ -84,6 +89,7 @@ export function CarCard({
         failed: "Błąd przetwarzania",
       }[codexJob.status]
     : "Nie wymaga weryfikacji";
+  const communicationStatus = car.communication?.status || "not_contacted";
   return (
     <article
       className={`${comparisonMode ? "comparisonMode" : ""} ${
@@ -141,6 +147,15 @@ export function CarCard({
       </div>
       <div className="carInfo">
         <div className="badges">
+          <span
+            className={`communicationBadge ${communicationStatusTone(
+              communicationStatus,
+            )}`}
+            title="Aktualny status komunikacji ze sprzedającym"
+          >
+            <MessageCircle />
+            {communicationStatusLabels[communicationStatus]}
+          </span>
           {car.reserved && <span className="reservedBg">ZAREZERWOWANE</span>}
           {car.cepik && (
             <span

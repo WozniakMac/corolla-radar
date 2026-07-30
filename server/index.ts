@@ -30,6 +30,12 @@ import {
   savePurchaseAnalysis,
 } from "./purchaseHistory";
 import { applyTechOverride, type TechOverride } from "./techOverride";
+import {
+  applyCommunicationUpdate,
+  CommunicationValidationError,
+  emptyCommunication,
+} from "./communication";
+import { findCarByListingUrl } from "./listingLookup";
 
 const config = loadServerConfig();
 const app = express();
@@ -47,13 +53,64 @@ app.use((_req, res, next) => {
   });
   next();
 });
-app.use(express.json({ limit: "32kb" }));
+app.use(express.json({ limit: "256kb" }));
 app.use(rejectCrossSiteMutations);
 app.use(limitMutations());
 app.get("/api/health", (_req, res) =>
   res.json({ ok: true, node: process.version }),
 );
 app.get("/api/cars", async (_req, res) => res.json((await load()).cars));
+app.get("/api/cars/resolve", async (req, res) => {
+  if (typeof req.query.url !== "string" || !req.query.url)
+    return res.status(400).json({ error: "Brak parametru url" });
+  try {
+    const result = findCarByListingUrl(
+      (await load()).cars as Car[],
+      req.query.url,
+    );
+    if (!result)
+      return res
+        .status(404)
+        .json({ error: "Nie znaleziono auta dla tego URL" });
+    res.json({
+      carId: result.car.id,
+      matchedUrl: result.listing.url,
+      source: result.listing.source,
+    });
+  } catch (error) {
+    res.status(400).json({
+      error: error instanceof Error ? error.message : "Nieprawidłowy URL",
+    });
+  }
+});
+app.get("/api/cars/:id/communication", async (req, res) => {
+  const car = ((await load()).cars as Car[]).find(
+    (item) => item.id === req.params.id,
+  );
+  if (!car) return res.status(404).json({ error: "Nie znaleziono auta" });
+  res.json({
+    carId: car.id,
+    communication: car.communication || emptyCommunication(),
+  });
+});
+app.patch("/api/cars/:id/communication", async (req, res) => {
+  try {
+    const store = await load();
+    const car = applyCommunicationUpdate(store, req.params.id, req.body);
+    if (!car) return res.status(404).json({ error: "Nie znaleziono auta" });
+    await save(store);
+    res.json({ carId: car.id, communication: car.communication });
+  } catch (error) {
+    if (error instanceof CommunicationValidationError)
+      return res.status(400).json({ error: error.message });
+    res.status(409).json({
+      error:
+        error instanceof Error
+          ? error.message
+          : "Nie udało się zapisać komunikacji",
+    });
+  }
+});
 app.get("/api/sources", (_req, res) => res.json(getStatuses()));
 app.get("/api/preferences/filters", async (_req, res) =>
   res.json({ filters: await loadSavedFilters() }),

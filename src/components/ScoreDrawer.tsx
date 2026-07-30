@@ -3,12 +3,18 @@ import {
   ArrowUpRight,
   CheckCircle2,
   ExternalLink,
+  MessageCircle,
   Minus,
   X,
 } from "lucide-react";
+import {
+  communicationStatusLabels,
+  communicationStatusTone,
+} from "../communication";
 import { money } from "../format";
 import { explainScore, scoreCar, type MarketBenchmarks } from "../scoring";
 import type { Car } from "../types";
+import { CommunicationPanel } from "./CommunicationPanel";
 
 export function ScoreDrawer({
   car,
@@ -24,6 +30,7 @@ export function ScoreDrawer({
   onTechOverride: (override: Car["techOverride"] | null) => Promise<void>;
 }) {
   const score = scoreCar(car, market);
+  const communicationStatus = car.communication?.status || "not_contacted";
   const explanation = explainScore(car, market);
   const scoreHistory = [...(car.scoreHistory || [])].reverse();
   const priceEvents = car.listings
@@ -85,6 +92,20 @@ export function ScoreDrawer({
           } • ZWERYFIKOWANO ${new Date(car.verifiedAt).toLocaleString("pl-PL")}`}
         </small>
         <h2 id="car-detail-title">{car.title}</h2>
+        <div className="drawerCommunicationStatus">
+          <MessageCircle />
+          <span>
+            <small>AKTUALNY STATUS KOMUNIKACJI</small>
+            <strong>{communicationStatusLabels[communicationStatus]}</strong>
+          </span>
+          <b
+            className={`communicationStatus ${communicationStatusTone(
+              communicationStatus,
+            )}`}
+          >
+            {communicationStatusLabels[communicationStatus]}
+          </b>
+        </div>
         {car.images?.length ? (
           <div className="gallery">
             {car.images.slice(0, 8).map((url, index) => (
@@ -106,6 +127,7 @@ export function ScoreDrawer({
         <div className="confidenceScore">
           Pewność danych: <strong>{score.confidence}%</strong>
         </div>
+        <CommunicationPanel car={car} />
         <h3>Dlaczego ten wynik?</h3>
         <div className="scoreExplanation">
           {explanation.map((item) => (

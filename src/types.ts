@@ -105,6 +105,47 @@ export type Car = {
   notes: string[];
   description?: string;
   images?: string[];
+  communication?: SellerCommunication;
+};
+export type CommunicationStatus =
+  | "not_contacted"
+  | "contact_planned"
+  | "contacted"
+  | "awaiting_reply"
+  | "seller_replied"
+  | "negotiating"
+  | "visit_scheduled"
+  | "closed_won"
+  | "closed_lost";
+export type CommunicationDirection = "inbound" | "outbound" | "internal_note";
+export type CommunicationChannel =
+  "phone" | "email" | "sms" | "whatsapp" | "portal" | "in_person" | "other";
+export type SellerContactEntry = {
+  id: string;
+  occurredAt: string;
+  direction: CommunicationDirection;
+  channel: CommunicationChannel;
+  summary: string;
+  details?: string;
+  contactPerson?: string;
+};
+export type CommunicationAiReport = {
+  generatedAt: string;
+  summary: string;
+  model?: string;
+  sentiment?: "positive" | "neutral" | "negative" | "mixed";
+  confidence?: number;
+  keyFindings?: string[];
+  risks?: string[];
+  unansweredQuestions?: string[];
+  recommendedNextSteps?: string[];
+};
+export type SellerCommunication = {
+  status: CommunicationStatus;
+  statusUpdatedAt?: string;
+  updatedAt?: string;
+  contacts: SellerContactEntry[];
+  aiReport?: CommunicationAiReport;
 };
 export type FilterState = {
   query: string;
