@@ -155,7 +155,7 @@ export function LeasingCalculator({
               {availableCars.map((car) => (
                 <option value={car.id} key={car.id}>
                   {car.title} · {money(effectivePrice(car))}
-                  {car.vat23 ? " · FV 23%" : " · bez FV 23%"}
+                  {car.vat23 ? " · Faktura VAT" : " · bez faktury VAT"}
                 </option>
               ))}
             </select>
@@ -628,11 +628,11 @@ export function LeasingCalculator({
             <div className="leasingWarning strong">
               <CircleAlert />
               <span>
-                Dla oferty bez potwierdzonej FV 23% liczymy wariant ostrożny:
-                cała cena brutto staje się bazą finansowania, a usługa leasingu
-                nadal jest fakturowana z 23% VAT. Brak znacznika FV 23% w
-                ogłoszeniu nie dowodzi VAT-marży — potwierdź dokument sprzedaży
-                i możliwość finansowania u leasingodawcy.
+                Dla oferty bez potwierdzonej faktury VAT liczymy wariant
+                ostrożny: cała cena brutto staje się bazą finansowania, a usługa
+                leasingu nadal jest fakturowana z 23% VAT. Brak znacznika
+                faktury VAT w ogłoszeniu nie dowodzi VAT-marży — potwierdź
+                dokument sprzedaży i możliwość finansowania u leasingodawcy.
               </span>
             </div>
           )}
@@ -721,8 +721,9 @@ export function LeasingCalculator({
           <div>
             <strong>Oferta i pojazd</strong>
             <p>
-              Potwierdź FV 23%, brak zastawu, właściciela, VIN, historię szkód,
-              zgodę na auto używane oraz maksymalny wiek na koniec umowy.
+              Potwierdź fakturę VAT i stawkę 23%, brak zastawu, właściciela,
+              VIN, historię szkód, zgodę na auto używane oraz maksymalny wiek na
+              koniec umowy.
             </p>
           </div>
           <div>

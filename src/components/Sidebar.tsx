@@ -93,7 +93,7 @@ export function Sidebar({
           2022 Comfort + Tech
         </button>
         <button onClick={() => onPreset("local")}>Najlepsze lokalne</button>
-        <button onClick={() => onPreset("vat")}>FV 23%</button>
+        <button onClick={() => onPreset("vat")}>Faktura VAT</button>
       </div>
       <div className="asideFoot">
         <span className={`pulse ${monitoringActive ? "" : "off"}`} /> Monitoring

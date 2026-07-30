@@ -6,6 +6,7 @@
     "dev": "concurrently -k \"vite\" \"tsx watch server/index.ts\"",
     "scan": "tsx server/scan.ts",
     "reprocess": "node --import tsx server/reprocess.ts",
+    "revalidate:terms": "node --import tsx server/revalidateSaleTerms.ts",
     "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.server.json",
     "build": "npm run typecheck && vite build",
     "test": "vitest run",

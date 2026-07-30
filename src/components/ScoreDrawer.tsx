@@ -402,11 +402,11 @@ export function ScoreDrawer({
               ? "Tech potwierdzony"
               : car.techOverride === "excluded"
                 ? "Tech wykluczony"
-                : "Automatyczne wykrywanie"}
+                : "Automatyczna decyzja na podstawie wersji"}
           </strong>
           <p>
-            Decyzja ręczna zastępuje nazwę i predykcję Tech oraz od razu zmienia
-            punktację.
+            Decyzja ręczna zastępuje automatyczną ocenę wersji wyposażenia i od
+            razu zmienia punktację oraz kwalifikację oferty.
           </p>
           <div>
             <button
@@ -417,7 +417,7 @@ export function ScoreDrawer({
               disabled={techOverrideSaving}
               onClick={() => void onTechOverride("confirmed")}
             >
-              Potwierdź Tech 100%
+              Potwierdź Tech
             </button>
             <button
               type="button"

@@ -273,7 +273,7 @@ export function OfferComparison({
       best: "lowest",
     },
     {
-      label: "Status FV 23%",
+      label: "Status faktury VAT",
       values: offers.map(({ car }) =>
         car.vat23 ? "Potwierdzona w ogłoszeniu" : "Niepotwierdzona",
       ),
@@ -297,8 +297,8 @@ export function OfferComparison({
       label: "Dokument auta",
       values: offers.map(({ car }) =>
         car.vat23
-          ? "Faktura VAT 23%"
-          : "Brak znacznika FV 23% — wariant ostrożny",
+          ? "Faktura VAT"
+          : "Brak potwierdzonej faktury VAT — wariant ostrożny",
       ),
     },
     {
@@ -823,11 +823,12 @@ export function OfferComparison({
                 <tr className="comparisonLeaseNotice">
                   <td colSpan={offers.length + 1}>
                     <strong>Dlaczego raty tak się różnią?</strong>
-                    Dla auta z FV 23% kalkulator finansuje cenę netto. Gdy
-                    ogłoszenie nie potwierdza FV 23%, ostrożnie przyjmuje całą
-                    cenę brutto jako podstawę, a leasing nadal dolicza 23% VAT.
-                    Brak znacznika w ogłoszeniu nie dowodzi VAT-marży — dokument
-                    sprzedaży trzeba potwierdzić u sprzedawcy.
+                    Dla auta z fakturą VAT kalkulator finansuje cenę netto przy
+                    stawce 23%. Gdy ogłoszenie nie potwierdza faktury VAT,
+                    ostrożnie przyjmuje całą cenę brutto jako podstawę, a
+                    leasing nadal dolicza 23% VAT. Brak znacznika w ogłoszeniu
+                    nie dowodzi VAT-marży — dokument sprzedaży trzeba
+                    potwierdzić u sprzedawcy.
                   </td>
                 </tr>
               )}

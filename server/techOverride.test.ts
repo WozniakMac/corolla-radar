@@ -5,7 +5,7 @@ import { testCars } from "../src/data";
 import type { Store } from "./store";
 import { applyTechOverride } from "./techOverride";
 
-const likelyCar = (): Car => ({
+const comfortCar = (): Car => ({
   ...testCars[0],
   id: "likely-tech",
   year: 2024,
@@ -21,8 +21,12 @@ const storeWith = (car: Car): Store => ({
 });
 
 describe("ręczna decyzja Tech", () => {
-  it("wyklucza predykcję Tech i obniża punktację", () => {
-    const car = likelyCar();
+  it("wyklucza Tech i obniża punktację wersji Comfort + Tech", () => {
+    const car = {
+      ...comfortCar(),
+      trim: "Comfort + Tech",
+      tech: true,
+    };
     const store = storeWith(car);
     const previous = scoreCar(car).equipment;
 
@@ -35,7 +39,7 @@ describe("ręczna decyzja Tech", () => {
   });
 
   it("nadaje pełne Tech i zwiększa punktację", () => {
-    const car = likelyCar();
+    const car = comfortCar();
     const store = storeWith(car);
     const previous = scoreCar(car).equipment;
 
@@ -47,18 +51,18 @@ describe("ręczna decyzja Tech", () => {
     expect(scoreCar(updated).equipment).toBeGreaterThan(previous);
   });
 
-  it("cofa ręczną decyzję i wraca do predykcji", () => {
-    const car = { ...likelyCar(), techOverride: "excluded" as const };
+  it("cofa ręczną decyzję i wraca do binarnej oceny wersji", () => {
+    const car = { ...comfortCar(), techOverride: "excluded" as const };
     const updated = applyTechOverride(storeWith(car), car.id, null)!;
 
     expect(updated.techOverride).toBeUndefined();
-    expect(hasTechEquivalent(updated)).toBe(true);
-    expect(scoreCar(updated).equipment).toBe(4);
+    expect(hasTechEquivalent(updated)).toBe(false);
+    expect(scoreCar(updated).equipment).toBe(1);
   });
 
   it("ręczne wykluczenie jest nadrzędne wobec nazwy Tech", () => {
     const car = {
-      ...likelyCar(),
+      ...comfortCar(),
       tech: true,
       trim: "Comfort + Tech",
     };

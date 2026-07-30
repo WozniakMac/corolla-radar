@@ -8,7 +8,7 @@ import {
   type ScoreExplanation,
 } from "../src/scoring";
 import { matchesFilters, normalizeFilters } from "../src/filters";
-import { isTechConfirmed } from "../src/corollaEquipment";
+import { hasTechEquivalent } from "../src/corollaEquipment";
 import type {
   Car,
   FilterState,
@@ -154,7 +154,7 @@ export function buildPurchaseAnalysisInput(
           camera: car.camera,
           parkingSensors: car.parkingSensors ?? null,
           heatedSeats: car.heatedSeats,
-          tech: isTechConfirmed(car),
+          tech: hasTechEquivalent(car),
         },
         cepik: car.cepik
           ? {

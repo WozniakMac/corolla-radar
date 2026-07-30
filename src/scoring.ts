@@ -5,8 +5,6 @@ import {
   equipmentSource,
   hasCatalogBlindSpot,
   hasTechEquivalent,
-  isTechConfirmed,
-  likelyTechConfidence,
   trimMarketPremium,
   trimVariant,
   type TechComponent,
@@ -40,7 +38,6 @@ export function buildMarketBenchmarks(cars: Car[]): MarketBenchmarks {
       price > 180000 ||
       car.mileage <= 0 ||
       car.mileage > 220000 ||
-      !hybridConfirmed(car) ||
       nonStandardSale(car)
     )
       continue;
@@ -72,15 +69,11 @@ export function buildMarketBenchmarks(cars: Car[]): MarketBenchmarks {
 }
 
 export type Qualification = {
-  status: "qualified" | "verification" | "rejected";
+  status: "qualified" | "rejected";
   reasons: string[];
 };
 
 const active = (car: Car) => car.listings.some((listing) => listing.active);
-const hybridConfirmed = (car: Car) =>
-  car.hybrid === true ||
-  /hybryd|hybrid/i.test(car.title) ||
-  [122, 140, 180, 184, 196].includes(car.power);
 
 export function qualifyCar(car: Car): Qualification {
   if (
@@ -103,15 +96,19 @@ export function qualifyCar(car: Car): Qualification {
           : "samochód sprzedawany jako uszkodzony",
       ],
     };
-  const reasons = [
-    !hybridConfirmed(car) && "napęd Hybrid",
-    !car.ecvt && "automat/e-CVT",
-    !car.camera && "kamera cofania",
-    !car.parkingSensors && "czujniki parkowania",
-  ].filter(Boolean) as string[];
-  return reasons.length
-    ? { status: "verification", reasons }
-    : { status: "qualified", reasons: [] };
+  if (!hasTechEquivalent(car))
+    return {
+      status: "rejected",
+      reasons: [
+        "wymagana wersja Comfort + Tech, Style, GR Sport lub Executive",
+      ],
+    };
+  if (!car.vat23)
+    return {
+      status: "rejected",
+      reasons: ["wymagana faktura VAT do leasingu"],
+    };
+  return { status: "qualified", reasons: [] };
 }
 
 export const isEligible = (car: Car) => qualifyCar(car).status === "qualified";
@@ -234,17 +231,10 @@ export function scoreCar(car: Car, market?: MarketBenchmarks): ScoreBreakdown {
   const hasBlindSpot =
     hasCatalogBlindSpot(car) ||
     /martwe.{0,15}pole|blind spot/i.test(car.description || "");
-  const techConfidence = likelyTechConfidence(car);
   const techPoints = techComponents.filter(
     (key) => key !== "parkingSensors" && key !== "ics",
   ).length;
-  const equipment = Math.min(
-    10,
-    (techConfidence === undefined
-      ? techPoints
-      : Math.floor(techPoints * (techConfidence / 100))) +
-      (hasBlindSpot ? 1 : 0),
-  );
+  const equipment = Math.min(10, techPoints + (hasBlindSpot ? 1 : 0));
   const location =
     car.distance <= 50
       ? 10
@@ -319,12 +309,6 @@ export function explainScore(
   const scoredComponents = components.filter(
     (key) => key !== "parkingSensors" && key !== "ics",
   );
-  const techConfidence = likelyTechConfidence(car);
-  const techProbabilityPenalty =
-    techConfidence === undefined
-      ? 0
-      : scoredComponents.length -
-        Math.floor(scoredComponents.length * (techConfidence / 100));
   const missingComponents = (
     [
       "heatedSeats",
@@ -428,8 +412,6 @@ export function explainScore(
           .filter(Boolean)
           .join(" • ") || "Brak dodatkowych premii wyposażenia.",
       deductions: [
-        techProbabilityPenalty > 0 &&
-          `Tech${techConfidence}%: −${techProbabilityPenalty} pkt za niepewną predykcję`,
         ...missingComponents.map(
           (key) =>
             `Brak potwierdzenia: ${equipmentLabel[key]} (−1 pkt potencjału wyposażenia)`,
@@ -461,9 +443,9 @@ export function explainScore(
       label: "Warunki sprzedaży",
       points: score.terms,
       max: 10,
-      detail: `${car.vat23 ? "FV 23%" : "bez FV 23%"} • ${dealerToyota(car) ? "dealer Toyota" : "inny sprzedawca"} • ${effectivePrice(car) > car.price ? "dopłata przy zakupie bez finansowania" : financingOnlyPrice ? "cena gotówkowa niepodana" : "brak wykrytej dopłaty gotówkowej"}`,
+      detail: `${car.vat23 ? "faktura VAT" : "bez potwierdzonej faktury VAT"} • ${dealerToyota(car) ? "dealer Toyota" : "inny sprzedawca"} • ${effectivePrice(car) > car.price ? "dopłata przy zakupie bez finansowania" : financingOnlyPrice ? "cena gotówkowa niepodana" : "brak wykrytej dopłaty gotówkowej"}`,
       deductions: [
-        !car.vat23 && "Brak FV 23%: −3 pkt",
+        !car.vat23 && "Brak potwierdzonej faktury VAT: −3 pkt",
         !dealer && "Sprzedawca poza siecią Toyota: −2 pkt",
         !pewneAuto && "Brak gwarancji/programu Toyota Pewne Auto: −2 pkt",
         effectivePrice(car) > car.price &&
@@ -488,7 +470,7 @@ export function worthTrip(
     car.distance <= 300 ||
     ratio <= 0.95 ||
     score.total >= 85 ||
-    (isTechConfirmed(car) &&
+    (hasTechEquivalent(car) &&
       car.aso &&
       car.polishSalon &&
       car.oneOwner &&

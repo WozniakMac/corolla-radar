@@ -15,6 +15,7 @@ import { useRadarApi } from "./hooks/useRadarApi";
 import {
   buildMarketBenchmarks,
   effectivePrice,
+  hasTechEquivalent,
   qualifyCar,
   scoreCar,
   worthTrip,
@@ -70,7 +71,6 @@ export default function App() {
   const [view, setView] = useState<AppView>("ranking");
   const [leaseCarId, setLeaseCarId] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(30);
-  const [verificationVisibleCount, setVerificationVisibleCount] = useState(15);
   const [comparisonMode, setComparisonMode] = useState(false);
   const [comparisonIds, setComparisonIds] = useState<string[]>([]);
   const [comparisonOpen, setComparisonOpen] = useState(false);
@@ -87,7 +87,6 @@ export default function App() {
   }, []);
   useEffect(() => {
     setVisibleCount(30);
-    setVerificationVisibleCount(15);
   }, [filters]);
   useEffect(() => {
     if (!selectedId) return;
@@ -166,9 +165,6 @@ export default function App() {
   const ranked = evaluated.filter(
     ({ car }) => qualifyCar(car).status === "qualified",
   );
-  const verification = evaluated.filter(
-    ({ car }) => qualifyCar(car).status === "verification",
-  );
 
   const applyPreset = (preset: "tech2022" | "local" | "vat") => {
     if (preset === "tech2022")
@@ -197,7 +193,9 @@ export default function App() {
     [cars],
   );
   const availableTrims = useMemo(() => {
-    const present = new Set(cars.map(trimVariant));
+    const present = new Set(
+      cars.filter(hasTechEquivalent).map((car) => trimVariant(car)),
+    );
     return TRIM_VARIANTS.filter((trim) => present.has(trim));
   }, [cars]);
   const availableEngines = useMemo(
@@ -421,68 +419,13 @@ export default function App() {
                 </small>
               </button>
             )}
-            {ranked.length === 0 && verification.length === 0 && (
+            {ranked.length === 0 && (
               <section className="emptyResults">
                 <strong>Brak ofert dla tych filtrów</strong>
                 <span>
                   Poszerz zakres ceny lub odległości albo zresetuj filtry.
                 </span>
               </section>
-            )}
-            {verification.length > 0 && (
-              <details className="verificationResults">
-                <summary>
-                  {verification.length} obiecujących ofert wymaga potwierdzenia
-                  warunków obowiązkowych
-                </summary>
-                <section className="cards">
-                  {verification
-                    .slice(0, verificationVisibleCount)
-                    .map(({ car, score }, index) => (
-                      <CarCard
-                        key={`verify-${car.id}`}
-                        car={car}
-                        score={score}
-                        rank={index + 1}
-                        onSelect={() => openCar(car)}
-                        codexJob={codexJobs.find(
-                          (job) =>
-                            job.carId === car.id ||
-                            car.listings.some(
-                              (listing) => listing.url === job.url,
-                            ),
-                        )}
-                        onProcessCodex={(id, force) =>
-                          void processCodex(id, force)
-                        }
-                        onProcessCepik={(id) => void processCepik(id)}
-                        comparisonMode={comparisonMode}
-                        comparisonSelected={comparisonIds.includes(car.id)}
-                        comparisonDisabled={
-                          comparisonIds.length >= 4 &&
-                          !comparisonIds.includes(car.id)
-                        }
-                        onToggleComparison={() => toggleComparison(car.id)}
-                        onCalculateLease={() => {
-                          setLeaseCarId(car.id);
-                          setView("leasing");
-                        }}
-                        communicationSaving={communicationSaving === car.id}
-                        onUpdateCommunication={updateCommunication}
-                      />
-                    ))}
-                </section>
-                {verification.length > verificationVisibleCount && (
-                  <button
-                    className="loadMoreButton"
-                    onClick={() =>
-                      setVerificationVisibleCount((count) => count + 15)
-                    }
-                  >
-                    Pokaż więcej ofert do weryfikacji
-                  </button>
-                )}
-              </details>
             )}
           </>
         )}

@@ -13,6 +13,7 @@ import { notifyNewTopTen } from "./notifications";
 import type { Store } from "./store";
 import { isDecisionMissing, missingListingFields } from "./codexMissing";
 import { equipmentEvidence } from "./equipmentEvidence";
+import { hasAcceptableVatInvoice } from "./saleTerms";
 import {
   deletePrunedSnapshotFiles,
   latestSnapshots,
@@ -243,7 +244,7 @@ function toCar(
     aso: p.aso,
     oneOwner: p.oneOwner,
     noStructuralDamage: p.noStructuralDamage,
-    vat23: /vat\s*23|fv\s*23|faktura vat 23/i.test(p.text),
+    vat23: hasAcceptableVatInvoice(`${p.title} ${p.text}`),
     camera: p.camera,
     parkingSensors: p.parkingSensors,
     ecvt: p.ecvt,
@@ -289,7 +290,7 @@ function toCar(
         aso: p.aso,
         oneOwner: p.oneOwner,
         noStructuralDamage: p.noStructuralDamage,
-        vat23: /vat\s*23|fv\s*23|faktura vat 23/i.test(p.text),
+        vat23: hasAcceptableVatInvoice(`${p.title} ${p.text}`),
         snapshotId,
         reserved: p.reserved,
         hybrid: p.hybrid,
@@ -374,7 +375,7 @@ export function upsertParsedCar(
     aso: p.aso,
     oneOwner: p.oneOwner,
     noStructuralDamage: p.noStructuralDamage,
-    vat23: /vat\s*23|fv\s*23|faktura vat 23/i.test(p.text),
+    vat23: hasAcceptableVatInvoice(`${p.title} ${p.text}`),
     snapshotId,
     reserved: p.reserved,
     hybrid: p.hybrid,

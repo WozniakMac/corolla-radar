@@ -735,11 +735,6 @@ details input[type="range"] {
   background: #e8f0fb;
   color: #2b66a4;
 }
-.badges .likelyTechBg {
-  background: #fff4d6;
-  color: #8a5a00;
-  border: 1px dashed #d7a62d;
-}
 .badges .trimBg {
   background: #eee8fa;
   color: #62439b;
@@ -2577,19 +2572,6 @@ details input[type="range"] {
   color: #278157;
   font-size: 11px;
   font-weight: 700;
-}
-.verificationResults {
-  margin-top: 24px;
-  border-top: 1px solid #dce3df;
-  padding-top: 18px;
-}
-.verificationResults > summary {
-  cursor: pointer;
-  color: #7a5b18;
-  font-weight: 800;
-}
-.verificationResults > .cards {
-  margin-top: 14px;
 }
 .loadingState,
 .emptyResults {

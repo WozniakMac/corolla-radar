@@ -79,7 +79,7 @@ describe("offer filters", () => {
     });
   });
 
-  it("includes likely Tech predictions in the Tech filter", () => {
+  it("nie traktuje wyposażenia zwykłego Comforta jako przewidywanego Tech", () => {
     expect(
       matchesFilters(
         {
@@ -89,6 +89,12 @@ describe("offer filters", () => {
           parkingSensors: true,
           heatedSeats: true,
         },
+        { ...defaultFilters, tech: true },
+      ),
+    ).toBe(false);
+    expect(
+      matchesFilters(
+        { ...car, trim: "Style", tech: false },
         { ...defaultFilters, tech: true },
       ),
     ).toBe(true);

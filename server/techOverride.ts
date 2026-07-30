@@ -24,7 +24,7 @@ export function applyTechOverride(
         ? "Tech potwierdzony"
         : override === "excluded"
           ? "Tech wykluczony"
-          : "Automatyczne wykrywanie Tech",
+          : "Automatyczna decyzja Tech na podstawie wersji",
   });
   return car;
 }

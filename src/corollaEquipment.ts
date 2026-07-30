@@ -33,10 +33,11 @@ export const isTechExcluded = (car: Car) => car.techOverride === "excluded";
 
 export const isTechConfirmed = (car: Car) =>
   car.techOverride === "confirmed" ||
-  (car.techOverride !== "excluded" && car.tech);
+  (car.techOverride !== "excluded" &&
+    (car.tech || /comfort.{0,12}tech|tech.{0,12}comfort/i.test(car.trim)));
 
 export function trimVariant(
-  car: Pick<Car, "trim" | "year" | "techOverride">,
+  car: Pick<Car, "trim" | "year" | "tech" | "techOverride">,
 ): TrimVariant {
   const trim = car.trim || "";
   if (/executive/i.test(trim)) return "Executive";
@@ -49,7 +50,12 @@ export function trimVariant(
     return car.year <= 2022 ? "Comfort + Style" : "Style";
   if (/tech/i.test(trim))
     return car.techOverride === "excluded" ? "Comfort" : "Comfort + Tech";
-  if (/comfort/i.test(trim)) return "Comfort";
+  if (/comfort/i.test(trim))
+    return car.techOverride === "confirmed" ||
+      (car.techOverride !== "excluded" && car.tech)
+      ? "Comfort + Tech"
+      : "Comfort";
+  if (car.techOverride === "confirmed") return "Comfort + Tech";
   if (/active/i.test(trim)) return "Active";
   return "Nieustalona";
 }
@@ -70,19 +76,7 @@ export function trimMarketPremium(car: Car) {
     Nieustalona: 0,
   };
   const variant = trimVariant(car);
-  if (
-    !isTechConfirmed(car) &&
-    ["Comfort", "Nieustalona"].includes(variant) &&
-    hasLikelyTech(car)
-  )
-    return Math.round(
-      premiums["Comfort + Tech"] * (likelyTechConfidence(car)! / 100),
-    );
-  const scoredVariant =
-    isTechConfirmed(car) && ["Comfort", "Nieustalona"].includes(variant)
-      ? "Comfort + Tech"
-      : variant;
-  return premiums[scoredVariant];
+  return premiums[variant];
 }
 
 export const equipmentLabel: Record<TechComponent, string> = {
@@ -109,53 +103,6 @@ function techNamedComponents(car: Car): TechComponent[] {
   return [...TECH_COMPONENTS];
 }
 
-const LIKELY_TECH_WEIGHTS: Partial<Record<TechComponent, number>> = {
-  parkingSensors: 2,
-  heatedSeats: 3,
-  heatedSteeringWheel: 3,
-  wirelessCharging: 3,
-  lumbarAdjustment: 3,
-  keyless: 2,
-  autoDimmingMirror: 2,
-  heatedWiperArea: 2,
-  foldingMirrors: 1,
-  rainSensor: 1,
-  ics: 2,
-};
-
-/**
- * Pakiet Tech jest często pomijany w nazwie używanego auta, choć sprzedawca
- * wymienia jego elementy. Co najmniej dwa charakterystyczne składniki i 5 pkt
- * dowodów dają ostrożną predykcję. Przykład: czujniki (2) + grzane fotele (3).
- *
- * Predykcja dotyczy Comforta lub auta z nieustaloną wersją. Style, GR Sport
- * i Executive są obsługiwane osobno jako katalogowe odpowiedniki Tech.
- */
-export function likelyTechEvidence(car: Car): TechComponent[] {
-  if (isTechConfirmed(car) || isTechExcluded(car)) return [];
-  if (catalogInferredComponents(car).length) return [];
-  if (!["Comfort", "Nieustalona"].includes(trimVariant(car))) return [];
-  const evidence = TECH_COMPONENTS.filter((key) => car[key] === true);
-  const weight = evidence.reduce(
-    (sum, key) => sum + (LIKELY_TECH_WEIGHTS[key] || 0),
-    0,
-  );
-  return evidence.length >= 2 && weight >= 5 ? evidence : [];
-}
-
-export function likelyTechConfidence(car: Car): number | undefined {
-  const evidence = likelyTechEvidence(car);
-  if (!evidence.length) return undefined;
-  const weight = evidence.reduce(
-    (sum, key) => sum + (LIKELY_TECH_WEIGHTS[key] || 0),
-    0,
-  );
-  return Math.min(90, 50 + (weight - 5) * 10);
-}
-
-export const hasLikelyTech = (car: Car) =>
-  likelyTechConfidence(car) !== undefined;
-
 // Po liftingu MY2023 katalog Toyoty potwierdza podstawowe elementy pakietu Tech
 // jako standard w Style/Executive. W starszych autach nazwa "Style" bywa nazwą
 // pakietu do Comfort, więc nie wolno na jej podstawie zakładać pełnego Tech.
@@ -174,7 +121,7 @@ export const hasCatalogBlindSpot = (car: Car) =>
 export function confirmedTechComponents(car: Car): TechComponent[] {
   const inferred = new Set(catalogInferredComponents(car));
   const namedTech = new Set(
-    isTechConfirmed(car) || hasLikelyTech(car) ? techNamedComponents(car) : [],
+    isTechConfirmed(car) ? techNamedComponents(car) : [],
   );
   return TECH_COMPONENTS.filter(
     (key) => car[key] === true || inferred.has(key) || namedTech.has(key),
@@ -183,9 +130,9 @@ export function confirmedTechComponents(car: Car): TechComponent[] {
 
 export const hasTechEquivalent = (car: Car) =>
   !isTechExcluded(car) &&
-  (isTechConfirmed(car) ||
-    hasLikelyTech(car) ||
-    confirmedTechComponents(car).length >= 8);
+  ["Comfort + Tech", "Style", "GR Sport", "Executive"].includes(
+    trimVariant(car),
+  );
 
 export function equipmentSource(car: Car, key: TechComponent) {
   if (car[key] === true) return "potwierdzone w ogłoszeniu";
@@ -196,8 +143,6 @@ export function equipmentSource(car: Car, key: TechComponent) {
     return `wynika z ręcznie potwierdzonego Tech MY${car.year}`;
   if (isTechConfirmed(car) && techNamedComponents(car).includes(key))
     return `wynika z pakietu Tech MY${car.year}`;
-  if (hasLikelyTech(car) && techNamedComponents(car).includes(key))
-    return `przewidywane z wyposażenia „Tech${likelyTechConfidence(car)}%” MY${car.year}`;
   if (catalogInferredComponents(car).includes(key))
     return `wynika z katalogu dla ${car.trim}, MY${car.year}`;
   return undefined;

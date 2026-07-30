@@ -22,14 +22,7 @@ import type {
   CommunicationStatus,
   ScoreBreakdown,
 } from "../types";
-import {
-  equipmentLabel,
-  hasLikelyTech,
-  isTechConfirmed,
-  likelyTechConfidence,
-  likelyTechEvidence,
-  trimVariant,
-} from "../corollaEquipment";
+import { trimVariant } from "../corollaEquipment";
 
 export function CarCard({
   car,
@@ -206,22 +199,7 @@ export function CarCard({
           <span className="trimBg">{trimVariant(car)}</span>
           <span>{car.year}</span>
           <span>{car.power} KM</span>
-          {hasLikelyTech(car) ? (
-            <span
-              className="likelyTechBg"
-              title={`Predykcja na podstawie: ${likelyTechEvidence(car)
-                .map((key) => equipmentLabel[key])
-                .join(", ")}`}
-            >
-              Tech{likelyTechConfidence(car)}%
-            </span>
-          ) : (
-            hasTechEquivalent(car) && (
-              <span className="blue">
-                {isTechConfirmed(car) ? "TECH" : "TECH EQ."}
-              </span>
-            )
-          )}
+          {hasTechEquivalent(car) && <span className="blue">TECH</span>}
           {car.parkingSensors ? (
             <span className="greenBg">CZUJNIKI</span>
           ) : (
@@ -284,7 +262,7 @@ export function CarCard({
         <small>CENA BRUTTO</small>
         <strong>{money(effectivePrice(car))}</strong>
         {effectivePrice(car) > car.price && <span>CENA GOTÓWKOWA</span>}
-        {car.vat23 && <span>FV 23%</span>}
+        {car.vat23 && <span>FAKTURA VAT</span>}
         <small className={`cardCodexStatus ${codexJob?.status || "notNeeded"}`}>
           <Bot /> OpenAI: {codexStatus}
         </small>

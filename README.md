@@ -3,7 +3,7 @@
 Prywatny radar zakupowy dla Toyoty Corolli Touring Sports. MVP prezentuje ranking 0–100, filtry, historię publikacji i uzasadnienie wyniku.
 
 Widok „Leasing” przelicza orientacyjny harmonogram i realny koszt po odliczeniu
-VAT dla profilu JDG na ryczałcie. Rozróżnia FV 23% od VAT-marża, użytek mieszany
+VAT dla profilu JDG na ryczałcie. Rozróżnia fakturę VAT od samej VAT-marża, użytek mieszany
 od wyłącznie firmowego oraz sprzedaż zagraniczną NP z prawem do odliczenia od
 sprzedaży zwolnionej. Parametry kalkulatora są zapisywane lokalnie w przeglądarce.
 Domyślny scenariusz zakłada firmowy wykup po cenie z harmonogramu. Przy wykupie
@@ -314,7 +314,7 @@ Po każdym skanie aplikacja porównuje aktualne TOP 10 z poprzednim. Zmiana skł
 
 Każde auto z kompletnymi danymi podstawowymi przechowuje ostatnie 100 zmian punktacji. Historia w szczegółach auta pokazuje poprzedni i nowy wynik każdej składowej oraz konkretne przesłanki, które pojawiły się, zniknęły albo zmieniły wartość. Zapis powstaje po skanie, ponownym przetworzeniu snapshotów oraz po uzupełnieniu danych przez CEPiK lub OpenAI; identyczny wynik nie tworzy duplikatu.
 
-Na dole szczegółów auta można ręcznie potwierdzić albo wykluczyć pakiet Tech. Ręczna decyzja jest trwale zapisywana, ma pierwszeństwo przed nazwą wersji i predykcją procentową oraz natychmiast wpływa na punktację. Można ją cofnąć, aby wrócić do automatycznego wykrywania.
+Na dole szczegółów auta można ręcznie potwierdzić albo wykluczyć pakiet Tech. Ręczna decyzja jest trwale zapisywana, ma pierwszeństwo przed automatyczną oceną wersji wyposażenia oraz natychmiast wpływa na punktację i kwalifikację oferty. Można ją cofnąć, aby wrócić do automatycznej decyzji binarnej.
 
 Deduplication scala publikacje tylko po identycznym VIN lub identycznym znormalizowanym URL-u. Podobna cena, przebieg i rocznik nie wystarczają do scalenia.
 

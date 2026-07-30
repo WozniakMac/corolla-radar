@@ -229,7 +229,7 @@ export function Filters({
             className={value.vat ? "on" : ""}
             onClick={() => set("vat", !value.vat)}
           >
-            FV 23%
+            Faktura VAT
           </button>
           <label>
             Przebieg do {Math.round(value.maxKm / 1000)} tys. km

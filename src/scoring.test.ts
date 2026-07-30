@@ -18,12 +18,42 @@ const qualified = (index = 2) => ({
 });
 
 describe("skalibrowany ranking", () => {
-  it("uses camera, sensors, hybrid and automatic as a hard gate", () => {
+  it("nie używa hybrydy, e-CVT, kamery ani czujników jako bramek", () => {
     const car = qualified();
     expect(isEligible(car)).toBe(true);
-    expect(qualifyCar({ ...car, parkingSensors: false })).toMatchObject({
-      status: "verification",
-      reasons: ["czujniki parkowania"],
+    expect(
+      isEligible({
+        ...car,
+        hybrid: false,
+        ecvt: false,
+        camera: false,
+        parkingSensors: false,
+      }),
+    ).toBe(true);
+  });
+
+  it("dopuszcza tylko wskazane wersje wyposażenia i wymaga faktury VAT", () => {
+    for (const trim of ["Comfort + Tech", "Style", "GR Sport", "Executive"])
+      expect(
+        isEligible({ ...qualified(), year: 2024, trim, tech: false }),
+      ).toBe(true);
+    expect(
+      qualifyCar({
+        ...qualified(),
+        trim: "Comfort",
+        tech: false,
+        parkingSensors: true,
+        heatedSeats: true,
+      }),
+    ).toMatchObject({
+      status: "rejected",
+      reasons: [
+        "wymagana wersja Comfort + Tech, Style, GR Sport lub Executive",
+      ],
+    });
+    expect(qualifyCar({ ...qualified(), vat23: false })).toMatchObject({
+      status: "rejected",
+      reasons: ["wymagana faktura VAT do leasingu"],
     });
   });
 
@@ -202,7 +232,7 @@ describe("skalibrowany ranking", () => {
     expect(equipment.detail).not.toContain("podgrzewana kierownica +1");
   });
 
-  it("reduces likely Tech points according to prediction confidence", () => {
+  it("nie skaluje punktów Tech procentową predykcją", () => {
     const base = {
       ...qualified(),
       year: 2024,
@@ -211,20 +241,17 @@ describe("skalibrowany ranking", () => {
       heatedSeats: true,
       parkingSensors: true,
     };
-    const likely = scoreCar(base);
+    const comfort = scoreCar(base);
     const explicit = scoreCar({
       ...base,
       trim: "Comfort + Tech",
       tech: true,
     });
-    expect(likely.equipment).toBe(4);
+    expect(comfort.equipment).toBe(1);
     expect(explicit.equipment).toBe(9);
-    expect(likely.total).toBeLessThan(explicit.total);
+    expect(comfort.total).toBeLessThan(explicit.total);
     expect(
       explainScore(base).find((item) => item.key === "equipment")?.detail,
-    ).toContain("Tech50%");
-    expect(
-      explainScore(base).find((item) => item.key === "equipment")?.deductions,
-    ).toContain("Tech50%: −5 pkt za niepewną predykcję");
+    ).not.toContain("Tech");
   });
 });
