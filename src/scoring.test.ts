@@ -185,6 +185,32 @@ describe("skalibrowany ranking", () => {
     expect(worthTrip(car, scoreCar(car))).toBe(false);
   });
 
+  it("awards full live location points and keeps distant offers when distance is ignored", () => {
+    const car = {
+      ...qualified(0),
+      price: 160000,
+      distance: 600,
+      tech: false,
+      aso: false,
+      polishSalon: false,
+      oneOwner: false,
+      vat23: false,
+    };
+    const normal = scoreCar(car);
+    const ignored = scoreCar(car, undefined, { ignoreDistance: true });
+    expect(normal.location).toBe(0);
+    expect(ignored.location).toBe(10);
+    expect(ignored.total).toBe(normal.total + 10);
+    expect(worthTrip(car, ignored, undefined, { ignoreDistance: true })).toBe(
+      true,
+    );
+    expect(
+      explainScore(car, undefined, { ignoreDistance: true }).find(
+        (item) => item.key === "location",
+      ),
+    ).toMatchObject({ points: 10, deductions: [] });
+  });
+
   it("never exceeds 100", () => {
     expect(scoreCar(qualified()).total).toBeLessThanOrEqual(100);
   });

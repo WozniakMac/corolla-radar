@@ -12,6 +12,7 @@ export const defaultFilters: FilterState = {
   maxPrice: 150000,
   maxKm: 200000,
   maxDistance: 0,
+  ignoreDistance: false,
   year: [],
   tech: false,
   vat: false,
@@ -80,6 +81,7 @@ export function normalizeFilters(value: unknown): FilterState {
       : defaultFilters.maxPrice,
     maxKm: Number(input.maxKm) || defaultFilters.maxKm,
     maxDistance: Number(input.maxDistance) || 0,
+    ignoreDistance: input.ignoreDistance === true,
     tech: input.tech === true,
     vat: input.vat === true,
   };

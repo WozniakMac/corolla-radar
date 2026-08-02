@@ -79,6 +79,16 @@ describe("offer filters", () => {
     });
   });
 
+  it("normalizes and persists the distance-scoring preference", () => {
+    expect(normalizeFilters({ ignoreDistance: true }).ignoreDistance).toBe(
+      true,
+    );
+    expect(normalizeFilters({ ignoreDistance: "true" }).ignoreDistance).toBe(
+      false,
+    );
+    expect(normalizeFilters({}).ignoreDistance).toBe(false);
+  });
+
   it("nie traktuje wyposażenia zwykłego Comforta jako przewidywanego Tech", () => {
     expect(
       matchesFilters(

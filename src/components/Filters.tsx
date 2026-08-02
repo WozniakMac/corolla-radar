@@ -105,6 +105,7 @@ export function Filters({
     value.minPrice > 0,
     value.maxPrice > 0 && value.maxPrice !== 150000,
     value.maxDistance > 0,
+    value.ignoreDistance,
     value.maxKm !== 200000,
     value.tech,
     value.vat,
@@ -218,6 +219,15 @@ export function Filters({
             }
           >
             <MapPin /> Do 150 km
+          </button>
+          <button
+            type="button"
+            className={value.ignoreDistance ? "on" : ""}
+            aria-pressed={value.ignoreDistance}
+            onClick={() => set("ignoreDistance", !value.ignoreDistance)}
+            title="Każde auto otrzyma pełne 10 punktów za lokalizację, niezależnie od odległości"
+          >
+            <MapPin /> Ignoruj odległość w punktacji
           </button>
           <button
             className={value.tech ? "on" : ""}

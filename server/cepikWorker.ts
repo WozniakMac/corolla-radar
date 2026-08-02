@@ -107,21 +107,28 @@ export async function checkCepik(car: any) {
 
 export async function cepikTopIds(cars: any[], savedFilters: any) {
   const market = buildMarketBenchmarks(cars);
-  const ranked = cars
-    .filter(
-      (item) =>
-        item.listings?.some((listing: any) => listing.active) &&
-        qualifyCar(item).status === "qualified",
-    )
+  const candidates = cars.filter(
+    (item) =>
+      item.listings?.some((listing: any) => listing.active) &&
+      qualifyCar(item).status === "qualified",
+  );
+  const ranked = candidates
     .map((item) => ({ item, score: scoreCar(item, market) }))
     .filter(({ item, score }) => worthTrip(item, score, market))
     .sort((left, right) => right.score.total - left.score.total);
   const ids = new Set(ranked.slice(0, 10).map(({ item }) => item.id));
-  if (savedFilters)
-    ranked
-      .filter(({ item }) => matchesFilters(item, savedFilters))
+  if (savedFilters) {
+    candidates
+      .filter((item) => matchesFilters(item, savedFilters))
+      .map((item) => ({
+        item,
+        score: scoreCar(item, market, savedFilters),
+      }))
+      .filter(({ item, score }) => worthTrip(item, score, market, savedFilters))
+      .sort((left, right) => right.score.total - left.score.total)
       .slice(0, 10)
       .forEach(({ item }) => ids.add(item.id));
+  }
   return ids;
 }
 

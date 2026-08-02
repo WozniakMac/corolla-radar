@@ -154,10 +154,11 @@ export default function App() {
             car.mileage > 0 &&
             car.listings.some((listing) => listing.active),
         )
-        .map((car) => ({ car, score: scoreCar(car, market) }))
+        .map((car) => ({ car, score: scoreCar(car, market, filters) }))
         .filter(
           ({ car, score }) =>
-            matchesFilters(car, filters) && worthTrip(car, score, market),
+            matchesFilters(car, filters) &&
+            worthTrip(car, score, market, filters),
         )
         .sort((a, b) => b.score.total - a.score.total),
     [cars, filters, market],
@@ -434,6 +435,7 @@ export default function App() {
         <ScoreDrawer
           car={selected}
           market={market}
+          ignoreDistance={filters.ignoreDistance}
           onClose={closeCar}
           techOverrideSaving={techOverrideSaving === selected.id}
           onTechOverride={(override) =>
@@ -457,7 +459,7 @@ export default function App() {
         <OfferComparison
           offers={comparedOffers.map((car) => ({
             car,
-            score: scoreCar(car, market),
+            score: scoreCar(car, market, filters),
           }))}
           onClose={() => setComparisonOpen(false)}
           onRemove={(id) => {

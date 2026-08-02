@@ -14,6 +14,9 @@ const clamp = (value: number, min = 0, max = 100) =>
   Math.min(max, Math.max(min, value));
 
 export type MarketBenchmarks = Record<string, number>;
+export type ScoreOptions = {
+  ignoreDistance?: boolean;
+};
 
 const engineGroup = (car: Car) =>
   /(?:^|\D)2[.,]0(?:\D|$)/.test(`${car.title} ${car.description || ""}`) ||
@@ -208,7 +211,11 @@ const dealerToyota = (car: Car) =>
   /toyota/i.test(car.seller) ||
   car.listings.some((listing) => /toyota/i.test(listing.source));
 
-export function scoreCar(car: Car, market?: MarketBenchmarks): ScoreBreakdown {
+export function scoreCar(
+  car: Car,
+  market?: MarketBenchmarks,
+  options: ScoreOptions = {},
+): ScoreBreakdown {
   const { deal } = dealMetrics(car, market);
   const dealer = dealerToyota(car);
   const batteryProtected =
@@ -235,8 +242,9 @@ export function scoreCar(car: Car, market?: MarketBenchmarks): ScoreBreakdown {
     (key) => key !== "parkingSensors" && key !== "ics",
   ).length;
   const equipment = Math.min(10, techPoints + (hasBlindSpot ? 1 : 0));
-  const location =
-    car.distance <= 50
+  const location = options.ignoreDistance
+    ? 10
+    : car.distance <= 50
       ? 10
       : car.distance <= 150
         ? 8
@@ -295,8 +303,9 @@ export type ScoreExplanation = {
 export function explainScore(
   car: Car,
   market?: MarketBenchmarks,
+  options: ScoreOptions = {},
 ): ScoreExplanation[] {
-  const score = scoreCar(car, market);
+  const score = scoreCar(car, market, options);
   const metrics = dealMetrics(car, market);
   const { expectedPrice, price, ratio } = metrics;
   const dealer = dealerToyota(car);
@@ -425,12 +434,15 @@ export function explainScore(
       label: "Lokalizacja",
       points: score.location,
       max: 10,
-      detail:
-        car.distance === 999
+      detail: options.ignoreDistance
+        ? car.distance === 999
+          ? "Odległość pominięta w punktacji; przyznano pełne 10 pkt. Faktyczna odległość jest nieustalona."
+          : `Odległość pominięta w punktacji; przyznano pełne 10 pkt. ${car.location}, około ${car.distance} km od Poznania.`
+        : car.distance === 999
           ? "Odległość nieustalona."
           : `${car.location}, około ${car.distance} km od Poznania.`,
       deductions:
-        score.location < 10
+        !options.ignoreDistance && score.location < 10
           ? [
               car.distance === 999
                 ? "Nieustalona odległość: −10 pkt"
@@ -463,9 +475,11 @@ export function worthTrip(
   car: Car,
   score: ScoreBreakdown,
   market?: MarketBenchmarks,
+  options: ScoreOptions = {},
 ) {
   const { ratio } = dealMetrics(car, market);
   return (
+    options.ignoreDistance ||
     car.distance === 999 ||
     car.distance <= 300 ||
     ratio <= 0.95 ||

@@ -158,6 +158,7 @@ export type FilterState = {
   maxPrice: number;
   maxKm: number;
   maxDistance: number;
+  ignoreDistance: boolean;
   year: string[];
   tech: boolean;
   vat: boolean;

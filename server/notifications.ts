@@ -208,7 +208,7 @@ export async function notifyNewTopTen(context: ScoreCaptureContext = {}) {
     .filter((car) => !savedFilters || matchesFilters(car, savedFilters))
     .map((car) => ({
       car,
-      score: scoreCar(car, market),
+      score: scoreCar(car, market, savedFilters || undefined),
       scoreChange: scoreChanges.get(car.id),
     }))
     .sort((a, b) => b.score.total - a.score.total)

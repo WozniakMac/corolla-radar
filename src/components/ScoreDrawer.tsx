@@ -19,6 +19,7 @@ import { CommunicationPanel } from "./CommunicationPanel";
 export function ScoreDrawer({
   car,
   market,
+  ignoreDistance,
   onClose,
   techOverrideSaving,
   onTechOverride,
@@ -27,6 +28,7 @@ export function ScoreDrawer({
 }: {
   car: Car;
   market: MarketBenchmarks;
+  ignoreDistance: boolean;
   onClose: () => void;
   techOverrideSaving: boolean;
   onTechOverride: (override: Car["techOverride"] | null) => Promise<void>;
@@ -36,9 +38,10 @@ export function ScoreDrawer({
     note?: string;
   }) => Promise<void>;
 }) {
-  const score = scoreCar(car, market);
+  const scoreOptions = { ignoreDistance };
+  const score = scoreCar(car, market, scoreOptions);
   const communicationStatus = car.communication?.status || "not_contacted";
-  const explanation = explainScore(car, market);
+  const explanation = explainScore(car, market, scoreOptions);
   const scoreHistory = [...(car.scoreHistory || [])].reverse();
   const priceEvents = car.listings
     .flatMap((listing) =>

@@ -52,13 +52,13 @@ export function rankTopTenForPurchase(
     )
     .map((car) => ({
       car,
-      score: scoreCar(car, market),
-      explanations: explainScore(car, market),
+      score: scoreCar(car, market, filters),
+      explanations: explainScore(car, market, filters),
     }))
     .filter(
       ({ car, score }) =>
         matchesFilters(car, filters) &&
-        worthTrip(car, score, market) &&
+        worthTrip(car, score, market, filters) &&
         qualifyCar(car).status === "qualified",
     )
     .sort((left, right) => right.score.total - left.score.total);
